@@ -8,7 +8,7 @@ using Discord.Rest;
 
 namespace Ciridium
 {
-    class PilotMissionCommands
+    class MissionCommands
     {
         public async Task HandleCreateRoomCommand(CommandContext context)
         {
@@ -54,29 +54,23 @@ namespace Ciridium
 
         public async Task HandleCloseMissionCommand(CommandContext context)
         {
-
+            if (MissionModel.IsMissionChannel(context.Channel.Id))
+            {
+                MissionModel.missionList.Remove(MissionModel.GetMission(context.Channel.Id));
+                await MissionModel.SaveMissions();
+                await context.Guild.GetTextChannel(context.Channel.Id).DeleteAsync(new RequestOptions() { AuditLogReason = "Deleted channel upon request by " + context.User.Discriminator });
+            }
         }
 
         public void RegisterCommand(CommandService service)
         {
             AccessLevel pilot = AccessLevel.Pilot;
             string summary = "Creates a new mission room. Specify platform and as many explorers as there are to add.";
-            service.AddCommand(new CommandKeys("createmission", 1000), HandleCreateRoomCommand, pilot, summary, "/createmission pc/xbox/ps4 {<@Explorers>}");
+            service.AddCommand(new CommandKeys("createmission", 3, 1000), HandleCreateRoomCommand, pilot, summary, "/createmission pc/xbox/ps4 {<@Explorers>}");
             summary = "If issued in a mission channel will update its number. Elsewhere will set the next missions number.";
-            service.AddCommand(new CommandKeys("setmissionnumber", 2), HandleSetMissionNumberCommand, AccessLevel.Moderator, summary, "/setmissionnumber <Number>");
+            service.AddCommand(new CommandKeys("setmissionnumber", 2, 2), HandleSetMissionNumberCommand, AccessLevel.Moderator, summary, "/setmissionnumber <Number>");
             summary = "Closes a mission room.";
             service.AddCommand(new CommandKeys("closemission"), HandleCloseMissionCommand, pilot, summary, "/closemission");
-        }
-    }
-
-    class AdminMissionCommands
-    {
-        public async Task HandleCommand(CommandContext context)
-        {
-        }
-
-        public void RegisterCommand(CommandService service)
-        {
         }
     }
 }

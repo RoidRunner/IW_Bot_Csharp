@@ -36,7 +36,7 @@ public class Program
     {
         await ResourcesModel.Init();
         await MissionSettingsModel.Init();
-        MissionModel.Init();
+        await MissionModel.Init();
 
         Var.client = new DiscordSocketClient(new DiscordSocketConfig
         {
@@ -161,7 +161,7 @@ public class Program
         //cmd6.Init(cmdService);
         HelpCommand cmd7 = new HelpCommand();
         cmd7.RegisterCommand(Var.cmdService);
-        PilotMissionCommands cmd8 = new PilotMissionCommands();
+        MissionCommands cmd8 = new MissionCommands();
         cmd8.RegisterCommand(Var.cmdService);
 
         Var.client.MessageReceived += HandleCommandAsync;

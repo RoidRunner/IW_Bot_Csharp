@@ -10,9 +10,10 @@ namespace Ciridium
 {
     static class MissionModel
     {
-        public static void Init ()
+        public static async Task Init ()
         {
             missionList = new List<Mission>();
+            await LoadMissions();
         }
 
         public static List<Mission> missionList;
@@ -47,6 +48,8 @@ namespace Ciridium
             missionList.Add(newMission);
             await NewMissionChannel.SendMessageAsync(string.Format(MissionSettingsModel.ExplorerQuestions, ResourcesModel.GetMentionsFromUserIdList(explorerIDs)));
 
+            await SaveMissions();
+            await MissionSettingsModel.SaveMissionSettings();
             return NewMissionChannel;
         }
 
@@ -80,7 +83,7 @@ namespace Ciridium
 
         private const string JSON_MISSIONS = "Missions";
 
-        public static async Task loadMissions()
+        public static async Task LoadMissions()
         {
             JSONObject json = await ResourcesModel.LoadToJSONObject(ResourcesModel.Path + @"Missions.json");
             if (json.HasField(JSON_MISSIONS))
@@ -96,7 +99,7 @@ namespace Ciridium
             }
         }
 
-        public static async Task saveMissions()
+        public static async Task SaveMissions()
         {
             JSONObject json = new JSONObject();
             JSONObject jMissions = new JSONObject();

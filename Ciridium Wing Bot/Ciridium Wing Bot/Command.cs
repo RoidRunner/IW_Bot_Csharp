@@ -30,27 +30,31 @@ namespace Ciridium
     internal struct CommandKeys
     {
         internal string[] Keys { get; private set; }
+        internal int FixedArgCnt { get; private set; }
         internal int MinArgCnt { get; private set; }
         internal int MaxArgCnt { get; private set; }
 
-        internal CommandKeys(string key, int maxArgCnt = 0)
+        internal CommandKeys(string key, int minArgCnt, int maxArgCnt)
         {
             Keys = key.Split(' ');
-            MinArgCnt = Keys.Length;
-            if (maxArgCnt == 0)
-            {
-                MaxArgCnt = MinArgCnt;
-            } else
-            {
-                MaxArgCnt = maxArgCnt;
-            }
+            FixedArgCnt = Keys.Length;
+            MinArgCnt = minArgCnt;
+            MaxArgCnt = maxArgCnt;
+        }
+
+        internal CommandKeys(string key)
+        {
+            Keys = key.Split(' ');
+            FixedArgCnt = Keys.Length;
+            MinArgCnt = 0;
+            MaxArgCnt = FixedArgCnt;
         }
 
         internal bool Matches(string[] check)
         {
             int checkCnt = check.Length;
             // Bail out if arg cnt doesn't match
-            if (checkCnt > MaxArgCnt || checkCnt < MinArgCnt)
+            if (checkCnt > MaxArgCnt || checkCnt < FixedArgCnt)
             {
                 return false;
             } else
@@ -66,6 +70,11 @@ namespace Ciridium
                 }
                 return allKeysMatch;
             }
+        }
+
+        internal bool HasMinArgCnt(int argCnt)
+        {
+            return argCnt >= MinArgCnt;
         }
 
         internal string KeyList

@@ -58,12 +58,21 @@ namespace Ciridium
                     AccessLevel userLevel = SettingsModel.GetUserAccessLevel(user);
                     if (HasPermission(userLevel, cmd.AccessLevel))
                     {
-                        try
+                        if (cmd.Key.HasMinArgCnt(context.ArgCnt))
                         {
-                            await cmd.HandleCommand(context);
-                        } catch (Exception e)
+                            try
+                            {
+                                await cmd.HandleCommand(context);
+                            }
+                            catch (Exception e)
+                            {
+                                await context.Channel.SendMessageAsync(string.Format("Exception Occured while trying to execute command `{0}`\n```{1}```\n```{2}```", cmd.Key.KeyList, e.Message, e.StackTrace));
+                            }
+                        } else
                         {
-                            await context.Channel.SendMessageAsync(string.Format("Exception Occured while trying to execute command `{0}`\n```{1}```\n```{2}```", cmd.Key.KeyList, e.Message, e.StackTrace));
+                            await context.Channel.SendMessageAsync(string.Format("The command `/{0}` expects {1} arguments, that is {2} more than you supplied! Try `/help {0}` for more info",
+                                cmd.Key.KeyList, cmd.Key.MinArgCnt - cmd.Key.FixedArgCnt, cmd.Key.MinArgCnt - context.ArgCnt
+                                ));
                         }
                     }
                     else
@@ -86,10 +95,10 @@ namespace Ciridium
             int argCntMatched = -2;
             foreach (Command command in commands)
             {
-                if (command.Key.Matches(context.Args) && command.Key.MinArgCnt > argCntMatched)
+                if (command.Key.Matches(context.Args) && command.Key.FixedArgCnt > argCntMatched)
                 {
                     result = command;
-                    argCntMatched = command.Key.MinArgCnt;
+                    argCntMatched = command.Key.FixedArgCnt;
                 }
             }
             return argCntMatched != -2;
@@ -101,10 +110,10 @@ namespace Ciridium
             int argCntMatched = -2;
             foreach (Command command in commands)
             {
-                if (command.Key.Matches(keys) && command.Key.MinArgCnt > argCntMatched)
+                if (command.Key.Matches(keys) && command.Key.FixedArgCnt > argCntMatched)
                 {
                     result = command;
-                    argCntMatched = command.Key.MinArgCnt;
+                    argCntMatched = command.Key.FixedArgCnt;
                 }
             }
             return argCntMatched != -2;
@@ -181,7 +190,7 @@ namespace Ciridium
         public void RegisterCommand(CommandService service)
         {
             service.AddCommand(new CommandKeys("help"), HandleHelpCommand, AccessLevel.Basic, "Lists a summary for all commands the user has access to.", "/help");
-            service.AddCommand(new CommandKeys("help", 2), HandleHelpCommandSpecific, AccessLevel.Basic, "Provides help for a specific command.", "/help [{<CommandKeys>}]");
+            service.AddCommand(new CommandKeys("help", 2, 2), HandleHelpCommandSpecific, AccessLevel.Basic, "Provides help for a specific command.", "/help [{<CommandKeys>}]");
         }
     }
 }

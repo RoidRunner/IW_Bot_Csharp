@@ -42,6 +42,7 @@ namespace Ciridium
         private static async Task HandleSettingsSaveCommand(CommandContext context)
         {
             await SettingsModel.SaveSettings();
+            await MissionSettingsModel.SaveMissionSettings();
             await context.Channel.SendMessageAsync("Settings Saved.");
         }
 
@@ -150,6 +151,12 @@ namespace Ciridium
             await context.Channel.SendMessageAsync(message);
         }
 
+        private static async Task HandleMissionNumberCommand(CommandContext context)
+        {
+            string message = "";
+            await context.Channel.SendMessageAsync(message);
+        }
+
         public void RegisterCommand(CommandService service)
         {
             string summary = "Lists current settings.";
@@ -160,13 +167,15 @@ namespace Ciridium
             summary = "Saves the current settings to the bots config file";
             s.AddCommand(new CommandKeys("settings save"), HandleSettingsSaveCommand, mod, summary, "/settings save");
             summary = "Enables/Disables debug messages for a debug category";
-            s.AddCommand(new CommandKeys("settings debug", 4), HandleDebugLoggingCommand, bAdmin,  summary, "/settings debug <Category> true/false");
+            s.AddCommand(new CommandKeys("settings debug", 4, 4), HandleDebugLoggingCommand, bAdmin,  summary, "/settings debug <Category> true/false");
             summary = "Sets the channel used for debug/welcoming to the channel the command was issued from.";
-            s.AddCommand(new CommandKeys("settings channel", 4), HandleDefaultChannelCommand, mod, summary, "/settings channel debug/welcoming");
+            s.AddCommand(new CommandKeys("settings channel", 4, 4), HandleDefaultChannelCommand, mod, summary, "/settings channel debug/welcoming");
             summary = "Sets the pilot/moderator role used to handle access to bot commands";
-            s.AddCommand(new CommandKeys("settings role", 4), HandleSetRoleCommand, bAdmin, summary, "/settings role pilot/moderator <@Role>");
+            s.AddCommand(new CommandKeys("settings role", 4, 4), HandleSetRoleCommand, bAdmin, summary, "/settings role pilot/moderator <@Role>");
             summary = "Sets the welcoming message to whatever is after the initial command args. The joining user will be pinged wherever you put {0}";
-            s.AddCommand(new CommandKeys("settings setjoinmsg", 1000), HandleWelcomingMessageCommand, mod, summary, "/settings setjoinmsg {<Words>}");
+            s.AddCommand(new CommandKeys("settings setjoinmsg", 3, 1000), HandleWelcomingMessageCommand, mod, summary, "/settings setjoinmsg {<Words>}");
+            summary = "Sets the number for the next created mission. Mission number automatically increments upon creating missions!";
+            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, mod, summary, "/settings setmissionnumber <Number>");
         }
     }
 

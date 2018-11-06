@@ -51,6 +51,7 @@ namespace Ciridium
         #region JSON Save/Load
 
         private const string JSON_MISSIONNUMBER = "MissionNumber";
+        private const string JSON_MISSIONCATEGORYID = "MissionCategoryId";
         private const string JSON_DEFAULTTOPIC = "DefaultTopic";
         private const string JSON_EXPLORERQUESTIONS = "ExplorerQuestions";
 
@@ -59,6 +60,9 @@ namespace Ciridium
             JSONObject json = await ResourcesModel.LoadToJSONObject(ResourcesModel.Path + @"MissionSettings.json");
             json.GetField(ref lastMissionNumber, JSON_MISSIONNUMBER);
             string text = "";
+            string jMissionCategoryID = "";
+            json.GetField(ref jMissionCategoryID, JSON_MISSIONCATEGORYID);
+            ulong.TryParse(jMissionCategoryID, out MissionCategoryId);
             if (json.GetField(ref text, JSON_DEFAULTTOPIC))
             {
                 DefaultTopic = text;
@@ -74,6 +78,7 @@ namespace Ciridium
         {
             JSONObject json = new JSONObject();
             json.AddField(JSON_MISSIONNUMBER, lastMissionNumber);
+            json.AddField(JSON_MISSIONCATEGORYID, MissionCategoryId.ToString());
             json.AddField(JSON_DEFAULTTOPIC, DefaultTopic);
             json.AddField(JSON_EXPLORERQUESTIONS, ExplorerQuestions);
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.Path + @"MissionSettings.json", json);

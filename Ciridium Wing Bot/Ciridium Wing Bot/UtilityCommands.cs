@@ -132,7 +132,7 @@ namespace Ciridium
         {
             string summary = "Prints out some debug info on all users mentioned.";
             string syntax = "/userinfo {<@user>}";
-            Var.cmdService.AddCommand(new CommandKeys("userinfo", 1000), HandleCommand, AccessLevel.Moderator, summary, syntax);
+            Var.cmdService.AddCommand(new CommandKeys("userinfo", 2, 1000), HandleCommand, AccessLevel.Moderator, summary, syntax);
         }
     }
 
