@@ -9,13 +9,16 @@ namespace Ciridium
 {
     internal struct Command
     {
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax) : this()
+        public const string NO_ARGUMENTS = "None";
+
+        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp)
         {
             Key = key;
             AccessLevel = accessLevel;
             HandleCommand = handleCommand;
             Summary = summary;
             Syntax = syntax;
+            ArgumentHelp = argumentHelp;
         }
 
         internal CommandKeys Key { get; private set; }
@@ -23,6 +26,7 @@ namespace Ciridium
         internal HandleCommand HandleCommand { get; private set; }
         internal string Summary { get; private set; }
         internal string Syntax { get; private set; }
+        internal string ArgumentHelp { get; private set; }
     }
 
     internal delegate Task HandleCommand(CommandContext context);

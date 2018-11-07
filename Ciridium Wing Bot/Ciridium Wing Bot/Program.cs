@@ -145,24 +145,12 @@ public class Program
     {
         Var.cmdService = new Ciridium.CommandService('/');
 
-        PingCommand cmd0 = new PingCommand();
-        cmd0.RegisterCommand(Var.cmdService);
-        ListChannelsCommand cmd1 = new ListChannelsCommand();
-        cmd1.RegisterCommand(Var.cmdService);
-        PrintTopicCommand cmd2 = new PrintTopicCommand();
-        cmd2.RegisterCommand(Var.cmdService);
-        GetUserInfoCommand cmd3 = new GetUserInfoCommand();
-        cmd3.RegisterCommand(Var.cmdService);
-        SettingsCommand cmd4 = new SettingsCommand();
-        cmd4.RegisterCommand(Var.cmdService);
-        ShutdownCommand cmd5 = new ShutdownCommand();
-        cmd5.RegisterCommand(Var.cmdService);
-        RestartCommand cmd6 = new RestartCommand();
-        //cmd6.Init(cmdService);
-        HelpCommand cmd7 = new HelpCommand();
-        cmd7.RegisterCommand(Var.cmdService);
-        MissionCommands cmd8 = new MissionCommands();
-        cmd8.RegisterCommand(Var.cmdService);
+        UtilityCommands utilityCmds = new UtilityCommands(Var.cmdService);
+        DebugCommands debugCmds = new DebugCommands(Var.cmdService);
+        SettingsCommand settingsCmds = new SettingsCommand(Var.cmdService);
+        ShutdownCommand shutdownCmds = new ShutdownCommand(Var.cmdService);
+        HelpCommand helpCmds = new HelpCommand(Var.cmdService);
+        MissionCommands missionCmds = new MissionCommands(Var.cmdService);
 
         Var.client.MessageReceived += HandleCommandAsync;
     }

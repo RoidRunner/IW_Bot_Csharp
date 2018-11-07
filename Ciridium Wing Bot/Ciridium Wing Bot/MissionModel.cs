@@ -12,16 +12,16 @@ namespace Ciridium
     {
         public static async Task Init ()
         {
-            missionList = new List<Mission>();
+            missionList = new List<ulong>();
             await LoadMissions();
         }
 
-        public static List<Mission> missionList;
+        public static List<ulong> missionList;
 
-        public static async Task<RestTextChannel> CreateMission(Platform platform, IReadOnlyCollection<SocketUser> explorers, SocketGuild guild)
+        public static async Task<RestTextChannel> CreateMission(string platform, IReadOnlyCollection<SocketUser> explorers, SocketGuild guild)
         {
             int missionnumber = MissionSettingsModel.NextMissionNumber;
-            string channelname = string.Format("mission_{0}_{1}", missionnumber, platform.ToString());
+            string channelname = string.Format("mission_{0}_{1}", missionnumber, platform);
             RestTextChannel NewMissionChannel = await guild.CreateTextChannelAsync(channelname);
 
             await NewMissionChannel.ModifyAsync(TextChannelProperties => {
@@ -39,13 +39,7 @@ namespace Ciridium
             }
 
             
-            Mission newMission = new Mission() {
-                ChannelId = NewMissionChannel.Id,
-                Number = missionnumber,
-                Platform = platform,
-                ExplorerIds = explorerIDs
-            };
-            missionList.Add(newMission);
+            missionList.Add(NewMissionChannel.Id);
             await NewMissionChannel.SendMessageAsync(string.Format(MissionSettingsModel.ExplorerQuestions, ResourcesModel.GetMentionsFromUserIdList(explorerIDs)));
 
             await SaveMissions();
@@ -53,30 +47,37 @@ namespace Ciridium
             return NewMissionChannel;
         }
 
-        public static Mission GetMission(ulong channelID)
+        public static async Task DeleteMission(ulong channelId, ulong guildId)
         {
-            foreach (Mission mission in missionList)
+            if (IsMissionChannel(channelId, guildId))
             {
-                if (mission.ChannelId == channelID)
-                {
-                    return mission;
-                }
+                missionList.Remove(channelId);
+                await SaveMissions();
+                await Var.client.GetGuild(guildId).GetTextChannel(channelId).DeleteAsync();
             }
-            return null;
         }
 
-        public static bool IsMissionChannel(ulong Id)
+        public static bool IsMissionChannel(ulong channelId, ulong guildId)
         {
             bool result = false;
-            foreach (Mission mission in missionList)
+            SocketGuild guild = Var.client.GetGuild(guildId);
+            if (guild != null)
             {
-                if (mission.ChannelId == Id)
+                SocketGuildChannel channel = guild.GetChannel(channelId);
+                if (channel != null)
                 {
-                    result = true;
-                    break;
+                    foreach (ulong missionChannelId in missionList)
+                    {
+                        if (missionChannelId == channelId && channel.Name.StartsWith("mission"))
+                        {
+                            result = true;
+                            break;
+                        }
+                    }
                 }
             }
             return result;
+
         }
 
         #region JSON Save/Load
@@ -86,109 +87,28 @@ namespace Ciridium
         public static async Task LoadMissions()
         {
             JSONObject json = await ResourcesModel.LoadToJSONObject(ResourcesModel.Path + @"Missions.json");
-            if (json.HasField(JSON_MISSIONS))
-            {
-                JSONObject jMissions = json[JSON_MISSIONS];
-                if (jMissions.IsArray)
+                if (json.IsArray)
                 {
-                    foreach (var jMission in jMissions)
+                    foreach (JSONObject jMission in json.list)
                     {
-                        missionList.Add(new Mission(jMission));
+                        ulong nId;
+                        if (ulong.TryParse(jMission.str, out nId))
+                        {
+                            missionList.Add(nId);
+                        }
                     }
-                }
             }
         }
 
         public static async Task SaveMissions()
         {
             JSONObject json = new JSONObject();
-            JSONObject jMissions = new JSONObject();
-            foreach (Mission mission in missionList)
+            foreach (ulong mission in missionList)
             {
-                jMissions.Add(mission.ToJSON());
+                json.Add(mission.ToString());
             }
-            json.AddField(JSON_MISSIONS, jMissions);
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.Path + @"Missions.json", json);
         }
         #endregion
-    }
-
-    class Mission
-    {
-        public ulong ChannelId;
-        public int Number;
-        public Platform Platform;
-        public List<ulong> ExplorerIds;
-        public bool IsIntact { get { return ChannelId != 0 && Number != -1; } }
-
-        public string GetChannelName()
-        {
-            return string.Format("mission_{0}_{1}", Number, Platform.ToString());
-        }
-
-        public Mission(JSONObject json)
-        {
-            string channelID = "";
-            int jPlatform = 0;
-            if (json.GetField(ref channelID, JSON_CHANNELID) &&
-                json.GetField(ref Number, JSON_NUMBER) && 
-                json.GetField(ref jPlatform, JSON_PLATFORM) && json.HasField(JSON_EXPLORERS))
-            {
-                Platform = (Platform)jPlatform;
-                if (!ulong.TryParse(channelID, out ChannelId))
-                {
-                    ChannelId = 0;
-                }
-                JSONObject explorerList = json[JSON_EXPLORERS];
-                if (explorerList.IsArray && explorerList.list != null)
-                {
-                    foreach (var explorer in explorerList.list)
-                    {
-                        ulong nID;
-                        if (ulong.TryParse(explorer.str, out nID))
-                        {
-                            ExplorerIds.Add(nID);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                ChannelId = 0;
-                Platform = Platform.NULL;
-                Number = -1;
-            }
-        }
-
-        public Mission()
-        {
-        }
-
-        private const string JSON_CHANNELID = "ChannelID";
-        private const string JSON_NUMBER = "Number";
-        private const string JSON_PLATFORM = "Platform";
-        private const string JSON_EXPLORERS = "Explorers";
-
-        public JSONObject ToJSON()
-        {
-            JSONObject json = new JSONObject();
-            json.AddField(JSON_CHANNELID, ChannelId.ToString());
-            json.AddField(JSON_NUMBER, Number);
-            json.AddField(JSON_PLATFORM, (int)Platform);
-            JSONObject explorerList = new JSONObject();
-            foreach (var explorerId in ExplorerIds)
-            {
-                explorerList.Add(explorerId.ToString());
-            }
-            return json;
-        }
-    }
-
-    public enum Platform
-    {
-        NULL,
-        pc,
-        xbox,
-        ps4
     }
 }

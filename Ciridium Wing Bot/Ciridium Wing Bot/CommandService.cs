@@ -35,9 +35,9 @@ namespace Ciridium
         /// </summary>
         /// <param name="key">The key to identify the command</param>
         /// <param name="command">The command object defining the commands behaviour</param>
-        public void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax)
+        public void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
         {
-            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax);
+            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp);
             commands.Add(cmd);
         }
 
@@ -136,61 +136,5 @@ namespace Ciridium
         Pilot,
         Moderator,
         BotAdmin
-    }
-
-    class HelpCommand
-    {
-        public async Task HandleHelpCommand(CommandContext context)
-        {
-            AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
-
-            StringBuilder message = new StringBuilder();
-            message.Append("You have access to the following commands:```");
-            foreach (Command cmd in Var.cmdService.commands)
-            {
-                if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
-                {
-                    message.AppendLine(string.Format("{0} : {1}", cmd.Syntax.PadRight(40), cmd.Summary));
-                }
-            }
-            message.Append("```Use `/help <cmdname>` to see syntax.");
-            await context.Channel.SendMessageAsync(message.ToString());
-        }
-
-        public async Task HandleHelpCommandSpecific(CommandContext context)
-        {
-            AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
-
-            string[] keys = new string[context.ArgCnt - 1];
-            for (int i = 1; i < context.ArgCnt; i++)
-            {
-                keys[i - 1] = context.Args[i];
-            }
-            if (Var.cmdService.TryGetCommand(keys, out Command cmd))
-            {
-                if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
-                {
-                    await context.Channel.SendMessageAsync(string.Format(
-                        "Syntax for command `/{0}`:\n```" +
-                        "Description : {1}\n" +
-                        "Syntax      : {2}" +
-                        "```",
-                        cmd.Key.KeyList, cmd.Summary, cmd.Syntax));
-                } else
-                {
-                    await context.Channel.SendMessageAsync("Unsufficient permissions to access this commands summary!");
-                }
-            }
-            else
-            {
-                await context.Channel.SendMessageAsync("Could not find that command!");
-            }
-        }
-
-        public void RegisterCommand(CommandService service)
-        {
-            service.AddCommand(new CommandKeys("help"), HandleHelpCommand, AccessLevel.Basic, "Lists a summary for all commands the user has access to.", "/help");
-            service.AddCommand(new CommandKeys("help", 2, 2), HandleHelpCommandSpecific, AccessLevel.Basic, "Provides help for a specific command.", "/help [{<CommandKeys>}]");
-        }
     }
 }

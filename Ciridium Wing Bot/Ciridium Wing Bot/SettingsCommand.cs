@@ -8,8 +8,53 @@ using Discord.WebSocket;
 
 namespace Ciridium
 {
+    /// <summary>
+    /// Handles all commands that change settings, such as default channels, welcoming messages.
+    /// </summary>
     class SettingsCommand
     {
+        public SettingsCommand(CommandService service)
+        {
+            string summary = "Lists current settings.";
+            CommandService s = Var.cmdService;
+            AccessLevel mod = AccessLevel.Moderator;
+            AccessLevel bAdmin = AccessLevel.BotAdmin;
+            s.AddCommand(new CommandKeys("settings"), HandleCommand, mod, summary, "/settings", Command.NO_ARGUMENTS);
+            summary = "Saves the current settings to the bots config file";
+            s.AddCommand(new CommandKeys("settings save"), HandleSettingsSaveCommand, mod, summary, "/settings save", Command.NO_ARGUMENTS);
+            summary = "Enables/Disables debug messages for a debug category";
+            string arguments =
+                "    <Category>\n" +
+                "Available debug categories are: 'misc', 'timing' & 'joinleave'\n" +
+                "    <Enable>\n" +
+                "Enable the category by setting 'true', disable by 'false'";
+            s.AddCommand(new CommandKeys("settings debug", 4, 4), HandleDebugLoggingCommand, bAdmin, summary, "/settings debug <Category> <Enable>", arguments);
+            summary = "Sets the channel used for debug, welcoming and the mission channel category";
+            arguments =
+                "    <Channel>\n" +
+                "Which default channel setting you wish to override. Available are 'debug', 'welcoming' & 'missioncategory'\n" +
+                "    <ChannelId>\n" +
+                "The uInt64 Id of the subject channel. Get Ids by using '/debug channels'";
+            s.AddCommand(new CommandKeys("settings channel", 4, 4), HandleDefaultChannelCommand, mod, summary, "/settings channel <Channel> <ChannelId>", arguments);
+            summary = "Sets the pilot/moderator role used to handle access to bot commands";
+            arguments =
+                "    <AccessLevel>\n" +
+                "Which of the access levels you want to assign a role to. Available are 'pilot' & 'moderator'\n" +
+                "    <@Role>\n" +
+                "Ping the role here that you want to give the access level";
+            s.AddCommand(new CommandKeys("settings role", 4, 4), HandleSetRoleCommand, bAdmin, summary, "/settings role <AccessLevel> <@Role>", arguments);
+            summary = "Sets the welcoming message.";
+            arguments =
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be the new join message. Insert '{0}' wherever you want the new user pinged!";
+            s.AddCommand(new CommandKeys("settings setjoinmsg", 3, 1000), HandleWelcomingMessageCommand, mod, summary, "/settings setjoinmsg {<Words>}", arguments);
+            summary = "Sets the number for the next created mission.";
+            arguments =
+                "    <Number>\n" +
+                "Specify the number for the next created mission.";
+            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, mod, summary, "/settings setmissionnumber <Number>", arguments);
+        }
+
         public async Task HandleCommand(SocketCommandContext context)
         {
             await context.Channel.SendMessageAsync(SettingsModel.DebugSettingsMessage);
@@ -157,26 +202,6 @@ namespace Ciridium
             await context.Channel.SendMessageAsync(message);
         }
 
-        public void RegisterCommand(CommandService service)
-        {
-            string summary = "Lists current settings.";
-            CommandService s = Var.cmdService;
-            AccessLevel mod = AccessLevel.Moderator;
-            AccessLevel bAdmin = AccessLevel.BotAdmin;
-            s.AddCommand(new CommandKeys("settings"), HandleCommand, mod, summary, "/settings");
-            summary = "Saves the current settings to the bots config file";
-            s.AddCommand(new CommandKeys("settings save"), HandleSettingsSaveCommand, mod, summary, "/settings save");
-            summary = "Enables/Disables debug messages for a debug category";
-            s.AddCommand(new CommandKeys("settings debug", 4, 4), HandleDebugLoggingCommand, bAdmin,  summary, "/settings debug <Category> true/false");
-            summary = "Sets the channel used for debug/welcoming to the channel the command was issued from.";
-            s.AddCommand(new CommandKeys("settings channel", 4, 4), HandleDefaultChannelCommand, mod, summary, "/settings channel debug/welcoming");
-            summary = "Sets the pilot/moderator role used to handle access to bot commands";
-            s.AddCommand(new CommandKeys("settings role", 4, 4), HandleSetRoleCommand, bAdmin, summary, "/settings role pilot/moderator <@Role>");
-            summary = "Sets the welcoming message to whatever is after the initial command args. The joining user will be pinged wherever you put {0}";
-            s.AddCommand(new CommandKeys("settings setjoinmsg", 3, 1000), HandleWelcomingMessageCommand, mod, summary, "/settings setjoinmsg {<Words>}");
-            summary = "Sets the number for the next created mission. Mission number automatically increments upon creating missions!";
-            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, mod, summary, "/settings setmissionnumber <Number>");
-        }
     }
 
     public enum DebugCategories

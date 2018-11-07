@@ -30,7 +30,7 @@ namespace Ciridium
         private static void InitPermissionsAndDefaultChannelProperties()
         {
             EveryonePerms = new OverwritePermissions(readMessages : PermValue.Deny, sendMessages : PermValue.Deny);
-            ExplorerPerms = new OverwritePermissions(sendMessages : PermValue.Allow);
+            ExplorerPerms = new OverwritePermissions(readMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, sendMessages : PermValue.Allow, embedLinks: PermValue.Allow, attachFiles: PermValue.Allow);
 
             ChannelPropertiesTemplate = new TextChannelProperties
             {
