@@ -28,7 +28,7 @@ namespace Ciridium
                 "Available debug categories are: 'misc', 'timing' & 'joinleave'\n" +
                 "    <Enable>\n" +
                 "Enable the category by setting 'true', disable by 'false'";
-            s.AddCommand(new CommandKeys("settings debug", 4, 4), HandleDebugLoggingCommand, bAdmin, summary, "/settings debug <Category> <Enable>", arguments);
+            s.AddCommand(new CommandKeys("settings debug", 4, 4), HandleDebugLoggingCommand, mod, summary, "/settings debug <Category> <Enable>", arguments);
             summary = "Sets the channel used for debug, welcoming and the mission channel category";
             arguments =
                 "    <Channel>\n" +
@@ -52,7 +52,7 @@ namespace Ciridium
             arguments =
                 "    <Number>\n" +
                 "Specify the number for the next created mission.";
-            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, mod, summary, "/settings setmissionnumber <Number>", arguments);
+            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, pilot, summary, "/settings setmissionnumber <Number>", arguments);
         }
 
         public async Task HandleCommand(SocketCommandContext context)
@@ -157,40 +157,34 @@ namespace Ciridium
         private static async Task HandleDefaultChannelCommand(CommandContext context)
         {
             string message = "";
-            if (context.ArgCnt == 4)
+            ulong Id = 0;
+            if (ulong.TryParse(context.Args[3], out Id))
             {
-                ulong Id = 0;
-                if (ulong.TryParse(context.Args[3], out Id))
+                switch (context.Args[2])
                 {
-                    switch (context.Args[2])
-                    {
-                        case "debug":
-                            SettingsModel.DebugMessageChannelId = Id;
-                            await SettingsModel.SaveSettings();
-                            message = "Debug Channel successfully set " + Var.client.GetChannel(Id).ToString();
-                            break;
-                        case "welcoming":
-                            SettingsModel.WelcomeMessageChannelId = Id;
-                            await SettingsModel.SaveSettings();
-                            message = "Welcoming Channel successfully set to " + Var.client.GetChannel(Id).ToString();
-                            break;
-                        case "missioncategory":
-                            MissionSettingsModel.MissionCategoryId = Id;
-                            await MissionSettingsModel.SaveMissionSettings();
-                            message = "Mission Category successfully set to " + Var.client.GetChannel(Id).ToString();
-                            break;
-                        default:
-                            message = "I don't know that default channel!";
-                            break;
-                    }
+                    case "debug":
+                        SettingsModel.DebugMessageChannelId = Id;
+                        await SettingsModel.SaveSettings();
+                        message = "Debug Channel successfully set " + Var.client.GetChannel(Id).ToString();
+                        break;
+                    case "welcoming":
+                        SettingsModel.WelcomeMessageChannelId = Id;
+                        await SettingsModel.SaveSettings();
+                        message = "Welcoming Channel successfully set to " + Var.client.GetChannel(Id).ToString();
+                        break;
+                    case "missioncategory":
+                        MissionSettingsModel.MissionCategoryId = Id;
+                        await MissionSettingsModel.SaveMissionSettings();
+                        message = "Mission Category successfully set to " + Var.client.GetChannel(Id).ToString();
+                        break;
+                    default:
+                        message = "I don't know that default channel!";
+                        break;
                 }
-                else
-                {
-                    message = "Cannot Parse the supplied Id as an uInt64 Value!";
-                }
-            } else
+            }
+            else
             {
-                message = "Wrong ARG CNT";
+                message = "Cannot Parse the supplied Id as an uInt64 Value!";
             }
 
             await context.Channel.SendMessageAsync(message);
@@ -199,6 +193,16 @@ namespace Ciridium
         private static async Task HandleMissionNumberCommand(CommandContext context)
         {
             string message = "";
+            int missionNr;
+            if (int.TryParse(context.Args[2], out missionNr))
+            {
+                MissionSettingsModel.NextMissionNumber = missionNr;
+                message = "Next missions number successfuly set to " + missionNr;
+            }
+            else
+            {
+                message = "Could not parse supplied argument to a int32 value!";
+            }
             await context.Channel.SendMessageAsync(message);
         }
 

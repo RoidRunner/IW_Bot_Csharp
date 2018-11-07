@@ -68,7 +68,8 @@ namespace Ciridium
                             {
                                 await context.Channel.SendMessageAsync(string.Format("Exception Occured while trying to execute command `{0}`\n```{1}```\n```{2}```", cmd.Key.KeyList, e.Message, e.StackTrace));
                             }
-                        } else
+                        }
+                        else
                         {
                             await context.Channel.SendMessageAsync(string.Format("The command `/{0}` expects {1} arguments, that is {2} more than you supplied! Try `/help {0}` for more info",
                                 cmd.Key.KeyList, cmd.Key.MinArgCnt - cmd.Key.FixedArgCnt, cmd.Key.MinArgCnt - context.ArgCnt

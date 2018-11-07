@@ -22,6 +22,10 @@ namespace Ciridium
             {
                 return ++lastMissionNumber;
             }
+            set
+            {
+                lastMissionNumber = value - 1;
+            }
         }
 
         public static OverwritePermissions EveryonePerms { get; private set; }
@@ -29,8 +33,8 @@ namespace Ciridium
 
         private static void InitPermissionsAndDefaultChannelProperties()
         {
-            EveryonePerms = new OverwritePermissions(readMessages : PermValue.Deny, sendMessages : PermValue.Deny);
-            ExplorerPerms = new OverwritePermissions(readMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, sendMessages : PermValue.Allow, embedLinks: PermValue.Allow, attachFiles: PermValue.Allow);
+            EveryonePerms = new OverwritePermissions(readMessages: PermValue.Deny, sendMessages: PermValue.Deny);
+            ExplorerPerms = new OverwritePermissions(readMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, sendMessages: PermValue.Allow, embedLinks: PermValue.Allow, attachFiles: PermValue.Allow);
 
             ChannelPropertiesTemplate = new TextChannelProperties
             {

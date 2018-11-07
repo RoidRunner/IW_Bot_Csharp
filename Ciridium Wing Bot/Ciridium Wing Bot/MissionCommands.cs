@@ -12,16 +12,9 @@ namespace Ciridium
     {
         public async Task HandleCreateRoomCommand(CommandContext context)
         {
-            if (context.ArgCnt >= 3)
-            {
-                RestTextChannel NewMissionChannel =
-                await MissionModel.CreateMission(context.Args[1], context.Message.MentionedUsers, context.Guild);
-                await context.Channel.SendMessageAsync("Successfully created new Mission. Check it out: " + NewMissionChannel.Mention);
-            }
-            else
-            {
-                await context.Channel.SendMessageAsync("Please specify both user and platform. '/help createmission' for more info.");
-            }
+            RestTextChannel NewMissionChannel =
+            await MissionModel.CreateMission(context.Args[1], context.Message.MentionedUsers, context.Guild);
+            await context.Channel.SendMessageAsync("Successfully created new Mission. Check it out: " + NewMissionChannel.Mention);
         }
 
         public async Task HandleCloseMissionCommand(CommandContext context)
