@@ -52,7 +52,7 @@ namespace Ciridium
             arguments =
                 "    <Number>\n" +
                 "Specify the number for the next created mission.";
-            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, pilot, summary, "/settings setmissionnumber <Number>", arguments);
+            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, AccessLevel.Pilot, summary, "/settings setmissionnumber <Number>", arguments);
         }
 
         public async Task HandleCommand(SocketCommandContext context)
