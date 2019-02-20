@@ -18,7 +18,7 @@ namespace Ciridium
 
         public static List<ulong> missionList;
 
-        public static async Task<RestTextChannel> CreateMission(string platform, IReadOnlyCollection<SocketUser> explorers, SocketGuild guild)
+        public static async Task<RestTextChannel> CreateMission(string platform, IReadOnlyCollection<SocketUser> explorers, SocketGuild guild, SocketUser source)
         {
             int missionnumber = MissionSettingsModel.NextMissionNumber;
             string channelname = string.Format("mission_{0}_{1}", missionnumber, platform);
@@ -71,6 +71,7 @@ namespace Ciridium
             }
             await NewMissionChannel.SendMessageAsync(pingstring, embed:embed.Build());
 
+            await SettingsModel.SendDebugMessage(string.Format("Created new mission room {0} on behalf of {1} for explorer {2}", NewMissionChannel.Mention, source.Mention, pingstring), DebugCategories.missions);
             await SaveMissions();
             await MissionSettingsModel.SaveMissionSettings();
             return NewMissionChannel;

@@ -13,58 +13,47 @@ namespace Ciridium
     {
         public SettingsCommand(CommandService service)
         {
-            string summary = "Lists current settings.";
             CommandService s = Var.cmdService;
-            AccessLevel mod = AccessLevel.Moderator;
-            AccessLevel bAdmin = AccessLevel.BotAdmin;
-            s.AddCommand(new CommandKeys("settings"), HandleCommand, mod, summary, "/settings", Command.NO_ARGUMENTS);
-            summary = "Enables/Disables debug messages for a debug category";
-            string arguments =
-                "    <Category>\n" +
-                "Available debug categories are: 'misc', 'timing' & 'joinleave'\n" +
-                "    <Enable>\n" +
-                "Enable the category by setting 'true', disable by 'false'";
-            s.AddCommand(new CommandKeys("settings debug", 4, 4), HandleDebugLoggingCommand, mod, summary, "/settings debug <Category> <Enable>", arguments);
-            summary = "Sets the channel used for debug, welcoming and the mission channel category";
-            arguments =
-                "    <Channel>\n" +
-                "Which default channel setting you wish to override. Available are 'debug', 'welcoming' & 'missioncategory'\n" +
-                "    <ChannelId>\n" +
-                "The uInt64 Id of the subject channel. Get Ids by using '/debug channels'";
-            s.AddCommand(new CommandKeys("settings channel", 4, 4), HandleDefaultChannelCommand, mod, summary, "/settings channel <Channel> <ChannelId>", arguments);
-            summary = "Sets the pilot/moderator role used to handle access to bot commands";
-            arguments =
-                "    <AccessLevel>\n" +
-                "Which of the access levels you want to assign a role to. Available are 'pilot' & 'moderator'\n" +
-                "    <@Role>\n" +
-                "Ping the role here that you want to give the access level";
-            s.AddCommand(new CommandKeys("settings role", 4, 4), HandleSetRoleCommand, bAdmin, summary, "/settings role <AccessLevel> <@Role>", arguments);
-            summary = "Sets the welcoming message.";
-            arguments =
-                "    {<Words>}\n" +
-                "All words following the initial arguments will be the new join message. Insert '{0}' wherever you want the new user pinged!";
-            s.AddCommand(new CommandKeys("settings setjoinmsg", 3, 1000), HandleWelcomingMessageCommand, mod, summary, "/settings setjoinmsg {<Words>}", arguments);
-            summary = "Sets the number for the next created mission";
-            arguments =
-                "    <Number>\n" +
-                "Specify the number for the next created mission";
-            s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, AccessLevel.Pilot, summary, "/settings setmissionnumber <Number>", arguments);
-            summary = "Sets the default mission channel topic";
-            arguments =
-                "    {<Words>}\n" +
-                "All words following the initial arguments will be the new default mission channel topic. Insert '{0}' wherever you want the explorers mentioned (no notifications)!";
-            s.AddCommand(new CommandKeys("settings setmissionchanneltopic", 3, 1000), HandleMissionTopicCommand, mod, summary, "/settings setmissionchanneltopic {<Words>}", arguments);
-            summary = "Sets the mission channel explorer questions";
-            arguments =
-                "    {<Words>}\n" +
-                "All words following the initial arguments will be the mission channel explorer questions. Insert '{0}' wherever you want the explorers mentioned!";
-            s.AddCommand(new CommandKeys("settings setexplorerquestions", 3, 1000), HandleMissionExplorerQuestionsCommand, mod, summary, "/settings setexplorerquestions {<Words>}", arguments);
+            // settings
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS), HandleCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS, CMDSYNTAX_SETTINGS, Command.NO_ARGUMENTS);
+            // settings debug
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_DEBUG, 4, 4), HandleDebugLoggingCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_DEBUG, CMDSYNTAX_SETTINGS_DEBUG, CMDARGS_SETTINGS_DEBUG);
+            // settings channel
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_CHANNEL, 4, 4), HandleDefaultChannelCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_CHANNEL, CMDSYNTAX_SETTINGS_CHANNEL, CMDARGS_SETTINGS_CHANNEL);
+            // settings role
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_ROLE, 4, 4), HandleSetRoleCommand, AccessLevel.BotAdmin, CMDSUMMARY_SETTINGS_ROLE, CMDSYNTAX_SETTINGS_ROLE, CMDARGS_SETTINGS_ROLE);
+            // settings setjoinmsg
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETJOINMSG, 3, 1000), HandleWelcomingMessageCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETJOINMSG, CMDSYNTAX_SETTINGS_SETJOINMSG, CMDARGS_SETTINGS_SETJOINMSG);
+            // settings setmissionnumber
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Pilot, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
+            // settings setmissionchanneltopic
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONCHANNELTOPIC, 3, 1000), HandleMissionTopicCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETMISSIONCHANNELTOPIC, CMDSYNTAX_SETTINGS_SETMISSIONCHANNELTOPIC, CMDARGS_SETTINGS_SETMISSIONCHANNELTOPIC);
+            // settings setexplorerquestions
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETEXPLORERQUESTIONS, 3, 1000), HandleMissionExplorerQuestionsCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETEXPLORERQUESTIONS, CMDSYNTAX_SETTINGS_SETEXPLORERQUESTIONS, CMDARGS_SETTINGS_SETEXPLORERQUESTIONS);
         }
+
+        #region /settings
+
+        private const string CMDKEYS_SETTINGS = "settings";
+        private const string CMDSYNTAX_SETTINGS = "/settings";
+        private const string CMDSUMMARY_SETTINGS = "Lists current settings";
 
         public async Task HandleCommand(SocketCommandContext context)
         {
             await context.Channel.SendEmbedAsync(SettingsModel.DebugSettingsMessage);
         }
+
+        #endregion
+        #region /settings debug
+
+        private const string CMDKEYS_SETTINGS_DEBUG = "settings debug";
+        private const string CMDSYNTAX_SETTINGS_DEBUG = "/settings debug";
+        private const string CMDSUMMARY_SETTINGS_DEBUG = "Enables/Disables debug messages for a debug category";
+        private const string CMDARGS_SETTINGS_DEBUG =
+                "    <Category>\n" +
+                "Available debug categories are: 'misc', 'timing' & 'joinleave'\n" +
+                "    <Enable>\n" +
+                "Enable the category by setting 'true', disable by 'false'";
 
         private static async Task HandleDebugLoggingCommand(CommandContext context)
         {
@@ -76,7 +65,7 @@ namespace Ciridium
                 bool oldsetting = SettingsModel.debugLogging[(int)debugcategory];
                 if (bool.TryParse(context.Args[3], out SettingsModel.debugLogging[(int)debugcategory]))
                 {
-                    message = string.Format("{0} debug logging setting {1}", SettingsModel.debugLogging[(int)debugcategory] ? "Enabled" : "Disabled", context.Args[2]);
+                    message = string.Format("{0} debug logging for '{1}'", SettingsModel.debugLogging[(int)debugcategory] ? "Enabled" : "Disabled", context.Args[2].ToUpper());
                 }
                 else
                 {
@@ -97,12 +86,18 @@ namespace Ciridium
             await context.Channel.SendEmbedAsync(message, error);
         }
 
-        /// <summary>
-        /// Handles the "/settings role" command
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
+        #endregion
+        #region /settings role
+
+        private const string CMDKEYS_SETTINGS_ROLE = "settings role";
+        private const string CMDSYNTAX_SETTINGS_ROLE = "/settings role <AccessLevel> <@Role>";
+        private const string CMDSUMMARY_SETTINGS_ROLE = "Sets the pilot/moderator role used to handle access to bot commands";
+        private const string CMDARGS_SETTINGS_ROLE =
+                "    <AccessLevel>\n" +
+                "Which of the access levels you want to assign a role to. Available are 'pilot' & 'moderator'\n" +
+                "    <@Role>\n" +
+                "Ping the role here that you want to give the access level";
+
         private async Task HandleSetRoleCommand(CommandContext context)
         {
             List<SocketRole> roles = new List<SocketRole>();
@@ -131,11 +126,16 @@ namespace Ciridium
             await context.Channel.SendEmbedAsync(message, error);
         }
 
-        /// <summary>
-        /// Handles the "/settings setwelcomingmessage" command
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+        #endregion
+        #region /settings setjoinmsg
+
+        private const string CMDKEYS_SETTINGS_SETJOINMSG = "settings setjoinmsg";
+        private const string CMDSYNTAX_SETTINGS_SETJOINMSG = "/settings setjoinmsg {<Words>}";
+        private const string CMDSUMMARY_SETTINGS_SETJOINMSG = "Sets the welcoming message";
+        private const string CMDARGS_SETTINGS_SETJOINMSG =
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be the new join message. Insert '{0}' wherever you want the new user pinged!";
+
         private static async Task HandleWelcomingMessageCommand(CommandContext context)
         {
             string nwelcomingMessage = context.Message.Content.Substring(21);
@@ -155,6 +155,18 @@ namespace Ciridium
                 await SettingsModel.WelcomeNewUser(context.User);
             }
         }
+
+        #endregion
+        #region /settings channel
+
+        private const string CMDKEYS_SETTINGS_CHANNEL = "settings channel";
+        private const string CMDSYNTAX_SETTINGS_CHANNEL = "/settings channel <Channel> <ChannelId>";
+        private const string CMDSUMMARY_SETTINGS_CHANNEL = "Sets the channel used for debug, welcoming and the mission channel category";
+        private const string CMDARGS_SETTINGS_CHANNEL =
+                "    <Channel>\n" +
+                "Which default channel setting you wish to override. Available are 'debug', 'welcoming' & 'missioncategory'\n" +
+                "    <ChannelId>\n" +
+                "The uInt64 Id of the subject channel. Get Ids by using '/debug channels'";
 
         /// <summary>
         /// handles the "/settings channel" command
@@ -204,6 +216,16 @@ namespace Ciridium
             await context.Channel.SendEmbedAsync(message, error);
         }
 
+        #endregion
+        #region /settings setmissionnumber
+
+        private const string CMDKEYS_SETTINGS_SETMISSIONNUMBER = "settings setmissionnumber";
+        private const string CMDSYNTAX_SETTINGS_SETMISSIONNUMBER = "/settings setmissionnumber <Number>";
+        private const string CMDSUMMARY_SETTINGS_SETMISSIONNUMBER = "Sets the number for the next created mission";
+        private const string CMDARGS_SETTINGS_SETMISSIONNUMBER =
+                "    <Number>\n" +
+                "Specify the number for the next created mission";
+
         private static async Task HandleMissionNumberCommand(CommandContext context)
         {
             string message = "";
@@ -227,6 +249,16 @@ namespace Ciridium
             await context.Channel.SendEmbedAsync(message, error);
         }
 
+        #endregion
+        #region /settings setmissionchanneltopic
+
+        private const string CMDKEYS_SETTINGS_SETMISSIONCHANNELTOPIC = "settings setmissionchanneltopic";
+        private const string CMDSYNTAX_SETTINGS_SETMISSIONCHANNELTOPIC = "/settings setmissionchanneltopic {<Words>}";
+        private const string CMDSUMMARY_SETTINGS_SETMISSIONCHANNELTOPIC = "Sets the default mission channel topic";
+        private const string CMDARGS_SETTINGS_SETMISSIONCHANNELTOPIC =
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be the mission channel explorer questions. Insert '{0}' wherever you want the explorers mentioned!";
+
         private static async Task HandleMissionTopicCommand(CommandContext context)
         {
             string nDefaultTopic = context.Message.Content.Substring(32);
@@ -236,6 +268,16 @@ namespace Ciridium
             await context.Channel.SendEmbedAsync("Default mission channel topic successfully updated!");
         }
 
+        #endregion
+        #region /settings setexplorerquestions
+
+        private const string CMDKEYS_SETTINGS_SETEXPLORERQUESTIONS = "settings ";
+        private const string CMDSYNTAX_SETTINGS_SETEXPLORERQUESTIONS = "/settings setexplorerquestions {<Words>}";
+        private const string CMDSUMMARY_SETTINGS_SETEXPLORERQUESTIONS = "Sets the mission channel explorer questions";
+        private const string CMDARGS_SETTINGS_SETEXPLORERQUESTIONS =
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be the mission channel explorer questions. Insert '{0}' wherever you want the explorers mentioned!";
+
         private static async Task HandleMissionExplorerQuestionsCommand(CommandContext context)
         {
             string nExplorerQuestions = context.Message.Content.Substring(30);
@@ -244,12 +286,7 @@ namespace Ciridium
             await MissionSettingsModel.SaveMissionSettings();
             await context.Channel.SendEmbedAsync("Default mission channel explorer questions successfully updated!");
         }
-    }
 
-    public enum DebugCategories
-    {
-        misc,
-        timing,
-        joinleave
+        #endregion
     }
 }

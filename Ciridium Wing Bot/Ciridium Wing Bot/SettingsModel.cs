@@ -193,6 +193,7 @@ namespace Ciridium
                 result.AddField("Welcoming Channel", Macros.MultiLineCodeBlock(WelcomeMessageChannelId));
                 result.AddField("Moderator Role", Macros.MultiLineCodeBlock(moderatorRole));
                 result.AddField("Escort Pilot Role", Macros.MultiLineCodeBlock(pilotRole));
+                result.AddField("Mission Category", Macros.MultiLineCodeBlock(MissionSettingsModel.MissionCategoryId));
             return result;
             }
         }
@@ -286,5 +287,13 @@ namespace Ciridium
         }
         #endregion
 
+    }
+
+    public enum DebugCategories
+    {
+        misc,
+        timing,
+        joinleave,
+        missions
     }
 }

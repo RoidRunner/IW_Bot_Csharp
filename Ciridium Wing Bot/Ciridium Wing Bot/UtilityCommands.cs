@@ -13,30 +13,30 @@ namespace Ciridium
     {
         public UtilityCommands(CommandService service)
         {
-            string syntax = "/ping";
-            string summary = "Pings the user back. Use if bot seems unresponsive.";
-            service.AddCommand(new CommandKeys("ping"), HandlePingCommand, AccessLevel.Basic, summary, syntax, Command.NO_ARGUMENTS);
-            summary = "Prints out the channels topic";
-            service.AddCommand(new CommandKeys("topic"), HandleTopicCommand, AccessLevel.Pilot, summary, "/topic", Command.NO_ARGUMENTS);
-            summary = "Try it";
-            service.AddCommand(new CommandKeys("time"), HandleTimeCommand, AccessLevel.Basic, summary, "/time", Command.NO_ARGUMENTS);
+            // ping
+            service.AddCommand(new CommandKeys(CMDKEYS_PING), HandlePingCommand, AccessLevel.Basic, CMDSUMMARY_PING, CMDSYNTAX_PING, Command.NO_ARGUMENTS);
+            // topic
+            service.AddCommand(new CommandKeys(CMDKEYS_TOPIC), HandleTopicCommand, AccessLevel.Pilot, CMDSUMMARY_TOPIC, CMDSYNTAX_TOPIC, Command.NO_ARGUMENTS);
         }
 
-        /// <summary>
-        /// Handles "/ping" command
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+        #region /ping
+
+        private const string CMDKEYS_PING = "ping";
+        private const string CMDSYNTAX_PING = "/ping";
+        private const string CMDSUMMARY_PING = "Pings the user back. Use if bot seems unresponsive";
+
         public async Task HandlePingCommand(CommandContext context)
         {
             await context.Channel.SendEmbedAsync(string.Format("Hi {0}", context.User.Mention));
         }
 
-        /// <summary>
-        /// Handles /topic command
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+        #endregion
+        #region /topic
+
+        private const string CMDKEYS_TOPIC = "topic";
+        private const string CMDSYNTAX_TOPIC = "/topic";
+        private const string CMDSUMMARY_TOPIC = "Prints out the channels topic";
+
         public async Task HandleTopicCommand(CommandContext context)
         {
             ITextChannel channel = context.Channel as ITextChannel;
@@ -46,38 +46,27 @@ namespace Ciridium
             }
         }
 
-        /// <summary>
-        /// Handles /time "command"
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public async Task HandleTimeCommand(CommandContext context)
-        {
-            string message = string.Format("You see UTC date & time in the top right so what else would you ever want from me?");
-            await context.Channel.SendEmbedAsync(message);
-        }
+        #endregion
     }
 
     class DebugCommands
     {
         public DebugCommands(CommandService service)
         {
-            string summary = "Lists all Channels & Categorychannels on current server.";
-            Var.cmdService.AddCommand(new CommandKeys("debug channels"), HandleListChannelsCommand, AccessLevel.Moderator, summary, "/debug channels", Command.NO_ARGUMENTS);
-            summary = "Lists all Roles on current server.";
-            Var.cmdService.AddCommand(new CommandKeys("debug roles"), HandleListRolesCommand, AccessLevel.Moderator, summary, "/debug roles", Command.NO_ARGUMENTS);
-            summary = "Prints out some debug info on all users mentioned.";
-            string arguments =
-                "    {<@user>}\n" +
-                "Mention all users you want debug info about here";
-            Var.cmdService.AddCommand(new CommandKeys("debug userinfo", 3, 1000), HandleUserInfoCommand, AccessLevel.Moderator, summary, "/debug userinfo {<@user>}", arguments);
+            // debug channels
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_CHANNELS), HandleListChannelsCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_CHANNELS, CMDSYNTAX_DEBUG_CHANNELS, Command.NO_ARGUMENTS);
+            // debug roles
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_ROLES), HandleListRolesCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_ROLES, CMDSYNTAX_DEBUG_ROLES, Command.NO_ARGUMENTS);
+            // debug userinfo
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO);
         }
 
-        /// <summary>
-        /// Handles /debug channels command
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
+        #region /debug channels
+
+        private const string CMDKEYS_DEBUG_CHANNELS = "debug channels";
+        private const string CMDSYNTAX_DEBUG_CHANNELS = "/debug channels";
+        private const string CMDSUMMARY_DEBUG_CHANNELS = "Lists all channels & categories on current server";
+
         public async Task HandleListChannelsCommand(SocketCommandContext context)
         {
             EmbedBuilder categoryembed = new EmbedBuilder();
@@ -115,6 +104,13 @@ namespace Ciridium
             await context.Channel.SendEmbedAsync(channelembed);
         }
 
+        #endregion
+        #region /debug roles
+
+        private const string CMDKEYS_DEBUG_ROLES = "debug roles";
+        private const string CMDSYNTAX_DEBUG_ROLES = "/debug roles";
+        private const string CMDSUMMARY_DEBUG_ROLES = "Lists all roles on current server";
+
         public async Task HandleListRolesCommand(SocketCommandContext context)
         {
             EmbedBuilder roleembed = new EmbedBuilder();
@@ -134,6 +130,16 @@ namespace Ciridium
 
             await context.Channel.SendEmbedAsync(roleembed);
         }
+
+        #endregion
+        #region /debug userinfo
+
+        private const string CMDKEYS_DEBUG_USERINFO = "debug userinfo";
+        private const string CMDSYNTAX_DEBUG_USERINFO = "/debug userinfo {<@user>}";
+        private const string CMDSUMMARY_DEBUG_USERINFO = "Prints out some debug info on all users mentioned";
+        private const string CMDARGS_DEBUG_USERINFO =
+                "    {<@user>}\n" +
+                "Mention all users you want debug info about here";
 
         public async Task HandleUserInfoCommand(SocketCommandContext context)
         {
@@ -155,24 +161,41 @@ namespace Ciridium
             }
         }
 
+        #endregion
     }
 
     class ShutdownCommand
     {
         public ShutdownCommand(CommandService service)
         {
-            string summary = "Shuts down the bot";
-            Var.cmdService.AddCommand(new CommandKeys("kys"), HandleShutdownCommand, AccessLevel.Moderator, summary, "/kys", Command.NO_ARGUMENTS);
-            Var.cmdService.AddCommand(new CommandKeys("shutdown"), HandleShutdownCommand, AccessLevel.Moderator, summary, "/shutdown", Command.NO_ARGUMENTS);
-            summary = "Restarts the bot.";
-            Var.cmdService.AddCommand(new CommandKeys("restart"), HandleRestartCommand, AccessLevel.Moderator, summary, "/restart", Command.NO_ARGUMENTS);
+            // shutdown
+            Var.cmdService.AddCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
+            // kys
+            Var.cmdService.AddCommand(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS);
+            // restart
+            Var.cmdService.AddCommand(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Moderator, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS);
         }
+
+        #region /shutdown
+
+        private const string CMDKEYS_SHUTDOWN = "shutdown";
+        private const string CMDKEYS_SHUTDOWN_ALT = "kys";
+        private const string CMDSYNTAX_SHUTDOWN = "/shutdown";
+        private const string CMDSYNTAX_SHUTDOWN_ALT = "/kys";
+        private const string CMDSUMMARY_SHUTDOWN = "Shuts down the bot";
 
         public async Task HandleShutdownCommand(SocketCommandContext context)
         {
             await context.Channel.SendEmbedAsync("Shutting down ...");
             Var.running = false;
         }
+
+        #endregion
+        #region /restart
+
+        private const string CMDKEYS_RESTART = "restart";
+        private const string CMDSYNTAX_RESTART = "/restart";
+        private const string CMDSUMMARY_RESTART = "Restarts the bot";
 
         public async Task HandleRestartCommand(SocketCommandContext context)
         {
@@ -183,10 +206,26 @@ namespace Ciridium
                 Var.running = false;
             }
         }
+
+        #endregion
     }
 
     class HelpCommand
     {
+        public HelpCommand(CommandService service)
+        {
+            // help (list)
+            service.AddCommand(new CommandKeys(CMDKEYS_HELP_LIST), HandleHelpCommand, AccessLevel.Basic, CMDSUMMARY_HELP_LIST, CMDSYNTAX_HELP_LIST, Command.NO_ARGUMENTS);
+            // help (specific)
+            service.AddCommand(new CommandKeys(CMDKEYS_HELP_SPECIFIC, 2, 6), HandleHelpCommandSpecific, AccessLevel.Basic, CMDSUMMARY_HELP_SPECIFIC, CMDSYNTAX_HELP_SPECIFIC, CMDARGS_HELP_SPECIFIC);
+        }
+
+        #region /help (list)
+
+        private const string CMDKEYS_HELP_LIST = "help";
+        private const string CMDSYNTAX_HELP_LIST = "/help";
+        private const string CMDSUMMARY_HELP_LIST = "Lists a summary for all commands you have access to";
+
         public async Task HandleHelpCommand(CommandContext context)
         {
             AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
@@ -204,6 +243,16 @@ namespace Ciridium
             embedmessage.Description = "Use `/help <cmdname>` to see syntax.";
             await context.Channel.SendEmbedAsync(embedmessage);
         }
+
+        #endregion
+        #region /help (specific)
+
+        private const string CMDKEYS_HELP_SPECIFIC = "help";
+        private const string CMDSYNTAX_HELP_SPECIFIC = "/help {<CommandKeys>}";
+        private const string CMDSUMMARY_HELP_SPECIFIC = "Provides summary, syntax and argument information for a specific command";
+        private const string CMDARGS_HELP_SPECIFIC =
+                "    {<CommandKeys>}\n" +
+                "List all command keys here that make up the command";
 
         public async Task HandleHelpCommandSpecific(CommandContext context)
         {
@@ -249,16 +298,8 @@ namespace Ciridium
             }
         }
 
-        public HelpCommand(CommandService service)
-        {
-            string summary = "Lists a summary for all commands the user has access to.";
-            service.AddCommand(new CommandKeys("help"), HandleHelpCommand, AccessLevel.Basic, summary, "/help", Command.NO_ARGUMENTS);
-            summary = "Provides help for a specific command.";
-            string arguments =
-                "    {<CommandKeys>}\n" +
-                "List all command keys here that make up the command.";
-            service.AddCommand(new CommandKeys("help", 2, 6), HandleHelpCommandSpecific, AccessLevel.Basic, summary, "/help {<CommandKeys>}", arguments);
-        }
-    }
+        #endregion
 
+
+    }
 }
