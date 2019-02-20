@@ -129,11 +129,8 @@ namespace Ciridium
                 ISocketMessageChannel channel = client.GetChannel(WelcomeMessageChannelId) as ISocketMessageChannel;
                 if (channel != null)
                 {
-                    EmbedBuilder embed = new EmbedBuilder();
-                    embed.Color = Var.BOTCOLOR;
-                    embed.Description = string.Format(welcomingMessage, user.Mention);
-                    await channel.SendMessageAsync(string.Empty, embed:embed.Build());
                     //await channel.SendMessageAsync(string.Format(welcomingMessage, user.Mention));
+                    await channel.SendEmbedAsync(user.Mention, string.Format(welcomingMessage, user.Mention));
                 }
             }
         }

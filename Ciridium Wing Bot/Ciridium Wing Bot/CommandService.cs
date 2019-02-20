@@ -151,7 +151,16 @@ namespace Ciridium
             embed.Color = Var.ERRORCOLOR;
             embed.Title = string.Format("**__An Exception occured while trying to execute command __**`/{0}`", cmd.Key.KeyList);
             embed.AddField("Message", Macros.MultiLineCodeBlock(e.Message));
-            embed.AddField("StackTrace", Macros.MultiLineCodeBlock(e.StackTrace));
+            string stacktrace;
+            if (e.StackTrace.Length <= 1024)
+            {
+                stacktrace = e.StackTrace;
+            }
+            else
+            {
+                stacktrace = e.StackTrace.Substring(0, 1024);
+            }
+            embed.AddField("StackTrace", Macros.MultiLineCodeBlock(stacktrace));
             await context.Channel.SendEmbedAsync(embed);
         }
     }

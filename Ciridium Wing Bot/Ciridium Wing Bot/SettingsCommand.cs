@@ -18,8 +18,6 @@ namespace Ciridium
             AccessLevel mod = AccessLevel.Moderator;
             AccessLevel bAdmin = AccessLevel.BotAdmin;
             s.AddCommand(new CommandKeys("settings"), HandleCommand, mod, summary, "/settings", Command.NO_ARGUMENTS);
-            summary = "Saves the current settings to the bots config file";
-            s.AddCommand(new CommandKeys("settings save"), HandleSettingsSaveCommand, mod, summary, "/settings save", Command.NO_ARGUMENTS);
             summary = "Enables/Disables debug messages for a debug category";
             string arguments =
                 "    <Category>\n" +
@@ -92,14 +90,11 @@ namespace Ciridium
                 error = true;
                 message = "I don't know that debug logging category";
             }
+            if (!error)
+            {
+                await SettingsModel.SaveSettings();
+            }
             await context.Channel.SendEmbedAsync(message, error);
-        }
-
-        private static async Task HandleSettingsSaveCommand(CommandContext context)
-        {
-            await SettingsModel.SaveSettings();
-            await MissionSettingsModel.SaveMissionSettings();
-            await context.Channel.SendEmbedAsync("Settings Saved.");
         }
 
         /// <summary>
@@ -129,6 +124,10 @@ namespace Ciridium
                     message = "Unknown Role Identifier";
                     break;
             }
+            if (!error)
+            {
+                await SettingsModel.SaveSettings();
+            }
             await context.Channel.SendEmbedAsync(message, error);
         }
 
@@ -150,8 +149,9 @@ namespace Ciridium
             else
             {
                 SettingsModel.welcomingMessage = nwelcomingMessage;
-                await context.Channel.SendEmbedAsync("Welcoming Message updated successfully. Here is how it will look:");
-
+                SocketTextChannel channel = context.Guild.GetTextChannel(SettingsModel.WelcomeMessageChannelId);
+                await SettingsModel.SaveSettings();
+                await context.Channel.SendEmbedAsync(string.Format("Welcoming Message updated successfully. I welcomed you in the welcoming channel: {0}", channel.Mention));
                 await SettingsModel.WelcomeNewUser(context.User);
             }
         }
@@ -174,17 +174,17 @@ namespace Ciridium
                     case "debug":
                         SettingsModel.DebugMessageChannelId = Id;
                         await SettingsModel.SaveSettings();
-                        message = "Debug Channel successfully set " + Var.client.GetChannel(Id).ToString();
+                        message = "Debug channel successfully set to " + Var.client.GetChannel(Id).ToString();
                         break;
                     case "welcoming":
                         SettingsModel.WelcomeMessageChannelId = Id;
                         await SettingsModel.SaveSettings();
-                        message = "Welcoming Channel successfully set to " + Var.client.GetChannel(Id).ToString();
+                        message = "Welcoming channel successfully set to " + Var.client.GetChannel(Id).ToString();
                         break;
                     case "missioncategory":
                         MissionSettingsModel.MissionCategoryId = Id;
                         await MissionSettingsModel.SaveMissionSettings();
-                        message = "Mission Category successfully set to " + Var.client.GetChannel(Id).ToString();
+                        message = "Mission category successfully set to " + Var.client.GetChannel(Id).ToString();
                         break;
                     default:
                         error = true;
@@ -197,7 +197,10 @@ namespace Ciridium
                 error = true;
                 message = "Cannot Parse the supplied Id as an uInt64 Value!";
             }
-
+            if (!error)
+            {
+                await SettingsModel.SaveSettings();
+            }
             await context.Channel.SendEmbedAsync(message, error);
         }
 
@@ -216,6 +219,11 @@ namespace Ciridium
                 error = true;
                 message = "Could not parse supplied argument to a int32 value!";
             }
+            if (!error)
+            {
+                await MissionSettingsModel.SaveMissionSettings();
+            }
+
             await context.Channel.SendEmbedAsync(message, error);
         }
 
