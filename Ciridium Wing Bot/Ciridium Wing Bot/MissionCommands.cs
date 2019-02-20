@@ -14,7 +14,7 @@ namespace Ciridium
         {
             RestTextChannel NewMissionChannel =
             await MissionModel.CreateMission(context.Args[1], context.Message.MentionedUsers, context.Guild);
-            await context.Channel.SendMessageAsync("Successfully created new Mission. Check it out: " + NewMissionChannel.Mention);
+            await context.Channel.SendEmbedAsync("Successfully created new Mission. Check it out: " + NewMissionChannel.Mention);
         }
 
         public async Task HandleCloseMissionCommand(CommandContext context)
@@ -24,16 +24,15 @@ namespace Ciridium
 
         public MissionCommands(CommandService service)
         {
-            AccessLevel pilot = AccessLevel.Pilot;
             string summary = "Creates a new mission room.";
             string arguments =
                 "    <NameSuffixes>\n" +
                 "Whatever the mission channel name should list right from number\n" +
                 "    {<@Explorers>}\n" +
                 "Mention all explorers here that are a part of that mission";
-            service.AddCommand(new CommandKeys("createmission", 3, 1000), HandleCreateRoomCommand, pilot, summary, "/createmission <NameSuffixes> {<@Explorers>}", arguments);
+            service.AddCommand(new CommandKeys("createmission", 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, summary, "/createmission <NameSuffixes> {<@Explorers>}", arguments);
             summary = "Closes a mission room.";
-            service.AddCommand(new CommandKeys("closemission"), HandleCloseMissionCommand, pilot, summary, "/closemission", Command.NO_ARGUMENTS);
+            service.AddCommand(new CommandKeys("closemission"), HandleCloseMissionCommand, AccessLevel.Moderator, summary, "/closemission", Command.NO_ARGUMENTS);
         }
     }
 }

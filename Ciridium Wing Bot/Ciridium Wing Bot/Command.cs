@@ -27,6 +27,12 @@ namespace Ciridium
         internal string Summary { get; private set; }
         internal string Syntax { get; private set; }
         internal string ArgumentHelp { get; private set; }
+
+
+        public override string ToString()
+        {
+            return Syntax;
+        }
     }
 
     internal delegate Task HandleCommand(CommandContext context);

@@ -21,6 +21,8 @@ public static class Var
     /// Commandservice storing all commands
     /// </summary>
     internal static Ciridium.CommandService cmdService;
+    internal static readonly Color BOTCOLOR = new Color(71, 71, 255);
+    internal static readonly Color ERRORCOLOR = new Color(255, 0, 0);
 }
 
 public class Program

@@ -129,7 +129,11 @@ namespace Ciridium
                 ISocketMessageChannel channel = client.GetChannel(WelcomeMessageChannelId) as ISocketMessageChannel;
                 if (channel != null)
                 {
-                    await channel.SendMessageAsync(string.Format(welcomingMessage, user.Mention));
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.Color = Var.BOTCOLOR;
+                    embed.Description = string.Format(welcomingMessage, user.Mention);
+                    await channel.SendMessageAsync(string.Empty, embed:embed.Build());
+                    //await channel.SendMessageAsync(string.Format(welcomingMessage, user.Mention));
                 }
             }
         }
@@ -176,30 +180,24 @@ namespace Ciridium
         /// <summary>
         /// Puts together a debug message for the "/settings" command
         /// </summary>
-        public static string DebugSettingsMessage
+        public static EmbedBuilder DebugSettingsMessage
         {
             get
             {
-                return string.Format("Current Settings:```" +
-                    "{0}" +
-                    "Debug Channel     : {1}\n" +
-                    "Welcoming Channel : {2}\n" +
-                    "Moderator Role    : {3}\n" +
-                    "Escort Pilot Role : {4}" +
-                    "```",
-                    DebugLoggingSettingsMessage(), DebugMessageChannelId, WelcomeMessageChannelId, moderatorRole, pilotRole);
+                EmbedBuilder result = new EmbedBuilder();
+                result.Color = Var.BOTCOLOR;
+                result.Title = "**__Current Settings__**";
+                for (int i = 0; i < debugLogging.Length; i++)
+                {
+                    bool catEnabled = debugLogging[i];
+                    result.AddField(string.Format("Debug {0}", ((DebugCategories)i).ToString().PadRight(12)), catEnabled ? "```Enabled```" : "```Disabled```");
+                }
+                result.AddField("Debug Channel", Macros.MultiLineCodeBlock(DebugMessageChannelId));
+                result.AddField("Welcoming Channel", Macros.MultiLineCodeBlock(WelcomeMessageChannelId));
+                result.AddField("Moderator Role", Macros.MultiLineCodeBlock(moderatorRole));
+                result.AddField("Escort Pilot Role", Macros.MultiLineCodeBlock(pilotRole));
+            return result;
             }
-        }
-
-        public static string DebugLoggingSettingsMessage()
-        {
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < debugLogging.Length; i++)
-            {
-                bool catEnabled = debugLogging[i];
-                result.AppendLine(string.Format("Debug {0}: {1}", ((DebugCategories)i).ToString().PadRight(12), catEnabled));
-            }
-            return result.ToString();
         }
 
         /// <summary>
@@ -217,7 +215,11 @@ namespace Ciridium
                 ISocketMessageChannel channel = client.GetChannel(DebugMessageChannelId) as ISocketMessageChannel;
                 if (channel != null)
                 {
-                    await channel.SendMessageAsync(string.Format("[{0}] {1}", category.ToString().ToUpper(), message));
+                    EmbedBuilder debugembed = new EmbedBuilder();
+                    debugembed.Color = Var.BOTCOLOR;
+                    debugembed.Title = string.Format("**__Debug: {0}__**", category.ToString().ToUpper());
+                    debugembed.Description = message;
+                    await channel.SendEmbedAsync(debugembed);
                 }
             }
         }

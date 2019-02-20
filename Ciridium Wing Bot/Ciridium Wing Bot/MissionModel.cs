@@ -22,25 +22,54 @@ namespace Ciridium
         {
             int missionnumber = MissionSettingsModel.NextMissionNumber;
             string channelname = string.Format("mission_{0}_{1}", missionnumber, platform);
-            RestTextChannel NewMissionChannel = await guild.CreateTextChannelAsync(channelname);
 
-            await NewMissionChannel.ModifyAsync(TextChannelProperties => {
-                TextChannelProperties.CategoryId = MissionSettingsModel.MissionCategoryId;
-                TextChannelProperties.Topic = MissionSettingsModel.DefaultTopic;
-            });
 
             List<ulong> explorerIDs = new List<ulong>();
+
+            foreach (IUser user in explorers)
+            {
+                explorerIDs.Add(user.Id);
+            }
+
+            string pingstring = ResourcesModel.GetMentionsFromUserIdList(explorerIDs);
+            RestTextChannel NewMissionChannel = await guild.CreateTextChannelAsync(channelname);
+
+            if (MissionSettingsModel.DefaultTopic.Contains("{0}"))
+            {
+                await NewMissionChannel.ModifyAsync(TextChannelProperties =>
+                {
+                    TextChannelProperties.CategoryId = MissionSettingsModel.MissionCategoryId;
+                    TextChannelProperties.Topic = string.Format(MissionSettingsModel.DefaultTopic, pingstring);
+                });
+            }
+            else
+            {
+                await NewMissionChannel.ModifyAsync(TextChannelProperties =>
+                {
+                    TextChannelProperties.CategoryId = MissionSettingsModel.MissionCategoryId;
+                    TextChannelProperties.Topic = MissionSettingsModel.DefaultTopic;
+                });
+            }
 
             await NewMissionChannel.AddPermissionOverwriteAsync(guild.EveryoneRole, MissionSettingsModel.EveryonePerms);
             foreach (IUser user in explorers)
             {
                 await NewMissionChannel.AddPermissionOverwriteAsync(user, MissionSettingsModel.ExplorerPerms);
-                explorerIDs.Add(user.Id);
             }
 
             
             missionList.Add(NewMissionChannel.Id);
-            await NewMissionChannel.SendMessageAsync(string.Format(MissionSettingsModel.ExplorerQuestions, ResourcesModel.GetMentionsFromUserIdList(explorerIDs)));
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Color = Var.BOTCOLOR;
+            if (MissionSettingsModel.ExplorerQuestions.Contains("{0}"))
+            {
+                embed.Description = string.Format(MissionSettingsModel.ExplorerQuestions, pingstring);
+            }
+            else
+            {
+                embed.Description = MissionSettingsModel.ExplorerQuestions;
+            }
+            await NewMissionChannel.SendMessageAsync(pingstring, embed:embed.Build());
 
             await SaveMissions();
             await MissionSettingsModel.SaveMissionSettings();
@@ -52,8 +81,8 @@ namespace Ciridium
             if (IsMissionChannel(channelId, guildId))
             {
                 missionList.Remove(channelId);
-                await SaveMissions();
                 await Var.client.GetGuild(guildId).GetTextChannel(channelId).DeleteAsync();
+                await SaveMissions();
             }
         }
 

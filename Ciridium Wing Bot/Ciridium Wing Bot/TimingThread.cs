@@ -168,7 +168,7 @@ namespace Ciridium
         {
             get
             {
-                return ActivityType.Watching;
+                return ActivityType.Playing;
             }
         }
     }

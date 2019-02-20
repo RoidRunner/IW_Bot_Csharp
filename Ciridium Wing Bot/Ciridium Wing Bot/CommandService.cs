@@ -66,19 +66,19 @@ namespace Ciridium
                             }
                             catch (Exception e)
                             {
-                                await context.Channel.SendMessageAsync(string.Format("Exception Occured while trying to execute command `{0}`\n```{1}```\n```{2}```", cmd.Key.KeyList, e.Message, e.StackTrace));
+                                SendExceptionMessage(e, context, cmd);
                             }
                         }
                         else
                         {
-                            await context.Channel.SendMessageAsync(string.Format("The command `/{0}` expects {1} arguments, that is {2} more than you supplied! Try `/help {0}` for more info",
+                            await context.Channel.SendEmbedAsync(string.Format("The command `/{0}` expects {1} arguments, that is {2} more than you supplied! Try `/help {0}` for more info",
                                 cmd.Key.KeyList, cmd.Key.MinArgCnt - cmd.Key.FixedArgCnt, cmd.Key.MinArgCnt - context.ArgCnt
                                 ));
                         }
                     }
                     else
                     {
-                        await context.Channel.SendMessageAsync(
+                        await context.Channel.SendEmbedAsync(
                             string.Format("Insufficient Permissions. `/{0}` requires {1} access, you have {2} access",
                             cmd.Key.KeyList, cmd.AccessLevel.ToString(), userLevel.ToString()));
                     }
@@ -111,9 +111,24 @@ namespace Ciridium
             int argCntMatched = -2;
             foreach (Command command in commands)
             {
-                if (command.Key.Matches(keys) && command.Key.FixedArgCnt > argCntMatched)
+                if (command.Key.Matches(keys) && command.Key.FixedArgCnt >= argCntMatched)
                 {
                     result = command;
+                    argCntMatched = command.Key.FixedArgCnt;
+                }
+            }
+            return argCntMatched != -2;
+        }
+
+        public bool TryGetCommands(string[] keys, out List<Command> results)
+        {
+            results = new List<Command>();
+            int argCntMatched = -2;
+            foreach (Command command in commands)
+            {
+                if (command.Key.Matches(keys) && command.Key.FixedArgCnt >= argCntMatched)
+                {
+                    results.Add(command);
                     argCntMatched = command.Key.FixedArgCnt;
                 }
             }
@@ -128,6 +143,16 @@ namespace Ciridium
         public static bool HasPermission(AccessLevel userLevel, AccessLevel cmdLevel)
         {
             return userLevel.CompareTo(cmdLevel) >= 0;
+        }
+
+        public async static void SendExceptionMessage(Exception e, CommandContext context, Command cmd)
+        {
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Color = Var.ERRORCOLOR;
+            embed.Title = string.Format("**__An Exception occured while trying to execute command __**`/{0}`", cmd.Key.KeyList);
+            embed.AddField("Message", Macros.MultiLineCodeBlock(e.Message));
+            embed.AddField("StackTrace", Macros.MultiLineCodeBlock(e.StackTrace));
+            await context.Channel.SendEmbedAsync(embed);
         }
     }
 

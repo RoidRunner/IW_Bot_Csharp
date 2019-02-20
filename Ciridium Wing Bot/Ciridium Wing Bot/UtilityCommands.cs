@@ -29,7 +29,7 @@ namespace Ciridium
         /// <returns></returns>
         public async Task HandlePingCommand(CommandContext context)
         {
-            await context.Channel.SendMessageAsync(string.Format("Hi {0}", context.User.Mention));
+            await context.Channel.SendEmbedAsync(string.Format("Hi {0}", context.User.Mention));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Ciridium
             ITextChannel channel = context.Channel as ITextChannel;
             if (channel != null)
             {
-                await context.Channel.SendMessageAsync(channel.Topic);
+                await context.Channel.SendEmbedAsync(channel.Topic);
             }
         }
 
@@ -54,7 +54,7 @@ namespace Ciridium
         public async Task HandleTimeCommand(CommandContext context)
         {
             string message = string.Format("You see UTC date & time in the top right so what else would you ever want from me?");
-            await context.Channel.SendMessageAsync(message);
+            await context.Channel.SendEmbedAsync(message);
         }
     }
 
@@ -80,101 +80,79 @@ namespace Ciridium
         /// <returns></returns>
         public async Task HandleListChannelsCommand(SocketCommandContext context)
         {
-            StringBuilder message = new StringBuilder();
-            message.Append("Channels on this server:```");
+            EmbedBuilder categoryembed = new EmbedBuilder();
+            categoryembed.Color = Var.BOTCOLOR;
+            categoryembed.Title = "**__Categories on this server__**";
+            EmbedBuilder channelembed = new EmbedBuilder();
+            channelembed.Color = Var.BOTCOLOR;
+            channelembed.Title = "**__Channels on this server__**";
 
-            var channels = context.Guild.Channels;
-
-            foreach (var channel in channels)
-            {
-                if (channel == null)
-                {
-                    message.AppendLine("[WARNING] One channel is NULL");
-                }
-                else
-                {
-                    message.AppendLine(string.Format("{0} : {1}", channel.Id, channel.Name));
-                }
-            }
-
-            message.Append("```Categories on this server:```");
-
-            var categories = context.Guild.CategoryChannels;
+            List<SocketGuildChannel> channels = new List<SocketGuildChannel>(context.Guild.Channels);
+            List<SocketCategoryChannel> categories = new List<SocketCategoryChannel>(context.Guild.CategoryChannels);
+            List<ulong> categoryIds = new List<ulong>();
 
             foreach (var category in categories)
             {
-                if (category == null)
+                if (category != null)
                 {
-                    message.AppendLine("[WARNING] This channel is NULL");
-                }
-                else
-                {
-                    message.AppendLine(string.Format("{0} : {1}", category.Id, category.Name));
+                    categoryIds.Add(category.Id);
+                    categoryembed.AddField(category.Name, string.Format("ID: `{0}`", category.Id));
                 }
             }
 
-            message.Append("```");
+            foreach (var channel in channels)
+            {
+                if (channel != null)
+                {
+                    if (!categoryIds.Contains(channel.Id))
+                    {
+                        channelembed.AddField(channel.Name, string.Format("ID: `{0}`", channel.Id));
+                    }
+                }
+            }
 
-            await context.Channel.SendMessageAsync(message.ToString());
+            await context.Channel.SendEmbedAsync(categoryembed);
+            await context.Channel.SendEmbedAsync(channelembed);
         }
 
         public async Task HandleListRolesCommand(SocketCommandContext context)
         {
-            StringBuilder message = new StringBuilder();
-            message.Append("Roles on this server:```");
+            EmbedBuilder roleembed = new EmbedBuilder();
+            roleembed.Color = Var.BOTCOLOR;
+            roleembed.Title = "**__Roles on this server__**";
 
             var roles = context.Guild.Roles;
 
             foreach (var role in roles)
             {
-                if (role == null)
+                if (role != null)
                 {
-                    message.AppendLine("[WARNING] One channel is NULL");
-                }
-                else
-                {
-                    message.AppendLine(string.Format("{0} : {1}", role.Id, role.Name));
+                    roleembed.AddField(role.Name, string.Format("ID: `{0}`", role.Id));
                 }
             }
 
-            message.Append("```");
 
-            await context.Channel.SendMessageAsync(message.ToString());
+            await context.Channel.SendEmbedAsync(roleembed);
         }
 
         public async Task HandleUserInfoCommand(SocketCommandContext context)
         {
             var users = context.Message.MentionedUsers;
-            StringBuilder message = new StringBuilder();
 
-            try
+            foreach (SocketUser user in users)
             {
-                foreach (SocketUser user in users)
+                EmbedBuilder userembed = new EmbedBuilder();
+                userembed.Color = Var.BOTCOLOR;
+                userembed.Title = string.Format("**__User {0}__**", user.Username);
+
+                userembed.AddField("Discriminator", Macros.MultiLineCodeBlock(string.Format("{0}#{1}", user.Username, user.Discriminator)));
+                userembed.AddField("Mention", Macros.MultiLineCodeBlock(user.Mention));
+                if (user.IsBot || user.IsWebhook)
                 {
-                    message.Append(string.Format("User {0}:```" +
-                        "Name + Tag    : {0}#{1}\n" +
-                        "Mention       : {2}\n",
-                        user.Username, user.Discriminator, user.Mention));
-                    if (user.IsBot)
-                    {
-                        message.Append("User is Bot\n");
-                    }
-                    if (user.IsWebhook)
-                    {
-                        message.Append("User is Webhook\n");
-                    }
-                    message.Append("```");
+                    userembed.AddField("Add. Info", string.Format("```Bot: {0} Webhook: {1}```", user.IsBot, user.IsWebhook));
                 }
+                await context.Channel.SendEmbedAsync(userembed);
             }
-            catch (Exception e)
-            {
-                await context.Channel.SendMessageAsync("[Exception]```" + e.Message + "\n" + e.StackTrace + "```");
-            }
-            if (string.IsNullOrWhiteSpace(message.ToString()))
-            {
-                message.Append("Please tag atleast one user when using this command!");
-            }
-            await context.Channel.SendMessageAsync(message.ToString());
         }
 
     }
@@ -186,13 +164,13 @@ namespace Ciridium
             string summary = "Shuts down the bot";
             Var.cmdService.AddCommand(new CommandKeys("kys"), HandleShutdownCommand, AccessLevel.Moderator, summary, "/kys", Command.NO_ARGUMENTS);
             Var.cmdService.AddCommand(new CommandKeys("shutdown"), HandleShutdownCommand, AccessLevel.Moderator, summary, "/shutdown", Command.NO_ARGUMENTS);
-            //summary = "Restarts the bot.";
-            //Var.cmdService.AddCommand(new CommandKeys("restart"), HandleRestartCommand, AccessLevel.Moderator, summary, "/restart");
+            summary = "Restarts the bot.";
+            Var.cmdService.AddCommand(new CommandKeys("restart"), HandleRestartCommand, AccessLevel.Moderator, summary, "/restart", Command.NO_ARGUMENTS);
         }
 
         public async Task HandleShutdownCommand(SocketCommandContext context)
         {
-            await context.Channel.SendMessageAsync("Shutting down ...");
+            await context.Channel.SendEmbedAsync("Shutting down ...");
             Var.running = false;
         }
 
@@ -200,9 +178,9 @@ namespace Ciridium
         {
             if (SettingsModel.UserIsBotAdmin(context.User.Id))
             {
-                await context.Channel.SendMessageAsync("Restarting ...");
-                Var.running = false;
+                await context.Channel.SendEmbedAsync("Restarting ... " + Environment.CurrentDirectory);
                 System.Diagnostics.Process.Start(Environment.CurrentDirectory);
+                Var.running = false;
             }
         }
     }
@@ -213,17 +191,18 @@ namespace Ciridium
         {
             AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
 
-            StringBuilder message = new StringBuilder();
-            message.Append("You have access to the following commands:```");
+            EmbedBuilder embedmessage = new EmbedBuilder();
+            embedmessage.Color = Var.BOTCOLOR;
+            embedmessage.Title = "You have access to the following commands";
             foreach (Command cmd in Var.cmdService.commands)
             {
                 if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
                 {
-                    message.AppendLine(string.Format("{0} : {1}", cmd.Syntax.PadRight(40), cmd.Summary));
+                    embedmessage.AddField(cmd.Syntax, cmd.Summary);
                 }
             }
-            message.Append("```Use `/help <cmdname>` to see syntax.");
-            await context.Channel.SendMessageAsync(message.ToString());
+            embedmessage.Description = "Use `/help <cmdname>` to see syntax.";
+            await context.Channel.SendEmbedAsync(embedmessage);
         }
 
         public async Task HandleHelpCommandSpecific(CommandContext context)
@@ -235,25 +214,38 @@ namespace Ciridium
             {
                 keys[i - 1] = context.Args[i];
             }
-            if (Var.cmdService.TryGetCommand(keys, out Command cmd))
+            if (Var.cmdService.TryGetCommands(keys, out List<Command> cmds))
             {
-                if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
+                foreach (Command cmd in cmds)
                 {
-                    await context.Channel.SendMessageAsync(string.Format(
-                        "Help for command **/{0}**:\n" +
-                        "**Description**:```{1}```" +
-                        "**Syntax:**```{2}```" +
-                        "**Arguments:**```{3}```",
-                        cmd.Key.KeyList, cmd.Summary, cmd.Syntax, cmd.ArgumentHelp));
-                }
-                else
-                {
-                    await context.Channel.SendMessageAsync("Unsufficient permissions to access this commands summary!");
+                    if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
+                    {
+                        EmbedBuilder embedmessage = new EmbedBuilder();
+                        embedmessage.Color = Var.BOTCOLOR;
+                        embedmessage.Title = string.Format("Help for command `/{0}`", cmd.Key.KeyList);
+                        embedmessage.AddField("Description", Macros.MultiLineCodeBlock(cmd.Summary));
+                        embedmessage.AddField("Syntax", Macros.MultiLineCodeBlock(cmd.Syntax));
+                        if (!cmd.ArgumentHelp.Equals(Command.NO_ARGUMENTS))
+                        {
+                            embedmessage.AddField("Arguments", Macros.MultiLineCodeBlock(cmd.ArgumentHelp));
+                        }
+                        //string.Format(
+                        //"Help for command **/{0}**:\n" +
+                        //"**Description**:```{1}```" +
+                        //"**Syntax:**```{2}```" +
+                        //"**Arguments:**```{3}```",
+                        //    cmd.Key.KeyList, cmd.Summary, cmd.Syntax, cmd.ArgumentHelp)
+                        await context.Channel.SendEmbedAsync(embedmessage);
+                    }
+                    else
+                    {
+                        await context.Channel.SendEmbedAsync(string.Format("Unsufficient permissions to access the command summary for `/{0}`!", cmd.Key.KeyList));
+                    }
                 }
             }
             else
             {
-                await context.Channel.SendMessageAsync("Could not find that command!");
+                await context.Channel.SendEmbedAsync("Could not find that command!");
             }
         }
 
@@ -263,9 +255,9 @@ namespace Ciridium
             service.AddCommand(new CommandKeys("help"), HandleHelpCommand, AccessLevel.Basic, summary, "/help", Command.NO_ARGUMENTS);
             summary = "Provides help for a specific command.";
             string arguments =
-                "    [{<CommandKeys>}]\n" +
+                "    {<CommandKeys>}\n" +
                 "List all command keys here that make up the command.";
-            service.AddCommand(new CommandKeys("help", 2, 6), HandleHelpCommandSpecific, AccessLevel.Basic, summary, "/help [{<CommandKeys>}]", arguments);
+            service.AddCommand(new CommandKeys("help", 2, 6), HandleHelpCommandSpecific, AccessLevel.Basic, summary, "/help {<CommandKeys>}", arguments);
         }
     }
 

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Discord.Commands;
-using Discord.Rest;
+﻿using Discord.Commands;
 using Discord.WebSocket;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Ciridium
 {
@@ -48,21 +46,32 @@ namespace Ciridium
                 "    {<Words>}\n" +
                 "All words following the initial arguments will be the new join message. Insert '{0}' wherever you want the new user pinged!";
             s.AddCommand(new CommandKeys("settings setjoinmsg", 3, 1000), HandleWelcomingMessageCommand, mod, summary, "/settings setjoinmsg {<Words>}", arguments);
-            summary = "Sets the number for the next created mission.";
+            summary = "Sets the number for the next created mission";
             arguments =
                 "    <Number>\n" +
-                "Specify the number for the next created mission.";
+                "Specify the number for the next created mission";
             s.AddCommand(new CommandKeys("settings setmissionnumber", 3, 3), HandleMissionNumberCommand, AccessLevel.Pilot, summary, "/settings setmissionnumber <Number>", arguments);
+            summary = "Sets the default mission channel topic";
+            arguments =
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be the new default mission channel topic. Insert '{0}' wherever you want the explorers mentioned (no notifications)!";
+            s.AddCommand(new CommandKeys("settings setmissionchanneltopic", 3, 1000), HandleMissionTopicCommand, mod, summary, "/settings setmissionchanneltopic {<Words>}", arguments);
+            summary = "Sets the mission channel explorer questions";
+            arguments =
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be the mission channel explorer questions. Insert '{0}' wherever you want the explorers mentioned!";
+            s.AddCommand(new CommandKeys("settings setexplorerquestions", 3, 1000), HandleMissionExplorerQuestionsCommand, mod, summary, "/settings setexplorerquestions {<Words>}", arguments);
         }
 
         public async Task HandleCommand(SocketCommandContext context)
         {
-            await context.Channel.SendMessageAsync(SettingsModel.DebugSettingsMessage);
+            await context.Channel.SendEmbedAsync(SettingsModel.DebugSettingsMessage);
         }
 
         private static async Task HandleDebugLoggingCommand(CommandContext context)
         {
             string message;
+            bool error = false;
             DebugCategories debugcategory;
             if (Enum.TryParse(context.Args[2], out debugcategory))
             {
@@ -73,22 +82,24 @@ namespace Ciridium
                 }
                 else
                 {
+                    error = true;
                     SettingsModel.debugLogging[(int)debugcategory] = oldsetting;
                     message = "Do you want it turned on or off? I am confused";
                 }
             }
             else
             {
+                error = true;
                 message = "I don't know that debug logging category";
             }
-            await context.Channel.SendMessageAsync(message);
+            await context.Channel.SendEmbedAsync(message, error);
         }
 
         private static async Task HandleSettingsSaveCommand(CommandContext context)
         {
             await SettingsModel.SaveSettings();
             await MissionSettingsModel.SaveMissionSettings();
-            await context.Channel.SendMessageAsync("Settings Saved.");
+            await context.Channel.SendEmbedAsync("Settings Saved.");
         }
 
         /// <summary>
@@ -101,27 +112,24 @@ namespace Ciridium
         {
             List<SocketRole> roles = new List<SocketRole>();
             roles.AddRange(context.Message.MentionedRoles);
-            if (roles.Count > 0)
+            string message = "";
+            bool error = false;
+            switch (context.Args[2])
             {
-                switch (context.Args[2])
-                {
-                    case "pilot":
-                        SettingsModel.pilotRole = roles[0].Id;
-                        await context.Channel.SendMessageAsync("Pilot Role updated!");
-                        break;
-                    case "moderator":
-                        SettingsModel.moderatorRole = roles[0].Id;
-                        await context.Channel.SendMessageAsync("Moderator Role updated!");
-                        break;
-                    default:
-                        await context.Channel.SendMessageAsync("Unknown Role Identifier");
-                        break;
-                }
+                case "pilot":
+                    SettingsModel.pilotRole = roles[0].Id;
+                    message = "Pilot Role updated!";
+                    break;
+                case "moderator":
+                    SettingsModel.moderatorRole = roles[0].Id;
+                    message = "Moderator Role updated!";
+                    break;
+                default:
+                    error = true;
+                    message = "Unknown Role Identifier";
+                    break;
             }
-            else
-            {
-                await context.Channel.SendMessageAsync("Mention a role you want to set");
-            }
+            await context.Channel.SendEmbedAsync(message, error);
         }
 
         /// <summary>
@@ -131,18 +139,18 @@ namespace Ciridium
         /// <returns></returns>
         private static async Task HandleWelcomingMessageCommand(CommandContext context)
         {
-            string nwelcomingMessage = context.Message.Content.Substring(30);
+            string nwelcomingMessage = context.Message.Content.Substring(21);
 
             if (!nwelcomingMessage.Contains("{0}"))
             {
-                await context.Channel.SendMessageAsync("You need to specify locations for:```" +
+                await context.Channel.SendEmbedAsync("You need to specify locations for:```" +
                     "{0} : User that joined\n" +
-                    "```");
+                    "```", true);
             }
             else
             {
                 SettingsModel.welcomingMessage = nwelcomingMessage;
-                await context.Channel.SendMessageAsync("Welcoming Message updated successfully. Here is how it will look:");
+                await context.Channel.SendEmbedAsync("Welcoming Message updated successfully. Here is how it will look:");
 
                 await SettingsModel.WelcomeNewUser(context.User);
             }
@@ -157,6 +165,7 @@ namespace Ciridium
         private static async Task HandleDefaultChannelCommand(CommandContext context)
         {
             string message = "";
+            bool error = false;
             ulong Id = 0;
             if (ulong.TryParse(context.Args[3], out Id))
             {
@@ -178,21 +187,24 @@ namespace Ciridium
                         message = "Mission Category successfully set to " + Var.client.GetChannel(Id).ToString();
                         break;
                     default:
+                        error = true;
                         message = "I don't know that default channel!";
                         break;
                 }
             }
             else
             {
+                error = true;
                 message = "Cannot Parse the supplied Id as an uInt64 Value!";
             }
 
-            await context.Channel.SendMessageAsync(message);
+            await context.Channel.SendEmbedAsync(message, error);
         }
 
         private static async Task HandleMissionNumberCommand(CommandContext context)
         {
             string message = "";
+            bool error = false;
             int missionNr;
             if (int.TryParse(context.Args[2], out missionNr))
             {
@@ -201,11 +213,29 @@ namespace Ciridium
             }
             else
             {
+                error = true;
                 message = "Could not parse supplied argument to a int32 value!";
             }
-            await context.Channel.SendMessageAsync(message);
+            await context.Channel.SendEmbedAsync(message, error);
         }
 
+        private static async Task HandleMissionTopicCommand(CommandContext context)
+        {
+            string nDefaultTopic = context.Message.Content.Substring(32);
+
+            MissionSettingsModel.DefaultTopic = nDefaultTopic;
+            await MissionSettingsModel.SaveMissionSettings();
+            await context.Channel.SendEmbedAsync("Default mission channel topic successfully updated!");
+        }
+
+        private static async Task HandleMissionExplorerQuestionsCommand(CommandContext context)
+        {
+            string nExplorerQuestions = context.Message.Content.Substring(30);
+
+            MissionSettingsModel.ExplorerQuestions = nExplorerQuestions;
+            await MissionSettingsModel.SaveMissionSettings();
+            await context.Channel.SendEmbedAsync("Default mission channel explorer questions successfully updated!");
+        }
     }
 
     public enum DebugCategories
