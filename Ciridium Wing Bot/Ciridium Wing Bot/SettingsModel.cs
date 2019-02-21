@@ -202,13 +202,14 @@ namespace Ciridium
                 for (int i = 0; i < debugLogging.Length; i++)
                 {
                     bool catEnabled = debugLogging[i];
-                    result.AddField(string.Format("Debug {0}", ((DebugCategories)i).ToString().PadRight(12)), catEnabled ? "```Enabled```" : "```Disabled```");
+                    result.AddField(string.Format("Debug {0}", ((DebugCategories)i).ToString().PadRight(12)), catEnabled ? "`Enabled`" : "`Disabled`");
                 }
-                result.AddField("Debug Channel", Macros.MultiLineCodeBlock(DebugMessageChannelId));
-                result.AddField("Welcoming Channel", Macros.MultiLineCodeBlock(WelcomeMessageChannelId));
-                result.AddField("Moderator Role", Macros.MultiLineCodeBlock(ModeratorRole));
-                result.AddField("Escort Pilot Role", Macros.MultiLineCodeBlock(PilotRole));
-                result.AddField("Mission Category", Macros.MultiLineCodeBlock(MissionSettingsModel.MissionCategoryId));
+                result.AddField("Debug Channel", Macros.InlineCodeBlock(DebugMessageChannelId));
+                result.AddField("Welcoming Channel", Macros.InlineCodeBlock(WelcomeMessageChannelId));
+                result.AddField("Mission Category", Macros.InlineCodeBlock(MissionSettingsModel.MissionCategoryId));
+                result.AddField("Moderator Role", Macros.InlineCodeBlock(ModeratorRole));
+                result.AddField("Escort Pilot Role", Macros.InlineCodeBlock(PilotRole));
+                result.AddField("Bot Dev Role", Macros.InlineCodeBlock(BotDevRole));
             return result;
             }
         }

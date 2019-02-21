@@ -96,7 +96,7 @@ namespace Ciridium
                 "    <AccessLevel>\n" +
                 "Which of the access levels you want to assign a role to. Available are 'pilot', 'botdev' & 'moderator'\n" +
                 "    <@Role>\n" +
-                "Ping the role here that you want to give the access level. Can alternatively be the uInt64 Id of the role";
+                "Specify the role that you want to assign, either by mention or as uInt64 Id";
 
         private async Task HandleSetRoleCommand(CommandContext context)
         {
@@ -187,7 +187,7 @@ namespace Ciridium
                 "    <Channel>\n" +
                 "Which default channel setting you wish to override. Available are 'debug', 'welcoming' & 'missioncategory'\n" +
                 "    <ChannelId>\n" +
-                "The uInt64 Id of the subject channel. Get Ids by using '/debug channels'";
+                "Specify the channel you want to assign either by mention, as uInt64 Id or by the keyword 'this'";
 
         /// <summary>
         /// handles the "/settings channel" command

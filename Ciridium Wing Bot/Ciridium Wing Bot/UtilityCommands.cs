@@ -264,7 +264,8 @@ namespace Ciridium
                         EmbedBuilder embedmessage = new EmbedBuilder();
                         embedmessage.Color = Var.BOTCOLOR;
                         embedmessage.Title = string.Format("Help for command `/{0}`", cmd.Key.KeyList);
-                        embedmessage.AddField("Description", Macros.MultiLineCodeBlock(cmd.Summary));
+                        embedmessage.AddField("Description", cmd.Summary);
+                        embedmessage.AddField("Required Access Level", cmd.AccessLevel.ToString());
                         embedmessage.AddField("Syntax", Macros.MultiLineCodeBlock(cmd.Syntax));
                         if (!cmd.ArgumentHelp.Equals(Command.NO_ARGUMENTS))
                         {

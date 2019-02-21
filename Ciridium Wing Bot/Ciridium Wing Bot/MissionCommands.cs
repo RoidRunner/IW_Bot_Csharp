@@ -145,11 +145,11 @@ namespace Ciridium
                     SocketTextChannel channel = context.Guild.GetTextChannel(missionchannel);
                     if (channel != null)
                     {
-                        embed.Add(new EmbedField(Macros.CodeBlock(missionchannel), channel.Mention));
+                        embed.Add(new EmbedField(Macros.InlineCodeBlock(missionchannel), channel.Mention));
                     }
                     else
                     {
-                        embed.Add(new EmbedField(Macros.CodeBlock(missionchannel), "Could not find mission channel!"));
+                        embed.Add(new EmbedField(Macros.InlineCodeBlock(missionchannel), "Could not find mission channel!"));
                     }
                 }
                 await context.Channel.SendSafeEmbedList("**__Currently active mission channels__**", embed);

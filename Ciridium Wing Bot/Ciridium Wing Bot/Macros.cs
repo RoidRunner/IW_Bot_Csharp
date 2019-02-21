@@ -8,7 +8,7 @@ namespace Ciridium
     static class Macros
     {
         private const string CODEBLOCKBASESTRING = "``````";
-        private const string CODEBASESTRING = "``";
+        private const string INLINECODEBLOCKBASESTRING = "``";
         private const string FATBASESTRING = "****";
 
         public static string MultiLineCodeBlock(object input)
@@ -16,9 +16,9 @@ namespace Ciridium
             return CODEBLOCKBASESTRING.Insert(3, input.ToString());
         }
 
-        public static string CodeBlock(object input)
+        public static string InlineCodeBlock(object input)
         {
-            return CODEBASESTRING.Insert(1, input.ToString());
+            return INLINECODEBLOCKBASESTRING.Insert(1, input.ToString());
         }
 
         public static string Fat(object input)
