@@ -11,10 +11,8 @@ namespace Ciridium
         public static ulong MissionCategoryId;
 
         private static int lastMissionNumber;
-        public static string DefaultTopic;
-        public static string ExplorerQuestions;
-
-        public static TextChannelProperties ChannelPropertiesTemplate;
+        public static string DefaultTopic = "NO DEFAULT TOPIC SET. USE '/settings missiontopic' TO SET ONE!";
+        public static string ExplorerQuestions = "NO EXPLORER QUESTION MESSAGE SET. USE '/settings explorerquestions' TO SET ONE! GONNA ALSO PING EXPLORERS FOR YA: {0}";
 
         public static int NextMissionNumber
         {
@@ -28,27 +26,15 @@ namespace Ciridium
             }
         }
 
-        public static OverwritePermissions EveryonePerms { get; private set; }
         public static OverwritePermissions ExplorerPerms { get; private set; }
 
         private static void InitPermissionsAndDefaultChannelProperties()
         {
-            EveryonePerms = new OverwritePermissions(readMessages: PermValue.Deny, sendMessages: PermValue.Deny);
             ExplorerPerms = new OverwritePermissions(readMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, sendMessages: PermValue.Allow, embedLinks: PermValue.Allow, attachFiles: PermValue.Allow);
-
-            ChannelPropertiesTemplate = new TextChannelProperties
-            {
-                CategoryId = MissionCategoryId,
-                Topic = DefaultTopic
-            };
         }
 
-        public static async Task Init()
+        static MissionSettingsModel()
         {
-            lastMissionNumber = 0;
-            DefaultTopic = "NO DEFAULT TOPIC SET. USE '/settings missiontopic' TO SET ONE!";
-            ExplorerQuestions = "NO EXPLORER QUESTION MESSAGE SET. USE '/settings explorerquestions' TO SET ONE! GONNA ALSO PING EXPLORERS FOR YA: {0}";
-            await LoadMissionSettings();
             InitPermissionsAndDefaultChannelProperties();
         }
 
@@ -61,21 +47,24 @@ namespace Ciridium
 
         public static async Task LoadMissionSettings()
         {
-            JSONObject json = await ResourcesModel.LoadToJSONObject(ResourcesModel.Path + @"MissionSettings.json");
-            json.GetField(ref lastMissionNumber, JSON_MISSIONNUMBER);
-            string text = "";
-            string jMissionCategoryID = "";
-            json.GetField(ref jMissionCategoryID, JSON_MISSIONCATEGORYID);
-            ulong.TryParse(jMissionCategoryID, out MissionCategoryId);
-            if (json.GetField(ref text, JSON_DEFAULTTOPIC))
+            LoadFileOperation operation = await ResourcesModel.LoadToJSONObject(ResourcesModel.MissionSettingsFilePath);
+            if (operation.Success)
             {
-                DefaultTopic = text;
+                JSONObject json = operation.Result;
+                json.GetField(ref lastMissionNumber, JSON_MISSIONNUMBER);
+                string text = "";
+                string jMissionCategoryID = "";
+                json.GetField(ref jMissionCategoryID, JSON_MISSIONCATEGORYID);
+                ulong.TryParse(jMissionCategoryID, out MissionCategoryId);
+                if (json.GetField(ref text, JSON_DEFAULTTOPIC))
+                {
+                    DefaultTopic = text;
+                }
+                if (json.GetField(ref text, JSON_EXPLORERQUESTIONS))
+                {
+                    ExplorerQuestions = text;
+                }
             }
-            if (json.GetField(ref text, JSON_EXPLORERQUESTIONS))
-            {
-                ExplorerQuestions = text;
-            }
-
         }
 
         public static async Task SaveMissionSettings()
@@ -85,7 +74,7 @@ namespace Ciridium
             json.AddField(JSON_MISSIONCATEGORYID, MissionCategoryId.ToString());
             json.AddField(JSON_DEFAULTTOPIC, DefaultTopic);
             json.AddField(JSON_EXPLORERQUESTIONS, ExplorerQuestions);
-            await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.Path + @"MissionSettings.json", json);
+            await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.MissionSettingsFilePath, json);
         }
 
         #endregion

@@ -7,6 +7,8 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 
+// dotnet publish -c Release -r win10-x64
+
 public static class Var
 {
     /// <summary>
@@ -23,6 +25,7 @@ public static class Var
     internal static Ciridium.CommandService cmdService;
     internal static readonly Color BOTCOLOR = new Color(71, 71, 255);
     internal static readonly Color ERRORCOLOR = new Color(255, 0, 0);
+    internal static string RestartPath = string.Empty;
 }
 
 public class Program
@@ -36,19 +39,34 @@ public class Program
     /// <returns></returns>
     public async Task MainAsync()
     {
-        await ResourcesModel.Init();
-        await MissionSettingsModel.Init();
-        await MissionModel.Init();
-
         Var.client = new DiscordSocketClient(new DiscordSocketConfig
         {
             LogLevel = LogSeverity.Info
         });
 
-        Var.client.Log += Logger;
-
-        if (await SettingsModel.Init(Var.client))
+        bool filesExist = false;
+        bool foundToken = false;
+        if (ResourcesModel.CheckSettingsFilesExistence())
         {
+            filesExist = true;
+            if (await SettingsModel.LoadSettingsAndCheckToken(Var.client))
+            {
+                foundToken = true;
+            }
+        }
+
+        if (foundToken)
+        {
+            await MissionSettingsModel.LoadMissionSettings();
+            await MissionModel.LoadMissions();
+
+            Var.client = new DiscordSocketClient(new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Info
+            });
+
+            Var.client.Log += Logger;
+
             SettingsModel.DebugMessage += Logger;
             TimingThread.Init(Var.client);
             InitCommands();
@@ -56,6 +74,7 @@ public class Program
             Var.client.UserJoined += HandleUserJoined;
             Var.client.UserLeft += HandleUserLeft;
             Var.client.Connected += ScheduleConnectDebugMessage;
+            //Var.client.Connected += SendConnectDebugMessage;
 
             await Var.client.LoginAsync(TokenType.Bot, SettingsModel.token);
             await Var.client.StartAsync();
@@ -66,6 +85,38 @@ public class Program
             {
                 await Task.Delay(100);
             }
+
+            if (string.IsNullOrEmpty(Var.RestartPath))
+            {
+                await SettingsModel.SendDebugMessage("Shutting down ...", DebugCategories.misc);
+            }
+            else
+            {
+                await SettingsModel.SendDebugMessage("Restarting ...", DebugCategories.misc);
+            }
+
+            Var.client.Dispose();
+        }
+        else
+        {
+            if (!filesExist)
+            {
+                await Logger(new LogMessage(LogSeverity.Critical, "SETTINGS", string.Format("Could not find config files! Standard directory is \"{0}\".\nReply with 'y' if you want to generate basic files now!", ResourcesModel.BaseDirectory)));
+                if (Console.ReadLine().ToCharArray()[0] == 'y')
+                {
+                    await ResourcesModel.InitiateBasicFiles();
+                }
+            }
+            else
+            {
+                await Logger(new LogMessage(LogSeverity.Critical, "SETTINGS", string.Format("Could not find a valid token in Settings file ({0}). Press any key to exit!", ResourcesModel.SettingsFilePath)));
+                Console.ReadLine();
+            }
+        }
+
+        if (!string.IsNullOrEmpty(Var.RestartPath))
+        {
+            System.Diagnostics.Process.Start(Var.RestartPath);
         }
     }
 

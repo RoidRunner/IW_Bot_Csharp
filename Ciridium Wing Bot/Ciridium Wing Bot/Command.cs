@@ -10,12 +10,27 @@ namespace Ciridium
     internal struct Command
     {
         public const string NO_ARGUMENTS = "None";
+        public readonly bool async;
 
         public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp)
         {
+            async = true;
             Key = key;
             AccessLevel = accessLevel;
             HandleCommand = handleCommand;
+            HandleSynchronousCommand = null;
+            Summary = summary;
+            Syntax = syntax;
+            ArgumentHelp = argumentHelp;
+        }
+
+        public Command(CommandKeys key, AccessLevel accessLevel, HandleSynchronousCommand handleCommand, string summary, string syntax, string argumentHelp)
+        {
+            async = false;
+            Key = key;
+            AccessLevel = accessLevel;
+            HandleCommand = null;
+            HandleSynchronousCommand = handleCommand;
             Summary = summary;
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
@@ -24,6 +39,7 @@ namespace Ciridium
         internal CommandKeys Key { get; private set; }
         internal AccessLevel AccessLevel { get; private set; }
         internal HandleCommand HandleCommand { get; private set; }
+        internal HandleSynchronousCommand HandleSynchronousCommand { get; private set; }
         internal string Summary { get; private set; }
         internal string Syntax { get; private set; }
         internal string ArgumentHelp { get; private set; }
@@ -36,6 +52,7 @@ namespace Ciridium
     }
 
     internal delegate Task HandleCommand(CommandContext context);
+    internal delegate void HandleSynchronousCommand(CommandContext context);
 
     internal struct CommandKeys
     {
@@ -67,7 +84,8 @@ namespace Ciridium
             if (checkCnt > MaxArgCnt || checkCnt < FixedArgCnt)
             {
                 return false;
-            } else
+            }
+            else
             {
                 bool allKeysMatch = true;
                 for (int i = 0; i < Keys.Length; i++)
@@ -118,7 +136,7 @@ namespace Ciridium
         }
 
         internal CommandContext(DiscordSocketClient client, SocketUserMessage msg) : base(client, msg)
-        { 
+        {
             Args = msg.Content.Split(" ");
             Args[0] = Args[0].Substring(1);
             ArgCnt = Args.Length;

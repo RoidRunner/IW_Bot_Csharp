@@ -14,8 +14,6 @@ namespace Ciridium
     /// </summary>
     static class SettingsModel
     {
-        private static DiscordSocketClient client;
-
         /// <summary>
         /// The bot token used to log into discord
         /// </summary>
@@ -45,15 +43,18 @@ namespace Ciridium
         /// </summary>
         public static string welcomingMessage = "Hi {0}";
 
+        static SettingsModel()
+        {
+            botAdminIDs = new List<ulong>();
+        }
+
         /// <summary>
         /// Initializes variables, loads settings and checks if loading was successful
         /// </summary>
         /// <param name="nclient"></param>
         /// <returns>False if loading of the critical variables (bottoken, botadminIDs) fails</returns>
-        public static async Task<bool> Init(DiscordSocketClient nclient)
+        public static async Task<bool> LoadSettingsAndCheckToken(DiscordSocketClient nclient)
         {
-            client = nclient;
-            botAdminIDs = new List<ulong>();
             await loadSettings();
             return token != null && botAdminIDs.Count > 0;
         }
@@ -75,49 +76,53 @@ namespace Ciridium
         /// <returns></returns>
         private static async Task loadSettings()
         {
-            JSONObject json = await ResourcesModel.LoadToJSONObject(ResourcesModel.Path + @"Settings.json");
-            if (json.GetField(ref token, JSON_BOTTOKEN) && json.HasField(JSON_ADMINIDS))
+            LoadFileOperation operation = await ResourcesModel.LoadToJSONObject(ResourcesModel.SettingsFilePath);
+            if (operation.Success)
             {
-                JSONObject botadmins = json[JSON_ADMINIDS];
-                if (botadmins.IsArray && botadmins.list != null)
+                JSONObject json = operation.Result;
+                if (json.GetField(ref token, JSON_BOTTOKEN) && json.HasField(JSON_ADMINIDS))
                 {
-                    foreach (var admin in botadmins.list)
+                    JSONObject botadmins = json[JSON_ADMINIDS];
+                    if (botadmins.IsArray && botadmins.list != null)
                     {
-                        ulong nID;
-                        if (ulong.TryParse(admin.str, out nID))
+                        foreach (var admin in botadmins.list)
                         {
-                            botAdminIDs.Add(nID);
+                            ulong nID;
+                            if (ulong.TryParse(admin.str, out nID))
+                            {
+                                botAdminIDs.Add(nID);
+                            }
                         }
                     }
-                }
-                if (json.HasField(JSON_ENABLEDEBUG))
-                {
-                    JSONObject debugSettings = json[JSON_ENABLEDEBUG];
-                    if (debugSettings.IsArray)
+                    if (json.HasField(JSON_ENABLEDEBUG))
                     {
-                        for (int i = 0; i < debugSettings.list.Count; i++)
+                        JSONObject debugSettings = json[JSON_ENABLEDEBUG];
+                        if (debugSettings.IsArray)
                         {
-                            debugLogging[i] = debugSettings.list[i].b;
+                            for (int i = 0; i < debugSettings.list.Count; i++)
+                            {
+                                debugLogging[i] = debugSettings.list[i].b;
+                            }
                         }
                     }
-                }
-                string id = "";
-                if (json.GetField(ref id, JSON_DEBUGCHANNEL))
-                {
-                    ulong.TryParse(id, out DebugMessageChannelId);
-                }
-                if (json.GetField(ref id, JSON_WELCOMINGCHANNEL))
-                {
-                    ulong.TryParse(id, out WelcomeMessageChannelId);
-                }
-                json.GetField(ref welcomingMessage, JSON_WELCOMINGMESSAGE);
-                if (json.GetField(ref id, JSON_MODERATORROLE))
-                {
-                    ulong.TryParse(id, out moderatorRole);
-                }
-                if (json.GetField(ref id, JSON_PILOTROLE))
-                {
-                    ulong.TryParse(id, out pilotRole);
+                    string id = "";
+                    if (json.GetField(ref id, JSON_DEBUGCHANNEL))
+                    {
+                        ulong.TryParse(id, out DebugMessageChannelId);
+                    }
+                    if (json.GetField(ref id, JSON_WELCOMINGCHANNEL))
+                    {
+                        ulong.TryParse(id, out WelcomeMessageChannelId);
+                    }
+                    json.GetField(ref welcomingMessage, JSON_WELCOMINGMESSAGE);
+                    if (json.GetField(ref id, JSON_MODERATORROLE))
+                    {
+                        ulong.TryParse(id, out moderatorRole);
+                    }
+                    if (json.GetField(ref id, JSON_PILOTROLE))
+                    {
+                        ulong.TryParse(id, out pilotRole);
+                    }
                 }
             }
         }
@@ -126,7 +131,7 @@ namespace Ciridium
         {
             if (WelcomeMessageChannelId != 0)
             {
-                ISocketMessageChannel channel = client.GetChannel(WelcomeMessageChannelId) as ISocketMessageChannel;
+                ISocketMessageChannel channel = Var.client.GetChannel(WelcomeMessageChannelId) as ISocketMessageChannel;
                 if (channel != null)
                 {
                     //await channel.SendMessageAsync(string.Format(welcomingMessage, user.Mention));
@@ -163,7 +168,7 @@ namespace Ciridium
 
 
 
-            await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.Path + "Settings.json", json);
+            await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.SettingsFilePath, json);
         }
 
         #endregion
@@ -210,7 +215,7 @@ namespace Ciridium
             }
             if (debugLogging[(int)category] && DebugMessageChannelId != 0)
             {
-                ISocketMessageChannel channel = client.GetChannel(DebugMessageChannelId) as ISocketMessageChannel;
+                ISocketMessageChannel channel = Var.client.GetChannel(DebugMessageChannelId) as ISocketMessageChannel;
                 if (channel != null)
                 {
                     EmbedBuilder debugembed = new EmbedBuilder();

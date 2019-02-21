@@ -169,11 +169,11 @@ namespace Ciridium
         public ShutdownCommand(CommandService service)
         {
             // shutdown
-            Var.cmdService.AddCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
+            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
             // kys
-            Var.cmdService.AddCommand(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS);
+            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS);
             // restart
-            Var.cmdService.AddCommand(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Moderator, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS);
+            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Moderator, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS);
         }
 
         #region /shutdown
@@ -184,9 +184,8 @@ namespace Ciridium
         private const string CMDSYNTAX_SHUTDOWN_ALT = "/kys";
         private const string CMDSUMMARY_SHUTDOWN = "Shuts down the bot";
 
-        public async Task HandleShutdownCommand(SocketCommandContext context)
+        public void HandleShutdownCommand(SocketCommandContext context)
         {
-            await context.Channel.SendEmbedAsync("Shutting down ...");
             Var.running = false;
         }
 
@@ -197,14 +196,13 @@ namespace Ciridium
         private const string CMDSYNTAX_RESTART = "/restart";
         private const string CMDSUMMARY_RESTART = "Restarts the bot";
 
-        public async Task HandleRestartCommand(SocketCommandContext context)
+        public void HandleRestartCommand(SocketCommandContext context)
         {
-            if (SettingsModel.UserIsBotAdmin(context.User.Id))
-            {
-                await context.Channel.SendEmbedAsync("Restarting ... " + Environment.CurrentDirectory);
-                System.Diagnostics.Process.Start(Environment.CurrentDirectory);
-                Var.running = false;
-            }
+            //await context.Channel.SendEmbedAsync("Restarting ..."
+            //    //+ "```\n" + Environment.CurrentDirectory + "\n\n" + System.Reflection.Assembly.GetEntryAssembly().Location + "\n\n" + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + "```"
+            //    );
+            Var.RestartPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            Var.running = false;
         }
 
         #endregion

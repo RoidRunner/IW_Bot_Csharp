@@ -8,35 +8,57 @@ namespace Ciridium
 {
     static class ResourcesModel
     {
-        public static string Path { get; private set; }
+        public static readonly string BaseDirectory;
+        public static readonly string SettingsFilePath;
+        public static readonly string MissionSettingsFilePath;
+        public static readonly string MissionsFilePath;
 
-        public static Task Init()
+        static ResourcesModel()
         {
-            Path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\Ciridium Wing Bot\";
-            return Task.CompletedTask;
+            BaseDirectory = Environment.CurrentDirectory + @"\Settings\";
+            SettingsFilePath = BaseDirectory + "Settings.json";
+            MissionSettingsFilePath = BaseDirectory + "MissionSettings.json";
+            MissionsFilePath = BaseDirectory + "Missions.json";
         }
 
+        public static bool CheckSettingsFilesExistence()
+        {
+            return File.Exists(SettingsFilePath) && File.Exists(MissionSettingsFilePath);
+        }
 
-        #region Save/Load Constants
-        #endregion
+        public static async Task InitiateBasicFiles()
+        {
+            Directory.CreateDirectory(BaseDirectory);
+            await SettingsModel.SaveSettings();
+            await MissionSettingsModel.SaveMissionSettings();
+            await MissionModel.SaveMissions();
+        }
+
         #region Save/Load
 
-        public static async Task<JSONObject> LoadToJSONObject(string path)
+        public static async Task<LoadFileOperation> LoadToJSONObject(string path)
         {
+            LoadFileOperation operation = new LoadFileOperation()
+            {
+                Success = false,
+                Result = null
+            };
             if (File.Exists(path))
             {
                 string fileContent = "";
                 try
                 {
                     fileContent = await File.ReadAllTextAsync(path, Encoding.UTF8);
-                    return new JSONObject(fileContent);
+                    operation.Result = new JSONObject(fileContent);
+                    operation.Success = true;
+                    return operation;
                 }
                 catch (Exception e)
                 {
                     await Program.Logger(new Discord.LogMessage(Discord.LogSeverity.Critical, "Save/Load", "Failed to load " + path, e));
                 }
             }
-            return null;
+            return operation;
         }
 
         public static async Task WriteJSONObjectToFile(string path, JSONObject json)
@@ -76,5 +98,11 @@ namespace Ciridium
         }
 
         #endregion
+    }
+
+    public struct LoadFileOperation
+    {
+        public bool Success;
+        public JSONObject Result;
     }
 }
