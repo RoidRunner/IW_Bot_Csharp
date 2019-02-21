@@ -1,8 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Ciridium
@@ -10,6 +8,7 @@ namespace Ciridium
     static class Macros
     {
         private const string CODEBLOCKBASESTRING = "``````";
+        private const string CODEBASESTRING = "``";
         private const string FATBASESTRING = "****";
 
         public static string MultiLineCodeBlock(object input)
@@ -17,9 +16,14 @@ namespace Ciridium
             return CODEBLOCKBASESTRING.Insert(3, input.ToString());
         }
 
-        public static string Fat(string input)
+        public static string CodeBlock(object input)
         {
-            return FATBASESTRING.Insert(2, input);
+            return CODEBASESTRING.Insert(1, input.ToString());
+        }
+
+        public static string Fat(object input)
+        {
+            return FATBASESTRING.Insert(2, input.ToString());
         }
 
         public async static Task<Discord.Rest.RestUserMessage> SendEmbedAsync(this ISocketMessageChannel channel, string message, bool error = false)
@@ -53,6 +57,51 @@ namespace Ciridium
         public async static Task<Discord.Rest.RestUserMessage> SendEmbedAsync(this ISocketMessageChannel channel, EmbedBuilder embed)
         {
             return await channel.SendMessageAsync(string.Empty, embed: embed.Build());
+        }
+
+        public async static Task SendSafeEmbedList(this ISocketMessageChannel channel, string title, List<EmbedField> embeds, string description = null)
+        {
+            List<EmbedBuilder> embedMessages = new List<EmbedBuilder>();
+            EmbedBuilder CurrentBuilder = null;
+            for (int i = 0; i < embeds.Count; i++)
+            {
+                if (i % 25 == 0)
+                {
+                    CurrentBuilder = new EmbedBuilder();
+                    CurrentBuilder.Color = Var.BOTCOLOR;
+                    CurrentBuilder.Title = title;
+                    if (!string.IsNullOrEmpty(description))
+                    {
+                        CurrentBuilder.Description = description;
+                    }
+                    embedMessages.Add(CurrentBuilder);
+                }
+
+                EmbedField embed = embeds[i];
+                if (CurrentBuilder != null)
+                {
+                    CurrentBuilder.AddField(embed.Title, embed.Value, embed.InLine);
+                }
+            }
+
+            foreach (EmbedBuilder embedMessage in embedMessages)
+            {
+                await channel.SendEmbedAsync(embedMessage);
+            }
+        }
+    }
+
+    public struct EmbedField
+    {
+        public string Title;
+        public object Value;
+        public bool InLine;
+
+        public EmbedField(string title, object value, bool inLine = false)
+        {
+            Title = title;
+            Value = value;
+            InLine = inLine;
         }
     }
 }

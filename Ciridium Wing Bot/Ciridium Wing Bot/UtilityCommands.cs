@@ -69,12 +69,8 @@ namespace Ciridium
 
         public async Task HandleListChannelsCommand(SocketCommandContext context)
         {
-            EmbedBuilder categoryembed = new EmbedBuilder();
-            categoryembed.Color = Var.BOTCOLOR;
-            categoryembed.Title = "**__Categories on this server__**";
-            EmbedBuilder channelembed = new EmbedBuilder();
-            channelembed.Color = Var.BOTCOLOR;
-            channelembed.Title = "**__Channels on this server__**";
+            List<EmbedField> categoryembed = new List<EmbedField>();
+            List<EmbedField> channelembed = new List<EmbedField>();
 
             List<SocketGuildChannel> channels = new List<SocketGuildChannel>(context.Guild.Channels);
             List<SocketCategoryChannel> categories = new List<SocketCategoryChannel>(context.Guild.CategoryChannels);
@@ -85,7 +81,7 @@ namespace Ciridium
                 if (category != null)
                 {
                     categoryIds.Add(category.Id);
-                    categoryembed.AddField(category.Name, string.Format("ID: `{0}`", category.Id));
+                    categoryembed.Add(new EmbedField(category.Name, string.Format("ID: `{0}`", category.Id)));
                 }
             }
 
@@ -95,13 +91,13 @@ namespace Ciridium
                 {
                     if (!categoryIds.Contains(channel.Id))
                     {
-                        channelembed.AddField(channel.Name, string.Format("ID: `{0}`", channel.Id));
+                        channelembed.Add(new EmbedField(channel.Name, string.Format("ID: `{0}`", channel.Id)));
                     }
                 }
             }
 
-            await context.Channel.SendEmbedAsync(categoryembed);
-            await context.Channel.SendEmbedAsync(channelembed);
+            await context.Channel.SendSafeEmbedList("**__Categories on this server__**", categoryembed);
+            await context.Channel.SendSafeEmbedList("**__Channels on this server__**", channelembed);
         }
 
         #endregion
@@ -113,9 +109,7 @@ namespace Ciridium
 
         public async Task HandleListRolesCommand(SocketCommandContext context)
         {
-            EmbedBuilder roleembed = new EmbedBuilder();
-            roleembed.Color = Var.BOTCOLOR;
-            roleembed.Title = "**__Roles on this server__**";
+            List<EmbedField> roleembed = new List<EmbedField>();
 
             var roles = context.Guild.Roles;
 
@@ -123,12 +117,12 @@ namespace Ciridium
             {
                 if (role != null)
                 {
-                    roleembed.AddField(role.Name, string.Format("ID: `{0}`", role.Id));
+                    roleembed.Add(new EmbedField(role.Name, string.Format("ID: `{0}`", role.Id)));
                 }
             }
 
 
-            await context.Channel.SendEmbedAsync(roleembed);
+            await context.Channel.SendSafeEmbedList("**__Roles on this server__**", roleembed);
         }
 
         #endregion

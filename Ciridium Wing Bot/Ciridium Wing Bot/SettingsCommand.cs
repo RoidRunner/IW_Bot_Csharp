@@ -94,31 +94,52 @@ namespace Ciridium
         private const string CMDSUMMARY_SETTINGS_ROLE = "Sets the pilot/moderator role used to handle access to bot commands";
         private const string CMDARGS_SETTINGS_ROLE =
                 "    <AccessLevel>\n" +
-                "Which of the access levels you want to assign a role to. Available are 'pilot' & 'moderator'\n" +
+                "Which of the access levels you want to assign a role to. Available are 'pilot', 'botdev' & 'moderator'\n" +
                 "    <@Role>\n" +
-                "Ping the role here that you want to give the access level";
+                "Ping the role here that you want to give the access level. Can alternatively be the uInt64 Id of the role";
 
         private async Task HandleSetRoleCommand(CommandContext context)
         {
-            List<SocketRole> roles = new List<SocketRole>();
-            roles.AddRange(context.Message.MentionedRoles);
+            ulong? roleId = null;
             string message = "";
             bool error = false;
-            switch (context.Args[2])
+
+            if (context.Message.MentionedRoles.Count > 0)
             {
-                case "pilot":
-                    SettingsModel.pilotRole = roles[0].Id;
-                    message = "Pilot Role updated!";
-                    break;
-                case "moderator":
-                    SettingsModel.moderatorRole = roles[0].Id;
-                    message = "Moderator Role updated!";
-                    break;
-                default:
-                    error = true;
-                    message = "Unknown Role Identifier";
-                    break;
+                roleId = new List<SocketRole>(context.Message.MentionedRoles)[0].Id;
+            } else if (ulong.TryParse(context.Args[3], out ulong parsedRoleId))
+            {
+                roleId = parsedRoleId;
             }
+            else
+            {
+                message = "Fourth argument must contain either a role mention or a RoleId!";
+                error = true;
+            }
+
+            if (roleId != null)
+            {
+                switch (context.Args[2])
+                {
+                    case "pilot":
+                        SettingsModel.PilotRole = (ulong)roleId;
+                        message = "Pilot Role set to " + context.Guild.GetRole((ulong)roleId).Mention;
+                        break;
+                    case "moderator":
+                        SettingsModel.ModeratorRole = (ulong)roleId;
+                        message = "Moderator Role set to " + context.Guild.GetRole((ulong)roleId).Mention;
+                        break;
+                    case "botdev":
+                        SettingsModel.BotDevRole = (ulong)roleId;
+                        message = "BotDev Role set to " + context.Guild.GetRole((ulong)roleId).Mention;
+                        break;
+                    default:
+                        error = true;
+                        message = "Unknown Role Identifier";
+                        break;
+                }
+            }
+
             if (!error)
             {
                 await SettingsModel.SaveSettings();
@@ -178,25 +199,41 @@ namespace Ciridium
         {
             string message = "";
             bool error = false;
-            ulong Id = 0;
-            if (ulong.TryParse(context.Args[3], out Id))
+            ulong? channelId = null;
+            if (ulong.TryParse(context.Args[3], out ulong Id))
+            {
+                channelId = Id;
+            } else if (context.Message.MentionedChannels.Count > 0)
+            {
+                channelId = new List<SocketGuildChannel>(context.Message.MentionedChannels)[0].Id;
+            } else if (context.Args[3].Equals("this"))
+            {
+                channelId = context.Channel.Id;
+            }
+            else
+            {
+                error = true;
+                message = "Cannot Parse the supplied Id as an uInt64 Value!";
+            }
+
+            if (channelId != null)
             {
                 switch (context.Args[2])
                 {
                     case "debug":
-                        SettingsModel.DebugMessageChannelId = Id;
+                        SettingsModel.DebugMessageChannelId = (ulong)channelId;
                         await SettingsModel.SaveSettings();
-                        message = "Debug channel successfully set to " + Var.client.GetChannel(Id).ToString();
+                        message = "Debug channel successfully set to " + context.Guild.GetChannel((ulong)channelId).Name;
                         break;
                     case "welcoming":
-                        SettingsModel.WelcomeMessageChannelId = Id;
+                        SettingsModel.WelcomeMessageChannelId = (ulong)channelId;
                         await SettingsModel.SaveSettings();
-                        message = "Welcoming channel successfully set to " + Var.client.GetChannel(Id).ToString();
+                        message = "Welcoming channel successfully set to " + context.Guild.GetChannel((ulong)channelId).Name;
                         break;
                     case "missioncategory":
-                        MissionSettingsModel.MissionCategoryId = Id;
+                        MissionSettingsModel.MissionCategoryId = (ulong)channelId;
                         await MissionSettingsModel.SaveMissionSettings();
-                        message = "Mission category successfully set to " + Var.client.GetChannel(Id).ToString();
+                        message = "Mission category successfully set to " + context.Guild.GetChannel((ulong)channelId).Name;
                         break;
                     default:
                         error = true;
@@ -204,11 +241,7 @@ namespace Ciridium
                         break;
                 }
             }
-            else
-            {
-                error = true;
-                message = "Cannot Parse the supplied Id as an uInt64 Value!";
-            }
+
             if (!error)
             {
                 await SettingsModel.SaveSettings();

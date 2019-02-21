@@ -162,29 +162,35 @@ namespace Ciridium
 
         public async static void SendExceptionMessage(Exception e, CommandContext context, Command cmd)
         {
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.Color = Var.ERRORCOLOR;
-            embed.Title = string.Format("**__An Exception occured while trying to execute command __**`/{0}`", cmd.Key.KeyList);
-            embed.AddField("Message", Macros.MultiLineCodeBlock(e.Message));
-            string stacktrace;
-            if (e.StackTrace.Length <= 250)
+            await context.Channel.SendEmbedAsync("Something went horribly wrong trying to execute your command! I have contacted my creators to help fix this issue!", true);
+            ISocketMessageChannel channel = Var.client.GetChannel(SettingsModel.DebugMessageChannelId) as ISocketMessageChannel;
+            if (channel != null)
             {
-                stacktrace = e.StackTrace;
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.Color = Var.ERRORCOLOR;
+                embed.Title = "**__Exception__**";
+                embed.AddField("Command", cmd.Key.KeyList);
+                embed.AddField("Location", context.Guild.GetTextChannel(context.Channel.Id).Mention);
+                embed.AddField("Message", Macros.MultiLineCodeBlock(e.Message));
+                string stacktrace;
+                if (e.StackTrace.Length <= 500)
+                {
+                    stacktrace = e.StackTrace;
+                }
+                else
+                {
+                    stacktrace = e.StackTrace.Substring(0, 500);
+                }
+                embed.AddField("StackTrace", Macros.MultiLineCodeBlock(stacktrace));
+                string message = string.Empty;
+                SocketRole botDevRole = context.Guild.GetRole(SettingsModel.BotDevRole);
+                if (botDevRole != null)
+                {
+                    message = botDevRole.Mention;
+                }
+                await channel.SendMessageAsync(message, embed:embed.Build());
             }
-            else
-            {
-                stacktrace = e.StackTrace.Substring(0, 250);
-            }
-            embed.AddField("StackTrace", Macros.MultiLineCodeBlock(stacktrace));
-            await context.Channel.SendEmbedAsync(embed);
-#if PMSTACKTRACE
-            if (SettingsModel.botAdminIDs.Count > 0)
-            {
-                SocketGuildUser firstBotAdmin = context.Guild.GetUser(SettingsModel.botAdminIDs[0]);
-                await firstBotAdmin.SendMessageAsync(string.Format("**__An Exception occured while trying to execute command __**`/{0}`. \nMessage```{1}```StackTrace in next message!", cmd.Key.KeyList, e.Message));
-                await firstBotAdmin.SendMessageAsync(Macros.MultiLineCodeBlock(e.StackTrace));
-            }
-#endif
+            await Program.Logger(new LogMessage(LogSeverity.Error, "CMDSERVICE", string.Format("An Exception occured while trying to execute command `/{0}`.Message: '{1}'\nStackTrace {2}", cmd.Key.KeyList, e.Message, e.StackTrace)));
         }
     }
 

@@ -33,11 +33,15 @@ namespace Ciridium
         /// <summary>
         /// The ID of the moderator role
         /// </summary>
-        public static ulong moderatorRole = 0;
+        public static ulong ModeratorRole = 0;
         /// <summary>
         /// The ID of the pilot role
         /// </summary>
-        public static ulong pilotRole = 0;
+        public static ulong PilotRole = 0;
+        /// <summary>
+        /// The ID of the bot dev role (pinging on error messages)
+        /// </summary>
+        public static ulong BotDevRole = 0;
         /// <summary>
         /// The Formatting string for the Welcoming Message. {0} is replaced with the new users mention.
         /// </summary>
@@ -69,6 +73,7 @@ namespace Ciridium
         private const string JSON_WELCOMINGMESSAGE = "WelcomingMessage";
         private const string JSON_PILOTROLE = "PilotRole";
         private const string JSON_MODERATORROLE = "ModeratorRole";
+        private const string JSON_BOTDEVROLE = "BotDevRole";
 
         /// <summary>
         /// Loads and applies Settings from appdata/locallow/Ciridium Wing Bot/Settings.json
@@ -117,11 +122,15 @@ namespace Ciridium
                     json.GetField(ref welcomingMessage, JSON_WELCOMINGMESSAGE);
                     if (json.GetField(ref id, JSON_MODERATORROLE))
                     {
-                        ulong.TryParse(id, out moderatorRole);
+                        ulong.TryParse(id, out ModeratorRole);
                     }
                     if (json.GetField(ref id, JSON_PILOTROLE))
                     {
-                        ulong.TryParse(id, out pilotRole);
+                        ulong.TryParse(id, out PilotRole);
+                    }
+                    if (json.GetField(ref id, JSON_BOTDEVROLE))
+                    {
+                        ulong.TryParse(id, out BotDevRole);
                     }
                 }
             }
@@ -163,8 +172,9 @@ namespace Ciridium
             json.AddField(JSON_DEBUGCHANNEL, DebugMessageChannelId.ToString());
             json.AddField(JSON_WELCOMINGCHANNEL, WelcomeMessageChannelId.ToString());
             json.AddField(JSON_WELCOMINGMESSAGE, welcomingMessage);
-            json.AddField(JSON_MODERATORROLE, moderatorRole.ToString());
-            json.AddField(JSON_PILOTROLE, pilotRole.ToString());
+            json.AddField(JSON_MODERATORROLE, ModeratorRole.ToString());
+            json.AddField(JSON_PILOTROLE, PilotRole.ToString());
+            json.AddField(JSON_BOTDEVROLE, BotDevRole.ToString());
 
 
 
@@ -196,8 +206,8 @@ namespace Ciridium
                 }
                 result.AddField("Debug Channel", Macros.MultiLineCodeBlock(DebugMessageChannelId));
                 result.AddField("Welcoming Channel", Macros.MultiLineCodeBlock(WelcomeMessageChannelId));
-                result.AddField("Moderator Role", Macros.MultiLineCodeBlock(moderatorRole));
-                result.AddField("Escort Pilot Role", Macros.MultiLineCodeBlock(pilotRole));
+                result.AddField("Moderator Role", Macros.MultiLineCodeBlock(ModeratorRole));
+                result.AddField("Escort Pilot Role", Macros.MultiLineCodeBlock(PilotRole));
                 result.AddField("Mission Category", Macros.MultiLineCodeBlock(MissionSettingsModel.MissionCategoryId));
             return result;
             }
@@ -272,11 +282,11 @@ namespace Ciridium
             bool hasPilotRole = false;
             foreach (var role in user.Roles)
             {
-                if (role.Id == moderatorRole)
+                if (role.Id == ModeratorRole)
                 {
                     return AccessLevel.Moderator;
                 }
-                else if (role.Id == pilotRole)
+                else if (role.Id == PilotRole)
                 {
                     hasPilotRole = true;
                 }
