@@ -128,11 +128,19 @@ namespace Ciridium
     {
         internal string[] Args { get; private set; }
         internal int ArgCnt { get; private set; }
+        internal AccessLevel UserLevel { get; private set; }
 
         internal CommandContext(DiscordSocketClient client, SocketUserMessage msg, string[] args) : base(client, msg)
         {
             Args = args;
             ArgCnt = args.Length;
+        }
+
+        internal CommandContext(DiscordSocketClient client, SocketUserMessage msg, string[] args, AccessLevel userLevel) : base(client, msg)
+        {
+            Args = args;
+            ArgCnt = args.Length;
+            UserLevel = userLevel;
         }
 
         internal CommandContext(DiscordSocketClient client, SocketUserMessage msg) : base(client, msg)
