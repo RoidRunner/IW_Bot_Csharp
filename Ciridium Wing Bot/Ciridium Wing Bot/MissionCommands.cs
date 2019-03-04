@@ -15,6 +15,8 @@ namespace Ciridium
         {
             // createmission
             service.AddCommand(new CommandKeys(CMDKEYS_CREATEMISSION, 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, CMDSUMMARY_CREATEMISSION, CMDSYNTAX_CREATEMISSION, CMDARGS_CREATEMISSION);
+            // enlistmission
+            service.AddCommand(new CommandKeys(CMDKEYS_ENLISTMISSION, 2, 2), HandleEnlistMissionCommand, AccessLevel.Moderator, CMDSUMMARY_ENLISTMISSION, CMDSYNTAX_ENLISTMISSION, CMDARGS_ENLISTMISSION);
             // closemission
             service.AddCommand(new CommandKeys(CMDKEYS_CLOSEMISSION, 2, 2), HandleCloseMissionCommand, AccessLevel.Moderator, CMDSUMMARY_CLOSEMISSION, CMDSYNTAX_CLOSEMISSION, CMDARGS_CLOSEMISSION);
             // unlistmission
@@ -36,9 +38,86 @@ namespace Ciridium
 
         public async Task HandleCreateRoomCommand(CommandContext context)
         {
-            RestTextChannel NewMissionChannel =
-            await MissionModel.CreateMission(context.Args[1], context.Message.MentionedUsers, context.Guild, context.User);
-            await context.Channel.SendEmbedAsync("Successfully created new Mission. Check it out: " + NewMissionChannel.Mention);
+            if (context.Message.MentionedUsers.Count > 0)
+            {
+                RestTextChannel NewMissionChannel =
+                await MissionModel.CreateMission(context.Args[1], context.Message.MentionedUsers, context.Guild, context.User);
+                await context.Channel.SendEmbedAsync("Successfully created new Mission. Check it out: " + NewMissionChannel.Mention);
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("You need to mention explorers (Example: @Explorer#0001)!");
+            }
+        }
+
+        #endregion
+        #region /enlistmission
+
+        private const string CMDKEYS_ENLISTMISSION = "enlistmission";
+        private const string CMDSYNTAX_ENLISTMISSION = "/enlistmission <ChannelId>";
+        private const string CMDSUMMARY_ENLISTMISSION = "Adds an unlisted channel to the list of mission rooms";
+        private const string CMDARGS_ENLISTMISSION =
+                "    <ChannelId>\n" +
+                "Either a uInt64 channel Id, a channel mention or 'this' (for current channel) that marks the mission channel to be added to the missions list";
+
+        public async Task HandleEnlistMissionCommand(CommandContext context)
+        {
+            bool isError = true;
+            string message;
+
+            ulong? channelId = null;
+            if (context.Args[1].Equals("this"))
+            {
+                channelId = context.Channel.Id;
+            }
+            else if (context.Message.MentionedChannels.Count > 0)
+            {
+                channelId = new List<SocketGuildChannel>(context.Message.MentionedChannels)[0].Id;
+            }
+            else if (ulong.TryParse(context.Args[1], out ulong parsedChannelId))
+            {
+                channelId = parsedChannelId;
+            }
+            if (channelId != null)
+            {
+                if (!MissionModel.missionList.Contains((ulong)channelId))
+                {
+                    SocketTextChannel channel = context.Guild.GetTextChannel((ulong)channelId);
+                    if (channel != null)
+                    {
+                        if (channel.CategoryId == MissionSettingsModel.MissionCategoryId)
+                        {
+                            if (channel.Name.StartsWith("mission_"))
+                            {
+                                isError = false;
+                                MissionModel.missionList.Add((ulong)channelId);
+                                message = string.Format("Added channel {0} (ID: `{1}`) to the mission list.", channel.Mention, (ulong)channelId);
+                            }
+                            else
+                            {
+                                message = "The mission channels name must start with `mission_`!";
+                            }
+                        }
+                        else
+                        {
+                            message = "The mission channel must be under the mission category!";
+                        }
+                    }
+                    else
+                    {
+                        message = string.Format("Could not find a channel with ID `{0}`!", (ulong)channelId);
+                    }
+                }
+                else
+                {
+                    message = "The mission list already contains this mission!";
+                }
+            }
+            else
+            {
+                message = "Second argument must specify a channel!";
+            }
+            await context.Channel.SendEmbedAsync(message, isError);
         }
 
         #endregion
@@ -75,7 +154,7 @@ namespace Ciridium
                     await MissionModel.DeleteMission((ulong)channelId, context.Guild.Id);
                     if ((ulong)channelId != context.Channel.Id)
                     {
-                        await context.Channel.SendEmbedAsync("Successfully deleted mission channel!", true);
+                        await context.Channel.SendEmbedAsync("Successfully deleted mission channel!", false);
                     }
                     await SettingsModel.SendDebugMessage(string.Format("Closed mission {0}", channelname), DebugCategories.missions);
                 }
@@ -113,7 +192,8 @@ namespace Ciridium
                     await MissionModel.SaveMissions();
                     message = string.Format("Successfully removed mission `{0}` from missionlist!", context.Args[1]);
                     error = false;
-                } else
+                }
+                else
                 {
                     message = string.Format("Could not find mission Id `{0}` in missionlist!", context.Args[1]);
                 }
@@ -137,7 +217,8 @@ namespace Ciridium
             if (MissionModel.missionList.Count == 0)
             {
                 await context.Channel.SendEmbedAsync("No missions active!");
-            } else
+            }
+            else
             {
                 List<EmbedField> embed = new List<EmbedField>();
                 foreach (ulong missionchannel in MissionModel.missionList)

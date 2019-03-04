@@ -198,6 +198,7 @@ namespace Ciridium
     {
         Basic,
         Pilot,
+        //Dispatch,
         Moderator,
         BotAdmin
     }
