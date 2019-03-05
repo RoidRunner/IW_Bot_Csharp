@@ -49,16 +49,36 @@ namespace Ciridium
         {
             return Syntax;
         }
+
+        internal bool HasPermission(AccessLevel userlevel)
+        {
+            return userlevel >= AccessLevel;
+        }
     }
 
     internal delegate Task HandleCommand(CommandContext context);
     internal delegate void HandleSynchronousCommand(CommandContext context);
 
+    /// <summary>
+    /// Carries all info necessary to parse commands
+    /// </summary>
     internal struct CommandKeys
     {
+        /// <summary>
+        /// The fixed keywords identifying the command
+        /// </summary>
         internal string[] Keys { get; private set; }
+        /// <summary>
+        /// Count of fixed keywords
+        /// </summary>
         internal int FixedArgCnt { get; private set; }
+        /// <summary>
+        /// Minimal count of arguments the command requires to function
+        /// </summary>
         internal int MinArgCnt { get; private set; }
+        /// <summary>
+        /// Maximum count of arguments the command may take
+        /// </summary>
         internal int MaxArgCnt { get; private set; }
 
         internal CommandKeys(string key, int minArgCnt, int maxArgCnt)
@@ -124,6 +144,9 @@ namespace Ciridium
         }
     }
 
+    /// <summary>
+    /// Carries all info on the context a commmand is executed in
+    /// </summary>
     internal class CommandContext : SocketCommandContext
     {
         internal string[] Args { get; private set; }

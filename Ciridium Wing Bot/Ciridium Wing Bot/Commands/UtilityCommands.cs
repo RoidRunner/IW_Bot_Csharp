@@ -27,7 +27,7 @@ namespace Ciridium
 
         public async Task HandlePingCommand(CommandContext context)
         {
-            await context.Channel.SendEmbedAsync(string.Format("Hi {0}", context.User.Mention));
+            await context.Channel.SendEmbedAsync(context.User.Mention, "Hi!");
         }
 
         #endregion
@@ -147,6 +147,7 @@ namespace Ciridium
 
                 userembed.AddField("Discriminator", Macros.MultiLineCodeBlock(string.Format("{0}#{1}", user.Username, user.Discriminator)));
                 userembed.AddField("Mention", Macros.MultiLineCodeBlock(user.Mention));
+                userembed.AddField("Profile Picture URL", user.GetAvatarUrl());
                 if (user.IsBot || user.IsWebhook)
                 {
                     userembed.AddField("Add. Info", string.Format("```Bot: {0} Webhook: {1}```", user.IsBot, user.IsWebhook));
@@ -158,9 +159,9 @@ namespace Ciridium
         #endregion
     }
 
-    class ShutdownCommand
+    class ShutdownCommands
     {
-        public ShutdownCommand(CommandService service)
+        public ShutdownCommands(CommandService service)
         {
             // shutdown
             Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
@@ -202,9 +203,9 @@ namespace Ciridium
         #endregion
     }
 
-    class HelpCommand
+    class HelpCommands
     {
-        public HelpCommand(CommandService service)
+        public HelpCommands(CommandService service)
         {
             // help (list)
             service.AddCommand(new CommandKeys(CMDKEYS_HELP_LIST), HandleHelpCommand, AccessLevel.Basic, CMDSUMMARY_HELP_LIST, CMDSYNTAX_HELP_LIST, Command.NO_ARGUMENTS);
@@ -227,7 +228,7 @@ namespace Ciridium
             embedmessage.Title = "You have access to the following commands";
             foreach (Command cmd in Var.cmdService.commands)
             {
-                if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
+                if (cmd.HasPermission(userLevel))
                 {
                     embedmessage.AddField(cmd.Syntax, cmd.Summary);
                 }
@@ -259,7 +260,7 @@ namespace Ciridium
             {
                 foreach (Command cmd in cmds)
                 {
-                    if (CommandService.HasPermission(userLevel, cmd.AccessLevel))
+                    if (cmd.HasPermission(userLevel))
                     {
                         EmbedBuilder embedmessage = new EmbedBuilder();
                         embedmessage.Color = Var.BOTCOLOR;

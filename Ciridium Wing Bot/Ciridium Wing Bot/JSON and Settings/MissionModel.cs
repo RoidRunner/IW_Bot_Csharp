@@ -17,14 +17,22 @@ namespace Ciridium
 
         public static List<ulong> missionList;
 
-        public static async Task<RestTextChannel> CreateMission(string platform, IReadOnlyCollection<SocketUser> explorers, SocketGuild guild, SocketUser source)
+        /// <summary>
+        /// Creates a new mission channel
+        /// </summary>
+        /// <param name="channel_name_suffix">The suffix added to the channel name</param>
+        /// <param name="explorers">All explorers to be part of this new mission channel</param>
+        /// <param name="guild">The guild containing the mission channel category</param>
+        /// <param name="source">The user that issued the createmission command</param>
+        /// <returns>The RestTextChannel created by the command</returns>
+        public static async Task<RestTextChannel> CreateMission(string channel_name_suffix, IReadOnlyCollection<SocketUser> explorers, SocketGuild guild, SocketUser source)
         {
             int failcode = 0;
             try
             {
                 // [00] retrieving mission number and other variables
                 int missionnumber = MissionSettingsModel.NextMissionNumber;
-                string channelname = string.Format("mission_{0}_{1}", missionnumber, platform);
+                string channelname = string.Format("mission_{0}_{1}", missionnumber, channel_name_suffix);
 
                 SocketGuildChannel missioncategory = guild.GetChannel(MissionSettingsModel.MissionCategoryId);
 
@@ -71,22 +79,20 @@ namespace Ciridium
                 failcode++;
 
                 // [05] Move to mission category and add channel topic
+                string channeltopic;
                 if (MissionSettingsModel.DefaultTopic.Contains("{0}"))
                 {
-                    await NewMissionChannel.ModifyAsync(TextChannelProperties =>
-                    {
-                        TextChannelProperties.CategoryId = MissionSettingsModel.MissionCategoryId;
-                        TextChannelProperties.Topic = string.Format(MissionSettingsModel.DefaultTopic, pingstring);
-                    });
+                    channeltopic = string.Format(MissionSettingsModel.DefaultTopic, pingstring);
                 }
                 else
                 {
-                    await NewMissionChannel.ModifyAsync(TextChannelProperties =>
-                    {
-                        TextChannelProperties.CategoryId = MissionSettingsModel.MissionCategoryId;
-                        TextChannelProperties.Topic = MissionSettingsModel.DefaultTopic;
-                    });
+                    channeltopic = MissionSettingsModel.DefaultTopic;
                 }
+                await NewMissionChannel.ModifyAsync(TextChannelProperties =>
+                {
+                    TextChannelProperties.CategoryId = MissionSettingsModel.MissionCategoryId;
+                    TextChannelProperties.Topic = channeltopic;
+                });
 
                 failcode++;
 
@@ -119,6 +125,11 @@ namespace Ciridium
             }
         }
 
+        /// <summary>
+        /// Deletes a mission channel
+        /// </summary>
+        /// <param name="channelId">ID of the channel</param>
+        /// <param name="guildId">ID of the guild containing the channel</param>
         public static async Task DeleteMission(ulong channelId, ulong guildId)
         {
             if (IsMissionChannel(channelId, guildId))
@@ -129,6 +140,12 @@ namespace Ciridium
             }
         }
 
+        /// <summary>
+        /// Check for a channel to be a mission channel
+        /// </summary>
+        /// <param name="channelId">ID of the channel</param>
+        /// <param name="guildId">ID of the guild containing the channel</param>
+        /// <returns>true if channel is confirmed a mission channel</returns>
         public static bool IsMissionChannel(ulong channelId, ulong guildId)
         {
             bool result = false;
@@ -138,14 +155,7 @@ namespace Ciridium
                 SocketGuildChannel channel = guild.GetChannel(channelId);
                 if (channel != null)
                 {
-                    foreach (ulong missionChannelId in missionList)
-                    {
-                        if (missionChannelId == channelId && channel.Name.StartsWith("mission"))
-                        {
-                            result = true;
-                            break;
-                        }
-                    }
+                    result = missionList.Contains(channelId) && channel.Name.StartsWith("mission");
                 }
             }
             return result;

@@ -11,8 +11,10 @@ namespace Ciridium
         public static ulong MissionCategoryId;
 
         private static int lastMissionNumber;
-        public static string DefaultTopic = "NO DEFAULT TOPIC SET. USE '/settings missiontopic' TO SET ONE!";
-        public static string ExplorerQuestions = "NO EXPLORER QUESTION MESSAGE SET. USE '/settings explorerquestions' TO SET ONE! GONNA ALSO PING EXPLORERS FOR YA: {0}";
+        public static string DefaultTopic = "NO DEFAULT TOPIC SET. USE '/settings template' TO SET ONE!";
+        public static string ExplorerQuestions = "NO EXPLORER QUESTION MESSAGE SET. USE '/settings template' TO SET ONE!";
+        public static string TestimonialPrompt = "NO TESTIMONIAL PROMPT SET. USE `/settings template` TO SET ONE!";
+        public static string FileReportPrompt = "NO FILE REPORT PROMPT SET. USE `/settings template` TO SET ONE!";
 
         public static int NextMissionNumber
         {
@@ -44,6 +46,8 @@ namespace Ciridium
         private const string JSON_MISSIONCATEGORYID = "MissionCategoryId";
         private const string JSON_DEFAULTTOPIC = "DefaultTopic";
         private const string JSON_EXPLORERQUESTIONS = "ExplorerQuestions";
+        private const string JSON_TESTIMONIALPROMPT = "TestimonialPrompt";
+        private const string JSON_FILEREPORTPROMPT = "FileReportPrompt";
 
         public static async Task LoadMissionSettings()
         {
@@ -64,6 +68,14 @@ namespace Ciridium
                 {
                     ExplorerQuestions = text;
                 }
+                if (json.GetField(ref text, JSON_TESTIMONIALPROMPT))
+                {
+                    TestimonialPrompt = text;
+                }
+                if (json.GetField(ref text, JSON_FILEREPORTPROMPT))
+                {
+                    FileReportPrompt = text;
+                }
             }
         }
 
@@ -74,6 +86,8 @@ namespace Ciridium
             json.AddField(JSON_MISSIONCATEGORYID, MissionCategoryId.ToString());
             json.AddField(JSON_DEFAULTTOPIC, DefaultTopic);
             json.AddField(JSON_EXPLORERQUESTIONS, ExplorerQuestions);
+            json.AddField(JSON_TESTIMONIALPROMPT, TestimonialPrompt);
+            json.AddField(JSON_FILEREPORTPROMPT, FileReportPrompt);
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.MissionSettingsFilePath, json);
         }
 

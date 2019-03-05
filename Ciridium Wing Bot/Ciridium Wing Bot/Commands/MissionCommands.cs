@@ -17,8 +17,10 @@ namespace Ciridium
             service.AddCommand(new CommandKeys(CMDKEYS_CREATEMISSION, 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, CMDSUMMARY_CREATEMISSION, CMDSYNTAX_CREATEMISSION, CMDARGS_CREATEMISSION);
             // enlistmission
             service.AddCommand(new CommandKeys(CMDKEYS_ENLISTMISSION, 2, 2), HandleEnlistMissionCommand, AccessLevel.Moderator, CMDSUMMARY_ENLISTMISSION, CMDSYNTAX_ENLISTMISSION, CMDARGS_ENLISTMISSION);
+            // completemission
+            service.AddCommand(new CommandKeys(CMDKEYS_COMPLETEMISSION), HandleCompleteMissionCommand, AccessLevel.Pilot, CMDSUMMARY_COMPLETEMISSION, CMDSYNTAX_COMPLETEMISSION, Command.NO_ARGUMENTS);
             // closemission
-            service.AddCommand(new CommandKeys(CMDKEYS_CLOSEMISSION, 2, 2), HandleCloseMissionCommand, AccessLevel.Moderator, CMDSUMMARY_CLOSEMISSION, CMDSYNTAX_CLOSEMISSION, CMDARGS_CLOSEMISSION);
+            service.AddCommand(new CommandKeys(CMDKEYS_CLOSEMISSION, 2, 2), HandleCloseMissionCommand, AccessLevel.Dispatch, CMDSUMMARY_CLOSEMISSION, CMDSYNTAX_CLOSEMISSION, CMDARGS_CLOSEMISSION);
             // unlistmission
             service.AddCommand(new CommandKeys(CMDKEYS_UNLISTMISSION, 2, 2), HandleUnlistMissionCommand, AccessLevel.Moderator, CMDSUMMARY_UNLISTMISSION, CMDSYNTAX_UNLISTMISSION, CMDARGS_UNLISTMISSION);
             // listmissions
@@ -118,6 +120,31 @@ namespace Ciridium
                 message = "Second argument must specify a channel!";
             }
             await context.Channel.SendEmbedAsync(message, isError);
+        }
+
+        #endregion
+        #region /completemission
+
+        private const string CMDKEYS_COMPLETEMISSION = "completemission";
+        private const string CMDSYNTAX_COMPLETEMISSION = "/completemission";
+        private const string CMDSUMMARY_COMPLETEMISSION = "Notifies the explorer to leave a testimonial and the dispatch to file a mission report";
+
+        public async Task HandleCompleteMissionCommand(CommandContext context)
+        {
+            if (MissionModel.IsMissionChannel(context.Channel.Id, context.Guild.Id))
+            {
+                ITextChannel channel = context.Channel as ITextChannel;
+                if (channel != null)
+                {
+                    await context.Channel.SendEmbedAsync(channel.Topic);
+                }
+                await context.Channel.SendEmbedAsync(MissionSettingsModel.TestimonialPrompt);
+                await context.Channel.SendEmbedAsync(MissionSettingsModel.FileReportPrompt);
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("Could not verify this channel as a mission channel!", true);
+            }
         }
 
         #endregion

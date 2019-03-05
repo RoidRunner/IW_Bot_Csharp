@@ -55,7 +55,7 @@ namespace Ciridium
                 }
                 catch (Exception e)
                 {
-                    await Program.Logger(new Discord.LogMessage(Discord.LogSeverity.Critical, "Save/Load", "Failed to load " + path, e));
+                    await BotCore.Logger(new Discord.LogMessage(Discord.LogSeverity.Critical, "Save/Load", "Failed to load " + path, e));
                 }
             }
             return operation;
@@ -69,7 +69,7 @@ namespace Ciridium
             }
             catch (Exception e)
             {
-                await Program.Logger(new Discord.LogMessage(Discord.LogSeverity.Critical, "Save/Load", "Failed to save " + path, e));
+                await BotCore.Logger(new Discord.LogMessage(Discord.LogSeverity.Critical, "Save/Load", "Failed to save " + path, e));
             }
         }
         #endregion

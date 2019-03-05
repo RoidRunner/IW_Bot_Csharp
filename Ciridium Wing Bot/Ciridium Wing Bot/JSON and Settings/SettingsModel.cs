@@ -14,6 +14,7 @@ namespace Ciridium
     /// </summary>
     static class SettingsModel
     {
+        #region Variables
         /// <summary>
         /// The bot token used to log into discord
         /// </summary>
@@ -35,9 +36,13 @@ namespace Ciridium
         /// </summary>
         public static ulong ModeratorRole = 0;
         /// <summary>
+        /// The ID of the dispatch role
+        /// </summary>
+        public static ulong DispatchRole = 0;
+        /// <summary>
         /// The ID of the pilot role
         /// </summary>
-        public static ulong PilotRole = 0;
+        public static ulong EscortPilotRole = 0;
         /// <summary>
         /// The ID of the bot dev role (pinging on error messages)
         /// </summary>
@@ -46,6 +51,9 @@ namespace Ciridium
         /// The Formatting string for the Welcoming Message. {0} is replaced with the new users mention.
         /// </summary>
         public static string welcomingMessage = "Hi {0}";
+
+        #endregion
+        #region Initialization
 
         static SettingsModel()
         {
@@ -63,6 +71,7 @@ namespace Ciridium
             return token != null && botAdminIDs.Count > 0;
         }
 
+        #endregion
         #region JSON, Save/Load
 
         private const string JSON_BOTTOKEN = "BotToken";
@@ -74,6 +83,7 @@ namespace Ciridium
         private const string JSON_PILOTROLE = "PilotRole";
         private const string JSON_MODERATORROLE = "ModeratorRole";
         private const string JSON_BOTDEVROLE = "BotDevRole";
+        private const string JSON_DISPATCHROLE = "DispatchRole";
 
         /// <summary>
         /// Loads and applies Settings from appdata/locallow/Ciridium Wing Bot/Settings.json
@@ -126,25 +136,16 @@ namespace Ciridium
                     }
                     if (json.GetField(ref id, JSON_PILOTROLE))
                     {
-                        ulong.TryParse(id, out PilotRole);
+                        ulong.TryParse(id, out EscortPilotRole);
                     }
                     if (json.GetField(ref id, JSON_BOTDEVROLE))
                     {
                         ulong.TryParse(id, out BotDevRole);
                     }
-                }
-            }
-        }
-
-        internal static async Task WelcomeNewUser(SocketUser user)
-        {
-            if (WelcomeMessageChannelId != 0)
-            {
-                ISocketMessageChannel channel = Var.client.GetChannel(WelcomeMessageChannelId) as ISocketMessageChannel;
-                if (channel != null)
-                {
-                    //await channel.SendMessageAsync(string.Format(welcomingMessage, user.Mention));
-                    await channel.SendEmbedAsync(user.Mention, string.Format(welcomingMessage, user.Mention));
+                    if (json.GetField(ref id, JSON_DISPATCHROLE))
+                    {
+                        ulong.TryParse(id, out DispatchRole);
+                    }
                 }
             }
         }
@@ -173,12 +174,28 @@ namespace Ciridium
             json.AddField(JSON_WELCOMINGCHANNEL, WelcomeMessageChannelId.ToString());
             json.AddField(JSON_WELCOMINGMESSAGE, welcomingMessage);
             json.AddField(JSON_MODERATORROLE, ModeratorRole.ToString());
-            json.AddField(JSON_PILOTROLE, PilotRole.ToString());
+            json.AddField(JSON_PILOTROLE, EscortPilotRole.ToString());
             json.AddField(JSON_BOTDEVROLE, BotDevRole.ToString());
-
+            json.AddField(JSON_DISPATCHROLE, DispatchRole.ToString());
 
 
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.SettingsFilePath, json);
+        }
+
+        #endregion
+        #region Welcoming
+
+        internal static async Task WelcomeNewUser(SocketUser user)
+        {
+            if (WelcomeMessageChannelId != 0)
+            {
+                ISocketMessageChannel channel = Var.client.GetChannel(WelcomeMessageChannelId) as ISocketMessageChannel;
+                if (channel != null)
+                {
+                    //await channel.SendMessageAsync(string.Format(welcomingMessage, user.Mention));
+                    await channel.SendEmbedAsync(user.Mention, string.Format(welcomingMessage, user.Mention));
+                }
+            }
         }
 
         #endregion
@@ -199,17 +216,31 @@ namespace Ciridium
                 EmbedBuilder result = new EmbedBuilder();
                 result.Color = Var.BOTCOLOR;
                 result.Title = "**__Current Settings__**";
+                result.AddField("Bot Version", "Ciridium Wing Bot " + Var.VERSION_CODE);
+                StringBuilder debugSettings = new StringBuilder();
+                debugSettings.Append("```");
                 for (int i = 0; i < debugLogging.Length; i++)
                 {
                     bool catEnabled = debugLogging[i];
-                    result.AddField(string.Format("Debug {0}", ((DebugCategories)i).ToString().PadRight(12)), catEnabled ? "`Enabled`" : "`Disabled`");
+                    debugSettings.Append("Debug ");
+                    string padded = ((DebugCategories)i).ToString().PadRight(12);
+                    debugSettings.Append(padded);
+                    debugSettings.Append(": ");
+                    debugSettings.AppendLine(catEnabled ? "Enabled" : "Disabled");
                 }
-                result.AddField("Debug Channel", Macros.InlineCodeBlock(DebugMessageChannelId));
-                result.AddField("Welcoming Channel", Macros.InlineCodeBlock(WelcomeMessageChannelId));
-                result.AddField("Mission Category", Macros.InlineCodeBlock(MissionSettingsModel.MissionCategoryId));
-                result.AddField("Moderator Role", Macros.InlineCodeBlock(ModeratorRole));
-                result.AddField("Escort Pilot Role", Macros.InlineCodeBlock(PilotRole));
-                result.AddField("Bot Dev Role", Macros.InlineCodeBlock(BotDevRole));
+                debugSettings.Append("```");
+                result.AddField("Debug Outputs", debugSettings.ToString());
+                result.AddField("Channel Settings", string.Format("```" +
+                    "Debug Channel:     {0}\n" +
+#if WELCOMING_MESSAGES
+                    "Welcoming Channel: {1}\n" +
+#endif
+                    "Mission Category:  {2}```", DebugMessageChannelId, WelcomeMessageChannelId, MissionSettingsModel.MissionCategoryId));
+                result.AddField("Role Settings", string.Format("```" +
+                    "Moderator:         {0}\n" +
+                    "Escort Pilot:      {1}\n" +
+                    "Dispatch:          {2}\n" +
+                    "Bot Dev:           {3}```", ModeratorRole, EscortPilotRole, DispatchRole, BotDevRole));
             return result;
             }
         }
@@ -238,8 +269,8 @@ namespace Ciridium
             }
         }
 
-        #endregion
-        #region Access Levels
+#endregion
+#region Access Levels
 
         /// <summary>
         /// Checks if the user is listed as bot admin
@@ -280,28 +311,25 @@ namespace Ciridium
             {
                 return AccessLevel.BotAdmin;
             }
-            bool hasPilotRole = false;
+            AccessLevel result = AccessLevel.Basic;
             foreach (var role in user.Roles)
             {
-                if (role.Id == ModeratorRole)
+                if (role.Id == ModeratorRole && result < AccessLevel.Moderator)
                 {
-                    return AccessLevel.Moderator;
+                    result = AccessLevel.Moderator;
                 }
-                else if (role.Id == PilotRole)
+                else if (role.Id == DispatchRole && result < AccessLevel.Dispatch)
                 {
-                    hasPilotRole = true;
+                    result = AccessLevel.Dispatch;
+                }
+                else if (role.Id == EscortPilotRole && result < AccessLevel.Pilot)
+                {
+                    result = AccessLevel.Pilot;
                 }
             }
-            if (hasPilotRole)
-            {
-                return AccessLevel.Pilot;
-            }
-            else
-            {
-                return AccessLevel.Basic;
-            }
+            return result;
         }
-        #endregion
+#endregion
 
     }
 

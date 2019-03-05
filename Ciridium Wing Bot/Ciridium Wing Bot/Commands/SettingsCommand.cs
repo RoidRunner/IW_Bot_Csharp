@@ -9,9 +9,9 @@ namespace Ciridium
     /// <summary>
     /// Handles all commands that change settings, such as default channels, welcoming messages.
     /// </summary>
-    class SettingsCommand
+    class SettingsCommands
     {
-        public SettingsCommand(CommandService service)
+        public SettingsCommands(CommandService service)
         {
             CommandService s = Var.cmdService;
             // settings
@@ -22,14 +22,14 @@ namespace Ciridium
             s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_CHANNEL, 4, 4), HandleDefaultChannelCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_CHANNEL, CMDSYNTAX_SETTINGS_CHANNEL, CMDARGS_SETTINGS_CHANNEL);
             // settings role
             s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_ROLE, 4, 4), HandleSetRoleCommand, AccessLevel.BotAdmin, CMDSUMMARY_SETTINGS_ROLE, CMDSYNTAX_SETTINGS_ROLE, CMDARGS_SETTINGS_ROLE);
+            // settings setmissionnumber
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
+            // settings template
+            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 4, 1000), HandleTemplateCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE);
+#if WELCOMING_MESSAGES
             // settings setjoinmsg
             s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETJOINMSG, 3, 1000), HandleWelcomingMessageCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETJOINMSG, CMDSYNTAX_SETTINGS_SETJOINMSG, CMDARGS_SETTINGS_SETJOINMSG);
-            // settings setmissionnumber
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Pilot, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
-            // settings setmissionchanneltopic
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONCHANNELTOPIC, 3, 1000), HandleMissionTopicCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETMISSIONCHANNELTOPIC, CMDSYNTAX_SETTINGS_SETMISSIONCHANNELTOPIC, CMDARGS_SETTINGS_SETMISSIONCHANNELTOPIC);
-            // settings setexplorerquestions
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETEXPLORERQUESTIONS, 3, 1000), HandleMissionExplorerQuestionsCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETEXPLORERQUESTIONS, CMDSYNTAX_SETTINGS_SETEXPLORERQUESTIONS, CMDARGS_SETTINGS_SETEXPLORERQUESTIONS);
+#endif
         }
 
         #region /settings
@@ -94,7 +94,7 @@ namespace Ciridium
         private const string CMDSUMMARY_SETTINGS_ROLE = "Sets the pilot/moderator role used to handle access to bot commands";
         private const string CMDARGS_SETTINGS_ROLE =
                 "    <AccessLevel>\n" +
-                "Which of the access levels you want to assign a role to. Available are 'pilot', 'botdev' & 'moderator'\n" +
+                "Which of the access levels you want to assign a role to. Available are 'pilot', 'dispatch', 'botdev' & 'moderator'\n" +
                 "    <@Role>\n" +
                 "Specify the role that you want to assign, either by mention or as uInt64 Id";
 
@@ -107,7 +107,8 @@ namespace Ciridium
             if (context.Message.MentionedRoles.Count > 0)
             {
                 roleId = new List<SocketRole>(context.Message.MentionedRoles)[0].Id;
-            } else if (ulong.TryParse(context.Args[3], out ulong parsedRoleId))
+            }
+            else if (ulong.TryParse(context.Args[3], out ulong parsedRoleId))
             {
                 roleId = parsedRoleId;
             }
@@ -122,8 +123,12 @@ namespace Ciridium
                 switch (context.Args[2])
                 {
                     case "pilot":
-                        SettingsModel.PilotRole = (ulong)roleId;
+                        SettingsModel.EscortPilotRole = (ulong)roleId;
                         message = "Pilot Role set to " + context.Guild.GetRole((ulong)roleId).Mention;
+                        break;
+                    case "dispatch":
+                        SettingsModel.DispatchRole = (ulong)roleId;
+                        message = "Dispatch Role set to " + context.Guild.GetRole((ulong)roleId).Mention;
                         break;
                     case "moderator":
                         SettingsModel.ModeratorRole = (ulong)roleId;
@@ -149,6 +154,7 @@ namespace Ciridium
 
         #endregion
         #region /settings setjoinmsg
+#if WELCOMING_MESSAGES
 
         private const string CMDKEYS_SETTINGS_SETJOINMSG = "settings setjoinmsg";
         private const string CMDSYNTAX_SETTINGS_SETJOINMSG = "/settings setjoinmsg {<Words>}";
@@ -177,6 +183,59 @@ namespace Ciridium
             }
         }
 
+#endif
+        #endregion
+        #region /settings template
+
+        private const string CMDKEYS_SETTINGS_TEMPLATE = "settings template";
+        private const string CMDSYNTAX_SETTINGS_TEMPLATE = "/settings template <Template> <{<Words>}";
+        private const string CMDSUMMARY_SETTINGS_TEMPLATE = "Sets a new text for any of the text templates";
+        private const string CMDARGS_SETTINGS_TEMPLATE =
+                "    <Template>\n" +
+                "Specifies which template shall be overwritten. Can be either `missionchanneltopic`, `explorerquestions`, `testimonialprompt` or `filereportprompt`" +
+                "    {<Words>}\n" +
+                "All words following the initial arguments will be set for that template. Include `{0}` for `missionchanneltopic` and `explorerquestions` as the location where the explorers shall be mentioned";
+
+        private const string TEMPLATE_MISSIONCHANNELTOPIC = "missionchanneltopic";
+        private const string TEMPLATE_EXPLORERQUESTIONS = "explorerquestions";
+        private const string TEMPLATE_TESTIMONIALPROMPT = "testimonialprompt";
+        private const string TEMPLATE_FILEREPORTPROMPT = "filereportprompt";
+        private const int TEMPLATE_BASELENGTH = 20;
+
+        private static async Task HandleTemplateCommand(CommandContext context)
+        {
+            bool success = true;
+            string message;
+            switch (context.Args[2].ToLower())
+            {
+                case TEMPLATE_MISSIONCHANNELTOPIC:
+                    MissionSettingsModel.DefaultTopic = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_MISSIONCHANNELTOPIC.Length);
+                    message = "Successfully set mission channel default topic!";
+                    break;
+                case TEMPLATE_EXPLORERQUESTIONS:
+                    MissionSettingsModel.ExplorerQuestions = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_EXPLORERQUESTIONS.Length);
+                    message = "Successfully set mission channel explorer questions!";
+                    break;
+                case TEMPLATE_TESTIMONIALPROMPT:
+                    MissionSettingsModel.TestimonialPrompt = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_TESTIMONIALPROMPT.Length);
+                    message = "Successfully set mission channel testimonial prompt!";
+                    break;
+                case TEMPLATE_FILEREPORTPROMPT:
+                    MissionSettingsModel.FileReportPrompt = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_FILEREPORTPROMPT.Length);
+                    message = "Successfully set mission channel report filing prompt!";
+                    break;
+                default:
+                    message = "Could not recognise this template!";
+                    success = false;
+                    break;
+            }
+            if (success)
+            {
+                await MissionSettingsModel.SaveMissionSettings();
+            }
+            await context.Channel.SendEmbedAsync(message, !success);
+        }
+
         #endregion
         #region /settings channel
 
@@ -203,10 +262,12 @@ namespace Ciridium
             if (ulong.TryParse(context.Args[3], out ulong Id))
             {
                 channelId = Id;
-            } else if (context.Message.MentionedChannels.Count > 0)
+            }
+            else if (context.Message.MentionedChannels.Count > 0)
             {
                 channelId = new List<SocketGuildChannel>(context.Message.MentionedChannels)[0].Id;
-            } else if (context.Args[3].Equals("this"))
+            }
+            else if (context.Args[3].Equals("this"))
             {
                 channelId = context.Channel.Id;
             }
@@ -280,44 +341,6 @@ namespace Ciridium
             }
 
             await context.Channel.SendEmbedAsync(message, error);
-        }
-
-        #endregion
-        #region /settings setmissionchanneltopic
-
-        private const string CMDKEYS_SETTINGS_SETMISSIONCHANNELTOPIC = "settings setmissionchanneltopic";
-        private const string CMDSYNTAX_SETTINGS_SETMISSIONCHANNELTOPIC = "/settings setmissionchanneltopic {<Words>}";
-        private const string CMDSUMMARY_SETTINGS_SETMISSIONCHANNELTOPIC = "Sets the default mission channel topic";
-        private const string CMDARGS_SETTINGS_SETMISSIONCHANNELTOPIC =
-                "    {<Words>}\n" +
-                "All words following the initial arguments will be the mission channel explorer questions. Insert '{0}' wherever you want the explorers mentioned!";
-
-        private static async Task HandleMissionTopicCommand(CommandContext context)
-        {
-            string nDefaultTopic = context.Message.Content.Substring(32);
-
-            MissionSettingsModel.DefaultTopic = nDefaultTopic;
-            await MissionSettingsModel.SaveMissionSettings();
-            await context.Channel.SendEmbedAsync("Default mission channel topic successfully updated!");
-        }
-
-        #endregion
-        #region /settings setexplorerquestions
-
-        private const string CMDKEYS_SETTINGS_SETEXPLORERQUESTIONS = "settings ";
-        private const string CMDSYNTAX_SETTINGS_SETEXPLORERQUESTIONS = "/settings setexplorerquestions {<Words>}";
-        private const string CMDSUMMARY_SETTINGS_SETEXPLORERQUESTIONS = "Sets the mission channel explorer questions";
-        private const string CMDARGS_SETTINGS_SETEXPLORERQUESTIONS =
-                "    {<Words>}\n" +
-                "All words following the initial arguments will be the mission channel explorer questions. Insert '{0}' wherever you want the explorers mentioned!";
-
-        private static async Task HandleMissionExplorerQuestionsCommand(CommandContext context)
-        {
-            string nExplorerQuestions = context.Message.Content.Substring(30);
-
-            MissionSettingsModel.ExplorerQuestions = nExplorerQuestions;
-            await MissionSettingsModel.SaveMissionSettings();
-            await context.Channel.SendEmbedAsync("Default mission channel explorer questions successfully updated!");
         }
 
         #endregion

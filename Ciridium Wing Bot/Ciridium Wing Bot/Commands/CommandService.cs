@@ -12,15 +12,7 @@ namespace Ciridium
 {
     class CommandService
     {
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="prefix">The command prefix that marks messages as commands</param>
-        public CommandService(char prefix)
-        {
-            this.prefix = prefix;
-            commands = new List<Command>();
-        }
+        #region Variables
 
         /// <summary>
         /// The command prefix that marks messages as commands
@@ -31,6 +23,22 @@ namespace Ciridium
         /// The dictionary storing commands by their first argument key
         /// </summary>
         public List<Command> commands { get; private set; }
+
+        #endregion
+        #region Init
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="prefix">The command prefix that marks messages as commands</param>
+        public CommandService(char prefix)
+        {
+            this.prefix = prefix;
+            commands = new List<Command>();
+        }
+
+        #endregion
+        #region Command Adding
 
         /// <summary>
         /// Add a new command by key
@@ -49,6 +57,9 @@ namespace Ciridium
             commands.Add(cmd);
         }
 
+        #endregion
+        #region Command Handling
+
         /// <summary>
         /// Command handling
         /// </summary>
@@ -64,9 +75,9 @@ namespace Ciridium
                 {
                     SocketGuildUser user = context.Guild.GetUser(context.User.Id);
                     AccessLevel userLevel = SettingsModel.GetUserAccessLevel(user);
-                    if (HasPermission(userLevel, cmd.AccessLevel))
+                    if (cmd.HasPermission(userLevel))
                     {
-                        if (cmd.Key.HasMinArgCnt(context.ArgCnt))
+                        if (context.ArgCnt >= cmd.Key.MinArgCnt)
                         {
                             try
                             {
@@ -81,21 +92,21 @@ namespace Ciridium
                             }
                             catch (Exception e)
                             {
-                                SendExceptionMessage(e, context, cmd);
+                                SendCommandExecutionExceptionMessage(e, context, cmd);
                             }
                         }
                         else
                         {
                             await context.Channel.SendEmbedAsync(string.Format("The command `/{0}` expects {1} arguments, that is {2} more than you supplied! Try `/help {0}` for more info",
-                                cmd.Key.KeyList, cmd.Key.MinArgCnt - cmd.Key.FixedArgCnt, cmd.Key.MinArgCnt - context.ArgCnt
-                                ));
+                                cmd.Key.KeyList, cmd.Key.MinArgCnt, cmd.Key.MinArgCnt - context.ArgCnt
+                                ), true);
                         }
                     }
                     else
                     {
                         await context.Channel.SendEmbedAsync(
                             string.Format("Insufficient Permissions. `/{0}` requires {1} access, you have {2} access",
-                            cmd.Key.KeyList, cmd.AccessLevel.ToString(), userLevel.ToString()));
+                            cmd.Key.KeyList, cmd.AccessLevel.ToString(), userLevel.ToString()), true);
                     }
                 }
                 else
@@ -105,6 +116,12 @@ namespace Ciridium
             }
         }
 
+        /// <summary>
+        /// Tries to match a context to a command
+        /// </summary>
+        /// <param name="context">The command context the command would execute in</param>
+        /// <param name="result">The command match</param>
+        /// <returns>Wether the command matching attempt was successful</returns>
         public bool TryGetCommand(CommandContext context, out Command result)
         {
             result = new Command();
@@ -120,6 +137,12 @@ namespace Ciridium
             return argCntMatched != -2;
         }
 
+        /// <summary>
+        /// Tries to match a key input to a command
+        /// </summary>
+        /// <param name="keys">The command keys identifying the command</param>
+        /// <param name="result">The command match</param>
+        /// <returns>Wether the command matching attempt was successful</returns>
         public bool TryGetCommand(string[] keys, out Command result)
         {
             result = new Command();
@@ -135,6 +158,12 @@ namespace Ciridium
             return argCntMatched != -2;
         }
 
+        /// <summary>
+        /// Tries to match a context to all matching commands
+        /// </summary>
+        /// <param name="keys">The command keys identifying the command</param>
+        /// <param name="results">The command matches</param>
+        /// <returns>Wether the command matching attempt was successful (as in yielding >= 1 results)</returns>
         public bool TryGetCommands(string[] keys, out List<Command> results)
         {
             results = new List<Command>();
@@ -155,12 +184,13 @@ namespace Ciridium
             return content.StartsWith(prefix);
         }
 
-        public static bool HasPermission(AccessLevel userLevel, AccessLevel cmdLevel)
-        {
-            return userLevel.CompareTo(cmdLevel) >= 0;
-        }
-
-        public async static void SendExceptionMessage(Exception e, CommandContext context, Command cmd)
+        /// <summary>
+        /// Sends an exception message to the debugmessage channel pinging the botdevs about it
+        /// </summary>
+        /// <param name="e">Exception</param>
+        /// <param name="context">The context the command failing executed in</param>
+        /// <param name="cmd">The command matched to the context</param>
+        public async static void SendCommandExecutionExceptionMessage(Exception e, CommandContext context, Command cmd)
         {
             await context.Channel.SendEmbedAsync("Something went horribly wrong trying to execute your command! I have contacted my creators to help fix this issue!", true);
             ISocketMessageChannel channel = Var.client.GetChannel(SettingsModel.DebugMessageChannelId) as ISocketMessageChannel;
@@ -190,16 +220,9 @@ namespace Ciridium
                 }
                 await channel.SendMessageAsync(message, embed:embed.Build());
             }
-            await Program.Logger(new LogMessage(LogSeverity.Error, "CMDSERVICE", string.Format("An Exception occured while trying to execute command `/{0}`.Message: '{1}'\nStackTrace {2}", cmd.Key.KeyList, e.Message, e.StackTrace)));
+            await BotCore.Logger(new LogMessage(LogSeverity.Error, "CMDSERVICE", string.Format("An Exception occured while trying to execute command `/{0}`.Message: '{1}'\nStackTrace {2}", cmd.Key.KeyList, e.Message, e.StackTrace)));
         }
-    }
 
-    public enum AccessLevel
-    {
-        Basic,
-        Pilot,
-        //Dispatch,
-        Moderator,
-        BotAdmin
+        #endregion
     }
 }
