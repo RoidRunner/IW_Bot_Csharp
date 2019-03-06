@@ -67,7 +67,7 @@ namespace Ciridium
         private const string CMDSYNTAX_DEBUG_CHANNELS = "/debug channels";
         private const string CMDSUMMARY_DEBUG_CHANNELS = "Lists all channels & categories on current server";
 
-        public async Task HandleListChannelsCommand(SocketCommandContext context)
+        public async Task HandleListChannelsCommand(CommandContext context)
         {
             List<EmbedField> categoryembed = new List<EmbedField>();
             List<EmbedField> channelembed = new List<EmbedField>();
@@ -107,7 +107,7 @@ namespace Ciridium
         private const string CMDSYNTAX_DEBUG_ROLES = "/debug roles";
         private const string CMDSUMMARY_DEBUG_ROLES = "Lists all roles on current server";
 
-        public async Task HandleListRolesCommand(SocketCommandContext context)
+        public async Task HandleListRolesCommand(CommandContext context)
         {
             List<EmbedField> roleembed = new List<EmbedField>();
 
@@ -135,7 +135,7 @@ namespace Ciridium
                 "    {<@user>}\n" +
                 "Mention all users you want debug info about here";
 
-        public async Task HandleUserInfoCommand(SocketCommandContext context)
+        public async Task HandleUserInfoCommand(CommandContext context)
         {
             var users = context.Message.MentionedUsers;
 
@@ -179,7 +179,7 @@ namespace Ciridium
         private const string CMDSYNTAX_SHUTDOWN_ALT = "/kys";
         private const string CMDSUMMARY_SHUTDOWN = "Shuts down the bot";
 
-        public void HandleShutdownCommand(SocketCommandContext context)
+        public void HandleShutdownCommand(CommandContext context)
         {
             Var.running = false;
         }
@@ -191,7 +191,7 @@ namespace Ciridium
         private const string CMDSYNTAX_RESTART = "/restart";
         private const string CMDSUMMARY_RESTART = "Restarts the bot";
 
-        public void HandleRestartCommand(SocketCommandContext context)
+        public void HandleRestartCommand(CommandContext context)
         {
             //await context.Channel.SendEmbedAsync("Restarting ..."
             //    //+ "```\n" + Environment.CurrentDirectory + "\n\n" + System.Reflection.Assembly.GetEntryAssembly().Location + "\n\n" + System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + "```"

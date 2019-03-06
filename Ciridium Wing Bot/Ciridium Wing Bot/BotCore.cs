@@ -6,6 +6,8 @@ using Ciridium;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Ciridium.WebRequests;
+using System.Threading;
 
 // dotnet publish -c Release -r win10-x64
 
@@ -49,6 +51,8 @@ namespace Ciridium {
         public async Task MainAsync()
         {
             Console.Title = "Ciridium Wing Bot " + Var.VERSION_CODE;
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+
             Var.client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info
@@ -219,6 +223,7 @@ namespace Ciridium {
             ShutdownCommands shutdownCmds = new ShutdownCommands(Var.cmdService);
             HelpCommands helpCmds = new HelpCommands(Var.cmdService);
             MissionCommands missionCmds = new MissionCommands(Var.cmdService);
+            WebCommands webCmds = new WebCommands(Var.cmdService);
 
             Var.client.MessageReceived += HandleCommandAsync;
         }
