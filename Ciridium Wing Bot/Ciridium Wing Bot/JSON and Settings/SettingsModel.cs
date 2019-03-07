@@ -241,7 +241,7 @@ namespace Ciridium
                     "Escort Pilot:      {1}\n" +
                     "Dispatch:          {2}\n" +
                     "Bot Dev:           {3}```", ModeratorRole, EscortPilotRole, DispatchRole, BotDevRole));
-            return result;
+                return result;
             }
         }
 
@@ -269,8 +269,8 @@ namespace Ciridium
             }
         }
 
-#endregion
-#region Access Levels
+        #endregion
+        #region Access Levels
 
         /// <summary>
         /// Checks if the user is listed as bot admin
@@ -329,7 +329,7 @@ namespace Ciridium
             }
             return result;
         }
-#endregion
+        #endregion
 
     }
 

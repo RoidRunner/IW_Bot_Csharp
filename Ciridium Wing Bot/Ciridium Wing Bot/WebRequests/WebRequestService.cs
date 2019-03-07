@@ -24,7 +24,7 @@ namespace Ciridium.WebRequests
             RequestJSONResult loadresult = new RequestJSONResult();
             try
             {
-                using (HttpRequestMessage requestmessage = new HttpRequestMessage(HttpMethod.Get, url))
+                using (HttpRequestMessage requestmessage = new HttpRequestMessage(HttpMethod.Post, url))
                 {
                     requestmessage.Version = new Version(1, 1);
                     string requestcontent = requestinfo.Print(true);

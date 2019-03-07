@@ -89,6 +89,18 @@ namespace Ciridium
                 await channel.SendEmbedAsync(embedMessage);
             }
         }
+
+        public static string MaxLength(this string str, int maxLength)
+        {
+            if (str.Length <= maxLength)
+            {
+                return str;
+            }
+            else
+            {
+                return str.Substring(0, maxLength);
+            }
+        }
     }
 
     public struct EmbedField
