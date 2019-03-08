@@ -17,6 +17,8 @@ namespace Ciridium
             service.AddCommand(new CommandKeys(CMDKEYS_PING), HandlePingCommand, AccessLevel.Basic, CMDSUMMARY_PING, CMDSYNTAX_PING, Command.NO_ARGUMENTS);
             // topic
             service.AddCommand(new CommandKeys(CMDKEYS_TOPIC), HandleTopicCommand, AccessLevel.Pilot, CMDSUMMARY_TOPIC, CMDSYNTAX_TOPIC, Command.NO_ARGUMENTS);
+            // about
+            service.AddCommand(new CommandKeys(CMDKEYS_ABOUT), HandleAboutCommand, AccessLevel.Basic, CMDSUMMARY_ABOUT, CMDSYNTAX_ABOUT, Command.NO_ARGUMENTS);
         }
 
         #region /ping
@@ -47,6 +49,24 @@ namespace Ciridium
         }
 
         #endregion
+        #region /about
+
+        private const string CMDKEYS_ABOUT = "about";
+        private const string CMDSYNTAX_ABOUT = "/about";
+        private const string CMDSUMMARY_ABOUT = "Provides basic info about me";
+
+        public async Task HandleAboutCommand(CommandContext context)
+        {
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Color = Var.BOTCOLOR;
+            embed.Title = "Ciridium Wing Bot";
+            embed.ThumbnailUrl = Var.client.CurrentUser.GetAvatarUrl();
+            embed.AddField("Version", "v" + Var.VERSION.ToString());
+            embed.AddField("Credits", "Programming: <@!117260771200598019>, Support: <@!181013221661081600>");
+            await context.Channel.SendEmbedAsync(embed);
+        }
+
+        #endregion
     }
 
     class DebugCommands
@@ -59,6 +79,8 @@ namespace Ciridium
             service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_ROLES), HandleListRolesCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_ROLES, CMDSYNTAX_DEBUG_ROLES, Command.NO_ARGUMENTS);
             // debug userinfo
             service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO);
+            // debug guilds
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_GUILDS), HandleListGuildsCommand, AccessLevel.BotAdmin, CMDSUMMARY_DEBUG_GUILDS, CMDSYNTAX_DEBUG_GUILDS, Command.NO_ARGUMENTS);
         }
 
         #region /debug channels
@@ -126,6 +148,31 @@ namespace Ciridium
         }
 
         #endregion
+        #region /debug guilds
+
+        private const string CMDKEYS_DEBUG_GUILDS = "debug guilds";
+        private const string CMDSYNTAX_DEBUG_GUILDS = "/debug guilds";
+        private const string CMDSUMMARY_DEBUG_GUILDS = "Lists all guilds this bot is on";
+
+        public async Task HandleListGuildsCommand(CommandContext context)
+        {
+            List<EmbedField> guildembed = new List<EmbedField>();
+
+            var guilds = Var.client.Guilds;
+
+            foreach (var guild in guilds)
+            {
+                if (guild != null)
+                {
+                    guildembed.Add(new EmbedField(guild.Name, string.Format("ID: `{0}`", guild.Id)));
+                }
+            }
+
+
+            await context.Channel.SendSafeEmbedList("**__Roles on this server__**", guildembed);
+        }
+
+        #endregion
         #region /debug userinfo
 
         private const string CMDKEYS_DEBUG_USERINFO = "debug userinfo";
@@ -147,7 +194,8 @@ namespace Ciridium
 
                 userembed.AddField("Discriminator", Macros.MultiLineCodeBlock(string.Format("{0}#{1}", user.Username, user.Discriminator)));
                 userembed.AddField("Mention", Macros.MultiLineCodeBlock(user.Mention));
-                userembed.AddField("Profile Picture URL", user.GetAvatarUrl());
+                userembed.AddField("uInt64 Id", Macros.MultiLineCodeBlock(user.Id));
+                userembed.ThumbnailUrl = user.GetAvatarUrl();
                 if (user.IsBot || user.IsWebhook)
                 {
                     userembed.AddField("Add. Info", string.Format("```Bot: {0} Webhook: {1}```", user.IsBot, user.IsWebhook));

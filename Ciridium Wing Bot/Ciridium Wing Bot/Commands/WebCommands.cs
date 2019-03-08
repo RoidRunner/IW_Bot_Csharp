@@ -42,10 +42,10 @@ namespace Ciridium.WebRequests
             {
                 requestedSystem = context.Message.Content.Substring(CMDKEYS_SYSTEMINFO.Length + 2);
             }
-            RequestJSONResult requestResultSystem = await WebRequestService.GetWebJSONAsync(WebRequests_URL_Methods.EDSM_SystemInfo_URL(requestedSystem, true, true, true, true, true));
-            RequestJSONResult requestResultStations = await WebRequestService.GetWebJSONAsync(WebRequests_URL_Methods.EDSM_SystemStations_URL(requestedSystem));
-            RequestJSONResult requestResultTraffic = await WebRequestService.GetWebJSONAsync(WebRequests_URL_Methods.EDSM_SystemTraffic_URL(requestedSystem));
-            RequestJSONResult requestResultDeaths = await WebRequestService.GetWebJSONAsync(WebRequests_URL_Methods.EDSM_SystemDeaths_URL(requestedSystem));
+            RequestJSONResult requestResultSystem = await WebRequestService.GetWebJSONAsync(WebRequestService.EDSM_SystemInfo_URL(requestedSystem, true, true, true, true, true));
+            RequestJSONResult requestResultStations = await WebRequestService.GetWebJSONAsync(WebRequestService.EDSM_SystemStations_URL(requestedSystem));
+            RequestJSONResult requestResultTraffic = await WebRequestService.GetWebJSONAsync(WebRequestService.EDSM_SystemTraffic_URL(requestedSystem));
+            RequestJSONResult requestResultDeaths = await WebRequestService.GetWebJSONAsync(WebRequestService.EDSM_SystemDeaths_URL(requestedSystem));
             if (requestResultSystem.IsSuccess)
             {
                 if (requestResultSystem.Object.IsArray && requestResultSystem.Object.Count < 1)
@@ -201,7 +201,7 @@ namespace Ciridium.WebRequests
 
                 // Getting Information about traffic
                 int traffic_week = -1;
-                int traffic_day  = -1;
+                int traffic_day = -1;
 
                 if ((traffic != null) && traffic.HasField("traffic"))
                 {
@@ -378,7 +378,8 @@ namespace Ciridium.WebRequests
             Other
         }
 
-        public static readonly string[] STATIONEMOJI = new string[] { "<:orbis:553217808960454656>", "<:coriolis:553217377421230092>", "<:ocellus:553217808918511627>", "<:asteroid:553219501077037076>", "<:outpost:553219500951076864>", "<:planetary:553226417647910912>", "<:megaship:553219500787630082>", "<:unknown:553220103764705300>", "<:unknown:553220103764705300>" };
+        public static readonly string[] STATIONEMOJI = new string[] { "<:orbis:553690990964244520>", "<:coriolis:553690991022964749>", "<:ocellus:553690990901460992>", "<:asteroid:553690991245262868>",
+            "<:outpost:553690991060844567>", "<:planetary:553690991123496963>", "<:megaship:553690991144599573>", "<:unknown:553690991136342026>", "<:unknown:553690991136342026>" };
         public static readonly string[] STATIONTYPENAMES = new string[] { "Orbis Starport", "Coriolis Starport", "Ocellus Starport", "Asteroid Base", "Outpost", "Planetary", "Megaship", "Unlandable", "Other" };
 
         #endregion
@@ -434,7 +435,7 @@ namespace Ciridium.WebRequests
             // two systems found, make the request
             if (commaEncountered)
             {
-                string requestURL = WebRequests_URL_Methods.EDSM_MultipleSystemsInfo_URL(new string[] { requestedSystem1, requestedSystem2 }, false, true, false, false, false);
+                string requestURL = WebRequestService.EDSM_MultipleSystemsInfo_URL(new string[] { requestedSystem1, requestedSystem2 }, false, true, false, false, false);
                 RequestJSONResult requestResult = await WebRequestService.GetWebJSONAsync(requestURL);
                 if (requestResult.IsSuccess)
                 {
@@ -481,7 +482,7 @@ namespace Ciridium.WebRequests
 
         public static Vector3 ParseCoords(JSONObject Coordinates)
         {
-            if ((Coordinates != null) && Coordinates.HasFields(new string[] { "x", "y", "z"}))
+            if ((Coordinates != null) && Coordinates.HasFields(new string[] { "x", "y", "z" }))
             {
                 return new Vector3(Coordinates["x"].f, Coordinates["y"].f, Coordinates["z"].f);
             }
@@ -501,9 +502,163 @@ namespace Ciridium.WebRequests
 
         public async Task HandleCMDRCommand(CommandContext context)
         {
-            string cmdrName = context.Message.Content.Substring(CMDKEYS_CMDR.Length + 2);
-            JSONObject RequestContent = WebRequests_URL_Methods.Inara_CMDR_Profile(cmdrName);
+            string cmdrName;
+            bool printJSON = context.Args[1].Equals("json");
+            if (printJSON)
+            {
+                cmdrName = context.Message.Content.Substring(CMDKEYS_CMDR.Length + 7);
+            }
+            else
+            {
+                cmdrName = context.Message.Content.Substring(CMDKEYS_CMDR.Length + 2);
+            }
+            JSONObject RequestContent = WebRequestService.Inara_CMDR_Profile(cmdrName);
+            //await context.Channel.SendEmbedAsync("Request JSON", string.Format("```json\n{0}```", RequestContent.Print(true).MaxLength(2037)));
+            RequestJSONResult requestResult = await WebRequestService.GetWebJSONAsync("https://inara.cz/inapi/v1/", RequestContent);
+            if (requestResult.IsSuccess)
+            {
+                JSONObject result = requestResult.Object;
+                if (printJSON)
+                {
+                    await context.Channel.SendEmbedAsync("Request JSON", string.Format("```json\n{0}```", result.Print(true).MaxLength(2037)));
+                }
+                bool resultOK = false;
+                JSONObject header = result["header"];
+                JSONObject events = result["events"];
+                if (header != null && events != null)
+                {
+                    int eventStatus = 0;
+                    header.GetField(ref eventStatus, "eventStatus");
+                    if (eventStatus == 200 && events.IsArray && events.Count > 0)
+                    {
+                        resultOK = true;
+                        await context.Channel.SendEmbedAsync(FormatMessage_InaraCMDR(events[0]));
+                    }
+                }
+                if (!resultOK)
+                {
+                    await context.Channel.SendEmbedAsync("Result not OK! Here the result JSON:", string.Format("```json\n{0}```", result.Print(true).MaxLength(2037)));
+                }
+            }
+            else if (requestResult.IsException)
+            {
+                await context.Channel.SendEmbedAsync(string.Format("Could not connect to Inaras services. Exception Message: `{0}`", requestResult.ThrownException.Message), true);
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync(string.Format("Could not connect to Inaras services. HTTP Error Message: `{0} {1}`", (int)requestResult.Status, requestResult.Status.ToString()), true);
+            }
         }
+
+        private EmbedBuilder FormatMessage_InaraCMDR(JSONObject resultevent)
+        {
+            int eventStatus = 0;
+            resultevent.GetField(ref eventStatus, "eventStatus");
+            if (eventStatus == 200 || eventStatus == 202)
+            {
+                JSONObject cmdr = resultevent["eventData"];
+
+                string cmdr_name = string.Empty;
+                string cmdr_inara_url = string.Empty;
+                string cmdr_avatar_url = string.Empty;
+                string cmdr_gameRole = string.Empty;
+                string cmdr_allegiance = string.Empty;
+                cmdr.GetField(ref cmdr_name, "userName");
+                cmdr.GetField(ref cmdr_inara_url, "inaraURL");
+                cmdr.GetField(ref cmdr_avatar_url, "avatarImageURL");
+                cmdr.GetField(ref cmdr_gameRole, "preferredGameRole");
+                cmdr.GetField(ref cmdr_allegiance, "preferredAllegianceName");
+                cmdr_inara_url = makeLinkSafe(cmdr_inara_url);
+                cmdr_avatar_url = makeLinkSafe(cmdr_avatar_url);
+
+                JSONObject cmdr_squadron = cmdr["commanderSquadron"];
+                string cmdr_squadron_name = string.Empty;
+                string cmdr_squadron_rank = string.Empty;
+                string cmdr_squadron_url = string.Empty;
+                int cmdr_squadron_membercount = 0;
+                if (cmdr_squadron != null)
+                {
+                    cmdr_squadron.GetField(ref cmdr_squadron_name, "squadronName");
+                    cmdr_squadron.GetField(ref cmdr_squadron_rank, "squadronMemberRank");
+                    cmdr_squadron.GetField(ref cmdr_squadron_url, "inaraURL");
+                    cmdr_squadron.GetField(ref cmdr_squadron_membercount, "squadronMembersCount");
+                    cmdr_squadron_url = makeLinkSafe(cmdr_squadron_url);
+                }
+
+                if (cmdr != null)
+                {
+
+                    EmbedBuilder message = new EmbedBuilder();
+                    message.Color = Var.BOTCOLOR;
+                    message.Title = string.Format("Inara profile of {0}", cmdr_name);
+                    message.ThumbnailUrl = cmdr_avatar_url;
+                    message.Url = cmdr_inara_url;
+                    if (!string.IsNullOrEmpty(cmdr_gameRole))
+                    {
+                        message.AddField("Preffered Role", cmdr_gameRole);
+                    }
+                    if (!string.IsNullOrEmpty(cmdr_allegiance))
+                    {
+                        message.AddField("Allegiance", cmdr_allegiance);
+                    }
+                    if (!string.IsNullOrEmpty(cmdr_squadron_name))
+                    {
+                        message.AddField("Squadron", string.Format("**[{0}]({1})** - Rank: **{2}**, Member Count: **{3}**", cmdr_squadron_name, cmdr_squadron_url, cmdr_squadron_rank, cmdr_squadron_membercount));
+                    }
+                    else
+                    {
+                        message.AddField("No Squadron", "- / -");
+                    }
+                    return message;
+                }
+            }
+            else if (eventStatus == 204)
+            {
+                EmbedBuilder errormessage = new EmbedBuilder();
+                errormessage.Color = Var.ERRORCOLOR;
+                errormessage.Description = resultevent["eventStatusText"].str;
+                return errormessage;
+            }
+
+            EmbedBuilder error = new EmbedBuilder();
+            error.Title = "Unknown Error!";
+            error.Description = string.Format("```json\n{0}```", resultevent.Print(true).MaxLength(2037));
+            error.Color = Var.ERRORCOLOR;
+
+            return error;
+        }
+
+        private string makeLinkSafe(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+            char[] oldString = input.ToCharArray();
+            int occurences = 0;
+            foreach (char character in oldString)
+            {
+                if (character == '\\')
+                {
+                    occurences++;
+                }
+            }
+            char[] newString = new char[oldString.Length - occurences];
+            int offset = 0;
+            for (int i = 0; i < oldString.Length; i++)
+            {
+                if (oldString[i] == '\\')
+                {
+                    offset++;
+                }
+                else
+                {
+                    newString[i - offset] = oldString[i];
+                }
+            }
+            return new string(newString);
+        }
+
 
         #endregion
     }

@@ -13,7 +13,8 @@ using System.Threading;
 
 public static class Var
 {
-    internal static string VERSION_CODE = "V1.0";
+    internal static string INARA_APPNAME = "CiridiumWingBot";
+    internal readonly static Version VERSION = new Version(1, 1);
     /// <summary>
     /// When put to false will stop the program
     /// </summary>
@@ -50,7 +51,7 @@ namespace Ciridium {
         /// <returns></returns>
         public async Task MainAsync()
         {
-            Console.Title = "Ciridium Wing Bot " + Var.VERSION_CODE;
+            Console.Title = "Ciridium Wing Bot v" + Var.VERSION.ToString();
             Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 
             Var.client = new DiscordSocketClient(new DiscordSocketConfig

@@ -81,13 +81,16 @@ namespace Ciridium
                         {
                             try
                             {
-                                if (cmd.async)
+                                using (msg.Channel.EnterTypingState())
                                 {
-                                    await cmd.HandleCommand(context);
-                                }
-                                else
-                                {
-                                    cmd.HandleSynchronousCommand(context);
+                                    if (cmd.async)
+                                    {
+                                        await cmd.HandleCommand(context);
+                                    }
+                                    else
+                                    {
+                                        cmd.HandleSynchronousCommand(context);
+                                    }
                                 }
                             }
                             catch (Exception e)
