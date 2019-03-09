@@ -15,7 +15,7 @@ using System.Threading;
 public static class Var
 {
     internal static string INARA_APPNAME = "CiridiumWingBot";
-    internal readonly static Version VERSION = new Version(1, 1);
+    internal readonly static Version VERSION = new Version(1, 2);
     /// <summary>
     /// When put to false will stop the program
     /// </summary>
@@ -254,7 +254,7 @@ namespace Ciridium {
         Basic,
         Pilot,
         Dispatch,
-        Moderator,
+        Director,
         BotAdmin
     }
 }

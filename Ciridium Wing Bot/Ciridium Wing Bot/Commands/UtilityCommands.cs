@@ -62,7 +62,8 @@ namespace Ciridium
             embed.Title = "Ciridium Wing Bot";
             embed.ThumbnailUrl = Var.client.CurrentUser.GetAvatarUrl();
             embed.AddField("Version", "v" + Var.VERSION.ToString());
-            embed.AddField("Credits", "Programming: <@!117260771200598019>, Support: <@!181013221661081600>");
+            embed.AddField("Credits", "Programming: <@!117260771200598019>\nSupport: <@!181013221661081600>");
+            embed.AddField("Data Sources", "[EDSM](https://www.edsm.net/), [Inara](https://inara.cz/), [EDAssets](https://edassets.org/#/)");
             await context.Channel.SendEmbedAsync(embed);
         }
 
@@ -74,11 +75,11 @@ namespace Ciridium
         public DebugCommands(CommandService service)
         {
             // debug channels
-            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_CHANNELS), HandleListChannelsCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_CHANNELS, CMDSYNTAX_DEBUG_CHANNELS, Command.NO_ARGUMENTS);
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_CHANNELS), HandleListChannelsCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_CHANNELS, CMDSYNTAX_DEBUG_CHANNELS, Command.NO_ARGUMENTS);
             // debug roles
-            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_ROLES), HandleListRolesCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_ROLES, CMDSYNTAX_DEBUG_ROLES, Command.NO_ARGUMENTS);
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_ROLES), HandleListRolesCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_ROLES, CMDSYNTAX_DEBUG_ROLES, Command.NO_ARGUMENTS);
             // debug userinfo
-            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Moderator, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO);
+            service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO);
             // debug guilds
             service.AddCommand(new CommandKeys(CMDKEYS_DEBUG_GUILDS), HandleListGuildsCommand, AccessLevel.BotAdmin, CMDSUMMARY_DEBUG_GUILDS, CMDSYNTAX_DEBUG_GUILDS, Command.NO_ARGUMENTS);
         }
@@ -212,11 +213,11 @@ namespace Ciridium
         public ShutdownCommands(CommandService service)
         {
             // shutdown
-            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
+            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Director, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
             // kys
-            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Moderator, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS);
+            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Director, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS);
             // restart
-            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Moderator, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS);
+            Var.cmdService.AddSynchronousCommand(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Director, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS);
         }
 
         #region /shutdown
@@ -280,7 +281,7 @@ namespace Ciridium
                     embeds.Add(new EmbedField(cmd.Syntax, cmd.Summary));
                 }
             }
-            await context.Channel.SendSafeEmbedList("You have access to the following commands", embeds, "Use `/help <cmdname>` to see syntax.");
+            await context.Channel.SendSafeEmbedList(string.Format("Your access level is `{0}`. Available commands:", userLevel.ToString()), embeds, "Use `/help <cmdname>` to see syntax.");
         }
 
         #endregion

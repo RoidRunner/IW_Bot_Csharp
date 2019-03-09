@@ -167,6 +167,22 @@ namespace Ciridium.WebRequests
             return "https://www.edsm.net/api-system-v1/deaths?systemName=" + systemName.Replace(' ', '+');
         }
 
+        public static string EDSM_Commander_Location(string commanderName, bool showId, bool showCoordinates)
+        {
+            StringBuilder result = new StringBuilder();
+            result.Append("https://www.edsm.net/api-logs-v1/get-position?commanderName=");
+            result.Append(commanderName.Replace(' ', '+'));
+            if (showId)
+            {
+                result.Append("&showId=1");
+            }
+            if (showCoordinates)
+            {
+                result.Append("&showCoordinates=1");
+            }
+            return result.ToString();
+        }
+
         internal static JSONObject Inara_CMDR_Profile(string cmdrName)
         {
             JSONObject result = Inara_Base_Request();
