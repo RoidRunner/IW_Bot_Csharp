@@ -19,6 +19,7 @@ namespace Ciridium
         /// The bot token used to log into discord
         /// </summary>
         internal static string token;
+        internal static string Inara_APIkey;
         /// <summary>
         /// A list containing all Bot Admin IDs
         /// </summary>
@@ -84,6 +85,7 @@ namespace Ciridium
         private const string JSON_MODERATORROLE = "ModeratorRole";
         private const string JSON_BOTDEVROLE = "BotDevRole";
         private const string JSON_DISPATCHROLE = "DispatchRole";
+        private const string JSON_INARA_APIKEY = "InaraAPIKey";
 
         /// <summary>
         /// Loads and applies Settings from appdata/locallow/Ciridium Wing Bot/Settings.json
@@ -146,6 +148,7 @@ namespace Ciridium
                     {
                         ulong.TryParse(id, out DispatchRole);
                     }
+                    json.GetField(ref Inara_APIkey, JSON_INARA_APIKEY);
                 }
             }
         }
@@ -177,6 +180,7 @@ namespace Ciridium
             json.AddField(JSON_PILOTROLE, EscortPilotRole.ToString());
             json.AddField(JSON_BOTDEVROLE, BotDevRole.ToString());
             json.AddField(JSON_DISPATCHROLE, DispatchRole.ToString());
+            json.AddField(JSON_INARA_APIKEY, Inara_APIkey);
 
 
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.SettingsFilePath, json);
@@ -216,7 +220,7 @@ namespace Ciridium
                 EmbedBuilder result = new EmbedBuilder();
                 result.Color = Var.BOTCOLOR;
                 result.Title = "**__Current Settings__**";
-                result.AddField("Bot Version", "Ciridium Wing Bot " + Var.VERSION_CODE);
+                result.AddField("Bot Version", "Ciridium Wing Bot " + Var.VERSION.ToString());
                 StringBuilder debugSettings = new StringBuilder();
                 debugSettings.Append("```");
                 for (int i = 0; i < debugLogging.Length; i++)
@@ -241,7 +245,7 @@ namespace Ciridium
                     "Escort Pilot:      {1}\n" +
                     "Dispatch:          {2}\n" +
                     "Bot Dev:           {3}```", ModeratorRole, EscortPilotRole, DispatchRole, BotDevRole));
-            return result;
+                return result;
             }
         }
 
@@ -269,8 +273,8 @@ namespace Ciridium
             }
         }
 
-#endregion
-#region Access Levels
+        #endregion
+        #region Access Levels
 
         /// <summary>
         /// Checks if the user is listed as bot admin
@@ -329,7 +333,7 @@ namespace Ciridium
             }
             return result;
         }
-#endregion
+        #endregion
 
     }
 

@@ -6,12 +6,16 @@ using Ciridium;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Ciridium.WebRequests;
+using System.Threading;
 
 // dotnet publish -c Release -r win10-x64
+// dotnet publish -c Release -r linux-x64
 
 public static class Var
 {
-    internal static string VERSION_CODE = "V1.0";
+    internal static string INARA_APPNAME = "CiridiumWingBot";
+    internal readonly static Version VERSION = new Version(1, 1);
     /// <summary>
     /// When put to false will stop the program
     /// </summary>
@@ -48,7 +52,9 @@ namespace Ciridium {
         /// <returns></returns>
         public async Task MainAsync()
         {
-            Console.Title = "Ciridium Wing Bot " + Var.VERSION_CODE;
+            Console.Title = "Ciridium Wing Bot v" + Var.VERSION.ToString();
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+
             Var.client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info
@@ -195,7 +201,7 @@ namespace Ciridium {
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
                     Console.BackgroundColor = ConsoleColor.Black;
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.ForegroundColor = ConsoleColor.Gray;
                     break;
             }
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message}");
@@ -219,6 +225,7 @@ namespace Ciridium {
             ShutdownCommands shutdownCmds = new ShutdownCommands(Var.cmdService);
             HelpCommands helpCmds = new HelpCommands(Var.cmdService);
             MissionCommands missionCmds = new MissionCommands(Var.cmdService);
+            WebCommands webCmds = new WebCommands(Var.cmdService);
 
             Var.client.MessageReceived += HandleCommandAsync;
         }
