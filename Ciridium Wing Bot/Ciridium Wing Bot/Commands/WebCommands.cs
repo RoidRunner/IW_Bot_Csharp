@@ -32,9 +32,10 @@ namespace Ciridium.WebRequests
         public async Task HandleSystemInfoCommand(CommandContext context)
         {
             bool printJSON = context.Args[1].Equals("json");
+            bool listStations = context.Args[1].Equals("list");
 
             string requestedSystem;
-            if (printJSON)
+            if (printJSON || listStations)
             {
                 requestedSystem = context.Message.Content.Substring(CMDKEYS_SYSTEMINFO.Length + 7);
             }
@@ -59,7 +60,7 @@ namespace Ciridium.WebRequests
                         await context.Channel.SendEmbedAsync("General System Info", string.Format("```json\n{0}```", requestResultSystem.Object.Print(true).MaxLength(2037)));
                         await context.Channel.SendEmbedAsync("Station Info", string.Format("```json\n{0}```", requestResultStations.Object.Print(true).MaxLength(2037)));
                     }
-                    await context.Channel.SendEmbedAsync(FormatMessage_SystemInfo(requestResultSystem.Object, requestResultStations.Object, requestResultTraffic.Object, requestResultDeaths.Object));
+                    await SendMessage_SystemInfo(context, requestResultSystem.Object, requestResultStations.Object, requestResultTraffic.Object, requestResultDeaths.Object, listStations);
                 }
             }
             else if (requestResultSystem.IsException)
@@ -72,9 +73,11 @@ namespace Ciridium.WebRequests
             }
         }
 
-        public static EmbedBuilder FormatMessage_SystemInfo(JSONObject system, JSONObject stations, JSONObject traffic, JSONObject deaths)
+        public static async Task SendMessage_SystemInfo(CommandContext context, JSONObject system, JSONObject stations, JSONObject traffic, JSONObject deaths, bool listStations)
         {
-            EmbedBuilder message = new EmbedBuilder();
+            EmbedBuilder infoembed = new EmbedBuilder();
+            List<EmbedField> listembed = new List<EmbedField>();
+            bool stationsFound = false;
 
             // Gathering Information
 
@@ -115,8 +118,10 @@ namespace Ciridium.WebRequests
                 StationInfo bestOrbitalLarge = null;
                 StationInfo bestOrbitalMedium = null;
                 StationInfo bestPlanetary = null;
+                List<StationInfo> stationInfos = new List<StationInfo>();
                 if ((stations != null) && stations.HasField("stations"))
                 {
+                    stationsFound = true;
                     foreach (JSONObject station in stations["stations"])
                     {
                         JSONObject otherservices = station["otherServices"];
@@ -134,7 +139,7 @@ namespace Ciridium.WebRequests
                             {
                                 if (station_gov.Equals("Workshop (Engineer)"))
                                 {
-                                    info.Type = StationType.Unlandable;
+                                    info.Type = StationType.EngineerBase;
                                 }
                             }
                             station.GetField(ref info.HasShipyard, "haveShipyard");
@@ -160,6 +165,7 @@ namespace Ciridium.WebRequests
                                     }
                                 }
                             }
+                            stationInfos.Add(info);
                             if (info.HasLargePadOrbital)
                             {
                                 if (bestOrbitalLarge == null)
@@ -220,58 +226,72 @@ namespace Ciridium.WebRequests
                 }
 
                 // Constructing message
-                message.Color = Var.BOTCOLOR;
-                message.Title = string.Format("__**System Info for {0}**__", system_name);
-                message.Url = string.Format("https://www.edsm.net/en/system/id/{0}/name/{1}", system_id, system_name_link);
-                message.AddField("General Info", string.Format("{0}Star Type: {1}\nSecurity: {2}", system_requirepermit ? string.Format("**Requires Permit**: {0}\n", system_permit) : string.Empty, startype, security));
+                infoembed.Color = Var.BOTCOLOR;
+                infoembed.Title = string.Format("__**System Info for {0}**__", system_name);
+                infoembed.Url = string.Format("https://www.edsm.net/en/system/id/{0}/name/{1}", system_id, system_name_link);
+                infoembed.AddField("General Info", string.Format("{0}Star Type: {1}\nSecurity: {2}", system_requirepermit ? string.Format("**Requires Permit**: {0}\n", system_permit) : string.Empty, startype, security));
 
                 bool provideInfoOnLarge = bestOrbitalLarge != null;
                 bool provideInfoOnMedium = (!provideInfoOnLarge && bestOrbitalMedium != null) || (provideInfoOnLarge && bestOrbitalMedium != null && bestOrbitalLarge.Distance > bestOrbitalMedium.Distance);
                 bool provideInfoOnPlanetary = (!provideInfoOnLarge && bestPlanetary != null) || (provideInfoOnLarge && bestPlanetary != null && bestOrbitalLarge.Distance > bestPlanetary.Distance);
                 if (provideInfoOnLarge)
                 {
-                    message.AddField("Closest Orbital Large Pad", bestOrbitalLarge.ToString());
+                    infoembed.AddField("Closest Orbital Large Pad", bestOrbitalLarge.ToString());
                 }
                 if (provideInfoOnMedium)
                 {
-                    message.AddField("Closest Orbital Medium Pad", bestOrbitalMedium.ToString());
+                    infoembed.AddField("Closest Orbital Medium Pad", bestOrbitalMedium.ToString());
                 }
                 if (provideInfoOnPlanetary)
                 {
-                    message.AddField("Closest Planetary Large Pad", bestPlanetary.ToString());
+                    infoembed.AddField("Closest Planetary Large Pad", bestPlanetary.ToString());
                 }
                 if (!provideInfoOnLarge && !provideInfoOnMedium && !provideInfoOnPlanetary)
                 {
-                    message.AddField("No Stations in this System!", "- / -");
+                    infoembed.AddField("No Stations in this System!", "- / -");
                 }
                 if (traffic_day != -1 && traffic_week != -1)
                 {
-                    message.AddField("Traffic Report", string.Format("Last 7 days: {0} CMDRs, last 24 hours: {1} CMDRs", traffic_week, traffic_day));
+                    infoembed.AddField("Traffic Report", string.Format("Last 7 days: {0} CMDRs, last 24 hours: {1} CMDRs", traffic_week, traffic_day));
                 }
                 else
                 {
-                    message.AddField("No Traffic Report Available", "- / -");
+                    infoembed.AddField("No Traffic Report Available", "- / -");
                 }
                 if (deaths_day != -1 && deaths_week != -1)
                 {
-                    message.AddField("CMDR Deaths Report", string.Format("Last 7 days: {0} CMDRs, last 24 hours: {1} CMDRs", deaths_week, deaths_day));
+                    infoembed.AddField("CMDR Deaths Report", string.Format("Last 7 days: {0} CMDRs, last 24 hours: {1} CMDRs", deaths_week, deaths_day));
                 }
                 else
                 {
-                    message.AddField("No CMDR Deaths Report Available", "- / -");
+                    infoembed.AddField("No CMDR Deaths Report Available", "- / -");
+                }
+
+                if (stationsFound && stationInfos.Count > 0)
+                {
+                    foreach (StationInfo stationInfo in stationInfos)
+                    {
+                        listembed.Add(new EmbedField(stationInfo.Title_NoLink, stationInfo.Services_Link));
+                    }
                 }
             }
             else
             {
-                message.Description = string.Format("Could not get name & id from JSON. Here have the source json data: ```json\n{0}```", system.Print(true));
-                message.Color = Var.ERRORCOLOR;
+                infoembed.Description = string.Format("Could not get name & id from JSON. Here have the source json data: ```json\n{0}```", system.Print(true));
+                infoembed.Color = Var.ERRORCOLOR;
             }
 
-            return message;
+            await context.Channel.SendEmbedAsync(infoembed);
+            if (listStations && stationsFound)
+            {
+                await context.Channel.SendSafeEmbedList("Stations in " + system_name, listembed);
+            }
         }
 
         private class StationInfo
         {
+            private static readonly CultureInfo culture = new CultureInfo("en-us");
+
             public string Name;
             public long Id;
             public StationType Type;
@@ -327,14 +347,53 @@ namespace Ciridium.WebRequests
 
             public override string ToString()
             {
-                string distanceFormatted = Distance.ToString("N", new CultureInfo("en-US"));
-                string result = string.Format("**{0} [{1}]({2})**: {3}, {4} ls\n     {5}{6}{7}{8}{9}{10}", STATIONEMOJI[(int)Type], Name, EDSMLink, STATIONTYPENAMES[(int)Type], distanceFormatted.Substring(0, distanceFormatted.Length - 3),
-                    HasRestock ? "Restock, " : string.Empty, HasRefuel ? "Refuel, " : string.Empty, HasRepair ? "Repair, " : string.Empty, HasShipyard ? "Shipyard, " : string.Empty, HasOutfitting ? "Outfitting, " : string.Empty, HasUniversalCartographics ? "Universal Cartographics" : string.Empty);
-                if (result.EndsWith(", "))
+                return string.Format("{0}\n     {1}", Title, Services);
+            }
+
+            public string Title
+            {
+                get
                 {
-                    result = result.Substring(0, result.Length - 2);
+                    string distanceFormatted = Distance.ToString("N", culture);
+                    string result = string.Format("**{0} [{1}]({2})**: {3}, {4} ls", STATIONEMOJI[(int)Type], Name, EDSMLink, STATIONTYPENAMES[(int)Type], distanceFormatted.Substring(0, distanceFormatted.Length - 3));
+                    return result;
                 }
-                return result;
+            }
+
+            public string Title_NoLink
+            {
+                get
+                {
+                    string distanceFormatted = Distance.ToString("N", culture);
+                    string result = string.Format("**{0} {1}**: {2}, {3} ls", STATIONEMOJI[(int)Type], Name, STATIONTYPENAMES[(int)Type], distanceFormatted.Substring(0, distanceFormatted.Length - 3));
+                    return result;
+                }
+            }
+
+            public string Services
+            {
+                get
+                {
+                    string result = string.Format("{0}{1}{2}{3}{4}{5}", HasRestock ? "Restock, " : string.Empty, HasRefuel ? "Refuel, " : string.Empty, HasRepair ? "Repair, " : string.Empty, HasShipyard ? "Shipyard, " : string.Empty, HasOutfitting ? "Outfitting, " : string.Empty, HasUniversalCartographics ? "Universal Cartographics" : string.Empty);
+                    if (result.EndsWith(", "))
+                    {
+                        result = result.Substring(0, result.Length - 2);
+                    }
+                    return result;
+                }
+            }
+
+            public string Services_Link
+            {
+                get
+                {
+                    string result = string.Format("[Link]({0}) - {1}{2}{3}{4}{5}{6}", EDSMLink, HasRestock ? "Restock, " : string.Empty, HasRefuel ? "Refuel, " : string.Empty, HasRepair ? "Repair, " : string.Empty, HasShipyard ? "Shipyard, " : string.Empty, HasOutfitting ? "Outfitting, " : string.Empty, HasUniversalCartographics ? "Universal Cartographics" : string.Empty);
+                    if (result.EndsWith(", "))
+                    {
+                        result = result.Substring(0, result.Length - 2);
+                    }
+                    return result;
+                }
             }
         }
 
@@ -375,12 +434,13 @@ namespace Ciridium.WebRequests
             Planetary,
             Megaship,
             Unlandable,
+            EngineerBase,
             Other
         }
 
         public static readonly string[] STATIONEMOJI = new string[] { "<:orbis:553690990964244520>", "<:coriolis:553690991022964749>", "<:ocellus:553690990901460992>", "<:asteroid:553690991245262868>",
-            "<:outpost:553690991060844567>", "<:planetary:553690991123496963>", "<:megaship:553690991144599573>", "<:unknown:553690991136342026>", "<:unknown:553690991136342026>" };
-        public static readonly string[] STATIONTYPENAMES = new string[] { "Orbis Starport", "Coriolis Starport", "Ocellus Starport", "Asteroid Base", "Outpost", "Planetary", "Megaship", "Unlandable", "Other" };
+            "<:outpost:553690991060844567>", "<:planetary:553690991123496963>", "<:megaship:553690991144599573>", "<:unknown:553690991136342026>", "<:Engineer:554018579050397698>", "<:unknown:553690991136342026>" };
+        public static readonly string[] STATIONTYPENAMES = new string[] { "Orbis Starport", "Coriolis Starport", "Ocellus Starport", "Asteroid Base", "Outpost", "Planetary", "Megaship", "Unlandable", "Engineer Base", "Other" };
 
         #endregion
         #region /distance
@@ -514,40 +574,104 @@ namespace Ciridium.WebRequests
             }
             JSONObject RequestContent = WebRequestService.Inara_CMDR_Profile(cmdrName);
             //await context.Channel.SendEmbedAsync("Request JSON", string.Format("```json\n{0}```", RequestContent.Print(true).MaxLength(2037)));
-            RequestJSONResult requestResult = await WebRequestService.GetWebJSONAsync("https://inara.cz/inapi/v1/", RequestContent);
-            if (requestResult.IsSuccess)
+            RequestJSONResult requestResultInara = await WebRequestService.GetWebJSONAsync("https://inara.cz/inapi/v1/", RequestContent);
+            RequestJSONResult requestResultEDSM = await WebRequestService.GetWebJSONAsync(WebRequestService.EDSM_Commander_Location(cmdrName, true, false));
+            bool inaraResultOK = false;
+            JSONObject inaraEvents = null;
+            if (requestResultInara.IsSuccess)
             {
-                JSONObject result = requestResult.Object;
+                JSONObject result = requestResultInara.Object;
                 if (printJSON)
                 {
-                    await context.Channel.SendEmbedAsync("Request JSON", string.Format("```json\n{0}```", result.Print(true).MaxLength(2037)));
+                    await context.Channel.SendEmbedAsync("Inara result JSON", string.Format("```json\n{0}```", result.Print(true).MaxLength(2037)));
                 }
-                bool resultOK = false;
                 JSONObject header = result["header"];
-                JSONObject events = result["events"];
-                if (header != null && events != null)
+                inaraEvents = result["events"];
+                if (header != null && inaraEvents != null)
                 {
                     int eventStatus = 0;
                     header.GetField(ref eventStatus, "eventStatus");
-                    if (eventStatus == 200 && events.IsArray && events.Count > 0)
+                    if (eventStatus == 200 && inaraEvents.IsArray && inaraEvents.Count > 0)
                     {
-                        resultOK = true;
-                        await context.Channel.SendEmbedAsync(FormatMessage_InaraCMDR(events[0]));
+                        inaraResultOK = true;
                     }
                 }
-                if (!resultOK)
+                if (!inaraResultOK)
                 {
                     await context.Channel.SendEmbedAsync("Result not OK! Here the result JSON:", string.Format("```json\n{0}```", result.Print(true).MaxLength(2037)));
                 }
             }
-            else if (requestResult.IsException)
+            else if (requestResultInara.IsException)
             {
-                await context.Channel.SendEmbedAsync(string.Format("Could not connect to Inaras services. Exception Message: `{0}`", requestResult.ThrownException.Message), true);
+                await context.Channel.SendEmbedAsync(string.Format("Could not connect to Inaras services. Exception Message: `{0}`", requestResultInara.ThrownException.Message), true);
             }
             else
             {
-                await context.Channel.SendEmbedAsync(string.Format("Could not connect to Inaras services. HTTP Error Message: `{0} {1}`", (int)requestResult.Status, requestResult.Status.ToString()), true);
+                await context.Channel.SendEmbedAsync(string.Format("Could not connect to Inaras services. HTTP Error Message: `{0} {1}`", (int)requestResultInara.Status, requestResultInara.Status.ToString()), true);
             }
+            bool edsmResultOK = false;
+            if (requestResultEDSM.IsSuccess)
+            {
+                JSONObject result = requestResultEDSM.Object;
+                if (printJSON)
+                {
+                    await context.Channel.SendEmbedAsync("EDSM result JSON", string.Format("```json\n{0}```", result.Print(true).MaxLength(2037)));
+                }
+                if (result.Count > 0)
+                {
+                    edsmResultOK = true;
+                }
+            }
+            if (inaraResultOK)
+            {
+                await context.Channel.SendEmbedAsync(FormatMessage_InaraCMDR(inaraEvents[0]));
+            }
+            if (edsmResultOK)
+            {
+                await context.Channel.SendEmbedAsync(FormatMessage_EDSMCMDR(cmdrName, requestResultEDSM.Object));
+            }
+        }
+
+        private EmbedBuilder FormatMessage_EDSMCMDR(string name, JSONObject response)
+        {
+            EmbedBuilder result = new EmbedBuilder();
+
+            int msgnum = 0;
+            string system = string.Empty;
+            response.GetField(ref msgnum, "msgnum");
+            response.GetField(ref system, "system");
+            if (msgnum == 100 && !string.IsNullOrEmpty(system))
+            {
+                result.Color = Var.BOTCOLOR;
+                result.Title = string.Format("EDSM profile of {0}", name);
+
+                int systemId = 0;
+                string shiptype = string.Empty;
+                string profile_url = string.Empty;
+                response.GetField(ref systemId, "systemId");
+                response.GetField(ref shiptype, "shipType");
+                response.GetField(ref profile_url, "url");
+
+                if (!string.IsNullOrEmpty(profile_url))
+                {
+                    result.Url = makeLinkSafe(profile_url);
+                }
+                if (!string.IsNullOrEmpty(system))
+                {
+                    result.AddField("Last Reported Location", string.Format("[{0}](https://www.edsm.net/en/system/id/{1}/name/{2})", system, systemId, system.Replace(' ', '+')));
+                }
+                if (!string.IsNullOrEmpty(shiptype))
+                {
+                    result.AddField("Last Reported Ship", shiptype);
+                }
+            }
+            else
+            {
+                result.Color = Var.ERRORCOLOR;
+                result.Description ="CMDR not found on EDSM or profile is private";
+            }
+
+            return result;
         }
 
         private EmbedBuilder FormatMessage_InaraCMDR(JSONObject resultevent)
@@ -616,7 +740,12 @@ namespace Ciridium.WebRequests
             {
                 EmbedBuilder errormessage = new EmbedBuilder();
                 errormessage.Color = Var.ERRORCOLOR;
-                errormessage.Description = resultevent["eventStatusText"].str;
+                string eventResult = resultevent["eventStatusText"].str;
+                if (eventResult.Equals("No results found."))
+                {
+                    eventResult = "CMDR not found on Inara";
+                }
+                errormessage.Description = eventResult;
                 return errormessage;
             }
 

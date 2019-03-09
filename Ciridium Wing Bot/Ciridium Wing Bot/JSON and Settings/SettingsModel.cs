@@ -318,9 +318,9 @@ namespace Ciridium
             AccessLevel result = AccessLevel.Basic;
             foreach (var role in user.Roles)
             {
-                if (role.Id == ModeratorRole && result < AccessLevel.Moderator)
+                if (role.Id == ModeratorRole && result < AccessLevel.Director)
                 {
-                    result = AccessLevel.Moderator;
+                    result = AccessLevel.Director;
                 }
                 else if (role.Id == DispatchRole && result < AccessLevel.Dispatch)
                 {
