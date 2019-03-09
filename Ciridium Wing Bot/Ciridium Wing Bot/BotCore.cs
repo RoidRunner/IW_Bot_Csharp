@@ -10,6 +10,7 @@ using Ciridium.WebRequests;
 using System.Threading;
 
 // dotnet publish -c Release -r win10-x64
+// dotnet publish -c Release -r linux-x64
 
 public static class Var
 {
@@ -200,7 +201,7 @@ namespace Ciridium {
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
                     Console.BackgroundColor = ConsoleColor.Black;
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.ForegroundColor = ConsoleColor.Gray;
                     break;
             }
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message}");

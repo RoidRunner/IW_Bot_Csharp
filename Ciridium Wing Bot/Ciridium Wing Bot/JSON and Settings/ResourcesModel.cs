@@ -15,7 +15,7 @@ namespace Ciridium
 
         static ResourcesModel()
         {
-            BaseDirectory = Environment.CurrentDirectory + @"\Settings\";
+            BaseDirectory = Environment.CurrentDirectory + "/Settings/";
             SettingsFilePath = BaseDirectory + "Settings.json";
             MissionSettingsFilePath = BaseDirectory + "MissionSettings.json";
             MissionsFilePath = BaseDirectory + "Missions.json";

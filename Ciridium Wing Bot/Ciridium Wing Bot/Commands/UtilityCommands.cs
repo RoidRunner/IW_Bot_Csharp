@@ -271,18 +271,16 @@ namespace Ciridium
         {
             AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
 
-            EmbedBuilder embedmessage = new EmbedBuilder();
-            embedmessage.Color = Var.BOTCOLOR;
-            embedmessage.Title = "You have access to the following commands";
+            List<EmbedField> embeds = new List<EmbedField>();
+
             foreach (Command cmd in Var.cmdService.commands)
             {
                 if (cmd.HasPermission(userLevel))
                 {
-                    embedmessage.AddField(cmd.Syntax, cmd.Summary);
+                    embeds.Add(new EmbedField(cmd.Syntax, cmd.Summary));
                 }
             }
-            embedmessage.Description = "Use `/help <cmdname>` to see syntax.";
-            await context.Channel.SendEmbedAsync(embedmessage);
+            await context.Channel.SendSafeEmbedList("You have access to the following commands", embeds, "Use `/help <cmdname>` to see syntax.");
         }
 
         #endregion
