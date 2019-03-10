@@ -11,21 +11,20 @@ namespace Ciridium
     /// </summary>
     class SettingsCommands
     {
-        public SettingsCommands(CommandService service)
+        public SettingsCommands()
         {
-            CommandService s = Var.cmdService;
             // settings
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS), HandleCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS, CMDSYNTAX_SETTINGS, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS), HandleCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS, CMDSYNTAX_SETTINGS, Command.NO_ARGUMENTS);
             // settings debug
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_DEBUG, 4, 4), HandleDebugLoggingCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_DEBUG, CMDSYNTAX_SETTINGS_DEBUG, CMDARGS_SETTINGS_DEBUG);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_DEBUG, 4, 4), HandleDebugLoggingCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_DEBUG, CMDSYNTAX_SETTINGS_DEBUG, CMDARGS_SETTINGS_DEBUG);
             // settings channel
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_CHANNEL, 4, 4), HandleDefaultChannelCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_CHANNEL, CMDSYNTAX_SETTINGS_CHANNEL, CMDARGS_SETTINGS_CHANNEL);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_CHANNEL, 4, 4), HandleDefaultChannelCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_CHANNEL, CMDSYNTAX_SETTINGS_CHANNEL, CMDARGS_SETTINGS_CHANNEL);
             // settings role
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_ROLE, 4, 4), HandleSetRoleCommand, AccessLevel.BotAdmin, CMDSUMMARY_SETTINGS_ROLE, CMDSYNTAX_SETTINGS_ROLE, CMDARGS_SETTINGS_ROLE);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_ROLE, 4, 4), HandleSetRoleCommand, AccessLevel.BotAdmin, CMDSUMMARY_SETTINGS_ROLE, CMDSYNTAX_SETTINGS_ROLE, CMDARGS_SETTINGS_ROLE);
             // settings setmissionnumber
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
             // settings template
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 4, 1000), HandleTemplateCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 4, 1000), HandleTemplateCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE);
 #if WELCOMING_MESSAGES
             // settings setjoinmsg
             s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETJOINMSG, 3, 1000), HandleWelcomingMessageCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETJOINMSG, CMDSYNTAX_SETTINGS_SETJOINMSG, CMDARGS_SETTINGS_SETJOINMSG);
@@ -35,7 +34,7 @@ namespace Ciridium
         #region /settings
 
         private const string CMDKEYS_SETTINGS = "settings";
-        private const string CMDSYNTAX_SETTINGS = "/settings";
+        private const string CMDSYNTAX_SETTINGS = "settings";
         private const string CMDSUMMARY_SETTINGS = "Lists current settings";
 
         public async Task HandleCommand(SocketCommandContext context)
@@ -47,7 +46,7 @@ namespace Ciridium
         #region /settings debug
 
         private const string CMDKEYS_SETTINGS_DEBUG = "settings debug";
-        private const string CMDSYNTAX_SETTINGS_DEBUG = "/settings debug";
+        private const string CMDSYNTAX_SETTINGS_DEBUG = "settings debug";
         private const string CMDSUMMARY_SETTINGS_DEBUG = "Enables/Disables debug messages for a debug category";
         private const string CMDARGS_SETTINGS_DEBUG =
                 "    <Category>\n" +
@@ -90,7 +89,7 @@ namespace Ciridium
         #region /settings role
 
         private const string CMDKEYS_SETTINGS_ROLE = "settings role";
-        private const string CMDSYNTAX_SETTINGS_ROLE = "/settings role <AccessLevel> <@Role>";
+        private const string CMDSYNTAX_SETTINGS_ROLE = "settings role <AccessLevel> <@Role>";
         private const string CMDSUMMARY_SETTINGS_ROLE = "Sets the pilot/moderator role used to handle access to bot commands";
         private const string CMDARGS_SETTINGS_ROLE =
                 "    <AccessLevel>\n" +
@@ -157,7 +156,7 @@ namespace Ciridium
 #if WELCOMING_MESSAGES
 
         private const string CMDKEYS_SETTINGS_SETJOINMSG = "settings setjoinmsg";
-        private const string CMDSYNTAX_SETTINGS_SETJOINMSG = "/settings setjoinmsg {<Words>}";
+        private const string CMDSYNTAX_SETTINGS_SETJOINMSG = "settings setjoinmsg {<Words>}";
         private const string CMDSUMMARY_SETTINGS_SETJOINMSG = "Sets the welcoming message";
         private const string CMDARGS_SETTINGS_SETJOINMSG =
                 "    {<Words>}\n" +
@@ -188,7 +187,7 @@ namespace Ciridium
         #region /settings template
 
         private const string CMDKEYS_SETTINGS_TEMPLATE = "settings template";
-        private const string CMDSYNTAX_SETTINGS_TEMPLATE = "/settings template <Template> <{<Words>}";
+        private const string CMDSYNTAX_SETTINGS_TEMPLATE = "settings template <Template> <{<Words>}";
         private const string CMDSUMMARY_SETTINGS_TEMPLATE = "Sets a new text for any of the text templates";
         private const string CMDARGS_SETTINGS_TEMPLATE =
                 "    <Template>\n" +
@@ -240,7 +239,7 @@ namespace Ciridium
         #region /settings channel
 
         private const string CMDKEYS_SETTINGS_CHANNEL = "settings channel";
-        private const string CMDSYNTAX_SETTINGS_CHANNEL = "/settings channel <Channel> <ChannelId>";
+        private const string CMDSYNTAX_SETTINGS_CHANNEL = "settings channel <Channel> <ChannelId>";
         private const string CMDSUMMARY_SETTINGS_CHANNEL = "Sets the channel used for debug, welcoming and the mission channel category";
         private const string CMDARGS_SETTINGS_CHANNEL =
                 "    <Channel>\n" +
@@ -314,7 +313,7 @@ namespace Ciridium
         #region /settings setmissionnumber
 
         private const string CMDKEYS_SETTINGS_SETMISSIONNUMBER = "settings setmissionnumber";
-        private const string CMDSYNTAX_SETTINGS_SETMISSIONNUMBER = "/settings setmissionnumber <Number>";
+        private const string CMDSYNTAX_SETTINGS_SETMISSIONNUMBER = "settings setmissionnumber <Number>";
         private const string CMDSUMMARY_SETTINGS_SETMISSIONNUMBER = "Sets the number for the next created mission";
         private const string CMDARGS_SETTINGS_SETMISSIONNUMBER =
                 "    <Number>\n" +

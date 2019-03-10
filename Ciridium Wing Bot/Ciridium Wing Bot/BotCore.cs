@@ -8,6 +8,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Ciridium.WebRequests;
 using System.Threading;
+using Ciridium.Shitposting;
+using System.Globalization;
+using Ciridium.Reactions;
 
 // dotnet publish -c Release -r win10-x64
 // dotnet publish -c Release -r linux-x64
@@ -25,10 +28,6 @@ public static class Var
     /// </summary>
     internal static DiscordSocketClient client;
     /// <summary>
-    /// Commandservice storing all commands
-    /// </summary>
-    internal static Ciridium.CommandService cmdService;
-    /// <summary>
     /// Embed color used for the bot
     /// </summary>
     internal static readonly Color BOTCOLOR = new Color(71, 71, 255);
@@ -40,6 +39,15 @@ public static class Var
     /// Path containing the restart location
     /// </summary>
     internal static string RestartPath = string.Empty;
+    internal static CultureInfo Culture = new CultureInfo("en-us");
+    internal const ulong GuildId = 531241586529402900;
+    internal static SocketGuild Guild
+    {
+        get
+        {
+            return Var.client.GetGuild(GuildId);
+        }
+    }
 }
 namespace Ciridium {
     public class BotCore
@@ -53,7 +61,7 @@ namespace Ciridium {
         public async Task MainAsync()
         {
             Console.Title = "Ciridium Wing Bot v" + Var.VERSION.ToString();
-            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+            Thread.CurrentThread.CurrentCulture = Var.Culture;
 
             Var.client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -75,6 +83,7 @@ namespace Ciridium {
             {
                 await MissionSettingsModel.LoadMissionSettings();
                 await MissionModel.LoadMissions();
+                await QuoteService.LoadQuotes();
 
                 Var.client = new DiscordSocketClient(new DiscordSocketConfig
                 {
@@ -90,6 +99,8 @@ namespace Ciridium {
                 Var.client.Log += Logger;
                 SettingsModel.DebugMessage += Logger;
                 Var.client.Connected += ScheduleConnectDebugMessage;
+                Var.client.ReactionAdded += HandleReactionAdded;
+                QuoteReactions quoteReact = new QuoteReactions();
 
                 await Var.client.LoginAsync(TokenType.Bot, SettingsModel.token);
                 await Var.client.StartAsync();
@@ -133,6 +144,11 @@ namespace Ciridium {
             {
                 System.Diagnostics.Process.Start(Var.RestartPath);
             }
+        }
+
+        private async Task HandleReactionAdded(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            await ReactionService.HandleReactionAdded(channel, reaction);
         }
 
         /// <summary>
@@ -205,6 +221,10 @@ namespace Ciridium {
                     break;
             }
             Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message}");
+            if (message.Exception != null)
+            {
+                Console.WriteLine(string.Format("{0}\n{1}", message.Exception.Message, message.Exception.StackTrace));
+            }
 
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
@@ -217,15 +237,14 @@ namespace Ciridium {
         /// </summary>
         private void InitCommands()
         {
-            Var.cmdService = new Ciridium.CommandService('/');
-
-            UtilityCommands utilityCmds = new UtilityCommands(Var.cmdService);
-            DebugCommands debugCmds = new DebugCommands(Var.cmdService);
-            SettingsCommands settingsCmds = new SettingsCommands(Var.cmdService);
-            ShutdownCommands shutdownCmds = new ShutdownCommands(Var.cmdService);
-            HelpCommands helpCmds = new HelpCommands(Var.cmdService);
-            MissionCommands missionCmds = new MissionCommands(Var.cmdService);
-            WebCommands webCmds = new WebCommands(Var.cmdService);
+            UtilityCommands utilityCmds = new UtilityCommands();
+            DebugCommands debugCmds = new DebugCommands();
+            SettingsCommands settingsCmds = new SettingsCommands();
+            ShutdownCommands shutdownCmds = new ShutdownCommands();
+            HelpCommands helpCmds = new HelpCommands();
+            MissionCommands missionCmds = new MissionCommands();
+            WebCommands webCmds = new WebCommands();
+            QuoteCommands quoteCmds = new QuoteCommands();
 
             Var.client.MessageReceived += HandleCommandAsync;
         }
@@ -244,7 +263,7 @@ namespace Ciridium {
                 return;
             }
 
-            await Var.cmdService.HandleCommand(msg);
+            await CommandService.HandleCommand(msg);
         }
 
     }

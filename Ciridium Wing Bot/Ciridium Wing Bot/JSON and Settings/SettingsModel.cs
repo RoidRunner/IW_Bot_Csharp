@@ -86,6 +86,7 @@ namespace Ciridium
         private const string JSON_BOTDEVROLE = "BotDevRole";
         private const string JSON_DISPATCHROLE = "DispatchRole";
         private const string JSON_INARA_APIKEY = "InaraAPIKey";
+        private const string JSON_PREFIX = "Prefix";
 
         /// <summary>
         /// Loads and applies Settings from appdata/locallow/Ciridium Wing Bot/Settings.json
@@ -149,6 +150,15 @@ namespace Ciridium
                         ulong.TryParse(id, out DispatchRole);
                     }
                     json.GetField(ref Inara_APIkey, JSON_INARA_APIKEY);
+                    string prefix_str = string.Empty;
+                    if (json.GetField(ref prefix_str, JSON_PREFIX))
+                    {
+                        if (prefix_str.Length > 0)
+                        {
+                            CommandService.Prefix = prefix_str[0];
+                        }
+                    }
+                    
                 }
             }
         }
@@ -181,6 +191,7 @@ namespace Ciridium
             json.AddField(JSON_BOTDEVROLE, BotDevRole.ToString());
             json.AddField(JSON_DISPATCHROLE, DispatchRole.ToString());
             json.AddField(JSON_INARA_APIKEY, Inara_APIkey);
+            json.AddField(JSON_PREFIX, CommandService.Prefix);
 
 
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.SettingsFilePath, json);
