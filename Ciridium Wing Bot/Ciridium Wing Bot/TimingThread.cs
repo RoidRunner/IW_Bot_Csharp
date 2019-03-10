@@ -49,9 +49,8 @@ namespace Ciridium
         /// <summary>
         /// initiates variables and starts the timer thread
         /// </summary>
-        public static void Init(DiscordSocketClient nClient)
+        static TimingThread()
         {
-            client = nClient;
             scheduledCallbacks = new List<ScheduledCallback>();
 
             timer = new Stopwatch();
@@ -114,11 +113,6 @@ namespace Ciridium
         }
 
         /// <summary>
-        /// The discord client UpdateTimeActivity() updates the activity of.
-        /// </summary>
-        private static DiscordSocketClient client;
-
-        /// <summary>
         /// Updates the clients activity to the current UTC time and schedules a new update for when the next minute is reached.
         /// </summary>
         /// <returns></returns>
@@ -129,7 +123,7 @@ namespace Ciridium
             activity.Time = string.Format("UTC {0}-{1}-{2} {3}:{4}",
                 now.Year, now.Month.ToString().PadLeft(2, '0'), now.Day.ToString().PadLeft(2, '0'),
                 now.Hour.ToString().PadLeft(2, '0'), now.Minute.ToString().PadLeft(2, '0'));
-            await client.SetActivityAsync(activity);
+            await Var.client.SetActivityAsync(activity);
             await SettingsModel.SendDebugMessage("Updated Time Activity to " + activity.Time + "!", DebugCategories.timing);
             
             AddScheduleDelegate(UpdateTimeActivity, (61 - now.Second) * 1000);
@@ -168,7 +162,7 @@ namespace Ciridium
         {
             get
             {
-                return ActivityType.Watching;
+                return ActivityType.Playing;
             }
         }
     }

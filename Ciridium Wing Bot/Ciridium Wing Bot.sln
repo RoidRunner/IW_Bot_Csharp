@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ciridium Wing Bot", "Ciridium Wing Bot\Ciridium Wing Bot.csproj", "{206A1939-3B96-4316-B1E6-49783BB520BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CiridiumWingBot", "Ciridium Wing Bot\CiridiumWingBot.csproj", "{206A1939-3B96-4316-B1E6-49783BB520BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
