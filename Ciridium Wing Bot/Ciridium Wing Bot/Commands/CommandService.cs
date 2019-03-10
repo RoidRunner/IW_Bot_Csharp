@@ -10,19 +10,19 @@ using System.Threading.Tasks;
 
 namespace Ciridium
 {
-    class CommandService
+    static class CommandService
     {
         #region Variables
 
         /// <summary>
         /// The command prefix that marks messages as commands
         /// </summary>
-        private char prefix;
+        internal static char Prefix = '/';
 
         /// <summary>
         /// The dictionary storing commands by their first argument key
         /// </summary>
-        public List<Command> commands { get; private set; }
+        public static List<Command> commands { get; private set; }
 
         #endregion
         #region Init
@@ -30,10 +30,8 @@ namespace Ciridium
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="prefix">The command prefix that marks messages as commands</param>
-        public CommandService(char prefix)
+        static CommandService()
         {
-            this.prefix = prefix;
             commands = new List<Command>();
         }
 
@@ -45,13 +43,13 @@ namespace Ciridium
         /// </summary>
         /// <param name="key">The key to identify the command</param>
         /// <param name="command">The command object defining the commands behaviour</param>
-        public void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
+        public static void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
         {
             Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp);
             commands.Add(cmd);
         }
 
-        public void AddSynchronousCommand(CommandKeys keys, HandleSynchronousCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
+        public static void AddSynchronousCommand(CommandKeys keys, HandleSynchronousCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
         {
             Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp);
             commands.Add(cmd);
@@ -65,7 +63,7 @@ namespace Ciridium
         /// </summary>
         /// <param name="context">The context the command runs in</param>
         /// <returns></returns>
-        public async Task HandleCommand(SocketUserMessage msg)
+        public static async Task HandleCommand(SocketUserMessage msg)
         {
             if (IsCommand(msg.Content))
             {
@@ -125,7 +123,7 @@ namespace Ciridium
         /// <param name="context">The command context the command would execute in</param>
         /// <param name="result">The command match</param>
         /// <returns>Wether the command matching attempt was successful</returns>
-        public bool TryGetCommand(CommandContext context, out Command result)
+        public static bool TryGetCommand(CommandContext context, out Command result)
         {
             result = new Command();
             int argCntMatched = -2;
@@ -146,7 +144,7 @@ namespace Ciridium
         /// <param name="keys">The command keys identifying the command</param>
         /// <param name="result">The command match</param>
         /// <returns>Wether the command matching attempt was successful</returns>
-        public bool TryGetCommand(string[] keys, out Command result)
+        public static bool TryGetCommand(string[] keys, out Command result)
         {
             result = new Command();
             int argCntMatched = -2;
@@ -167,7 +165,7 @@ namespace Ciridium
         /// <param name="keys">The command keys identifying the command</param>
         /// <param name="results">The command matches</param>
         /// <returns>Wether the command matching attempt was successful (as in yielding >= 1 results)</returns>
-        public bool TryGetCommands(string[] keys, out List<Command> results)
+        public static bool TryGetCommands(string[] keys, out List<Command> results)
         {
             results = new List<Command>();
             int argCntMatched = -2;
@@ -182,9 +180,9 @@ namespace Ciridium
             return argCntMatched != -2;
         }
 
-        private bool IsCommand(string content)
+        private static bool IsCommand(string content)
         {
-            return content.StartsWith(prefix);
+            return content.StartsWith(Prefix);
         }
 
         /// <summary>

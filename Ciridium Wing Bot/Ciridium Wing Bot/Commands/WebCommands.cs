@@ -13,17 +13,17 @@ namespace Ciridium.WebRequests
     {
         public static string ERROR = "ERROR";
 
-        public WebCommands(CommandService service)
+        public WebCommands()
         {
-            service.AddCommand(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO);
-            service.AddCommand(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE);
-            service.AddCommand(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR);
         }
 
         #region /systeminfo
 
         private const string CMDKEYS_SYSTEMINFO = "systeminfo";
-        private const string CMDSYNTAX_SYSTEMINFO = "/systeminfo <SystemName>";
+        private const string CMDSYNTAX_SYSTEMINFO = "systeminfo <SystemName>";
         private const string CMDSUMMARY_SYSTEMINFO = "Prints out detailed information about a system";
         private const string CMDARGS_SYSTEMINFO =
                 "    {<SystemName>}\n" +
@@ -447,7 +447,7 @@ namespace Ciridium.WebRequests
 
 
         private const string CMDKEYS_DISTANCE = "distance";
-        private const string CMDSYNTAX_DISTANCE = "/distance <SystemName1>, <SystemName2>";
+        private const string CMDSYNTAX_DISTANCE = "distance <SystemName1>, <SystemName2>";
         private const string CMDSUMMARY_DISTANCE = "Calculates raw lightyear distance between two systems";
         private const string CMDARGS_DISTANCE =
                 "    <SystemName1>\n" +
@@ -554,7 +554,7 @@ namespace Ciridium.WebRequests
 
 
         private const string CMDKEYS_CMDR = "cmdr";
-        private const string CMDSYNTAX_CMDR = "/cmdr <CMDRName>";
+        private const string CMDSYNTAX_CMDR = "cmdr <CMDRName>";
         private const string CMDSUMMARY_CMDR = "Locates the inara profile of a commander";
         private const string CMDARGS_CMDR =
                 "    <CMDRName>\n" +

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,6 +8,8 @@ namespace Ciridium
 {
     static class Macros
     {
+        public static Random Rand = new Random();
+
         private const string CODEBLOCKBASESTRING = "``````";
         private const string INLINECODEBLOCKBASESTRING = "``";
         private const string FATBASESTRING = "****";
@@ -88,6 +91,11 @@ namespace Ciridium
             {
                 await channel.SendEmbedAsync(embedMessage);
             }
+        }
+
+        public static string GetMessageURL(this IMessage message, ulong guildId)
+        {
+            return string.Format("https://discordapp.com/channels/{0}/{1}/{2}", guildId, message.Channel.Id, message.Id);
         }
 
         public static string MaxLength(this string str, int maxLength)

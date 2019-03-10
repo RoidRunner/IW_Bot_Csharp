@@ -13,12 +13,19 @@ namespace Ciridium
         public static readonly string MissionSettingsFilePath;
         public static readonly string MissionsFilePath;
 
+        public static readonly string ShitpostingDirectory;
+        public static readonly string QuotesDirectory;
+        public static readonly string QuoteSettingsFilePath;
+
         static ResourcesModel()
         {
             BaseDirectory = Environment.CurrentDirectory + "/Settings/";
             SettingsFilePath = BaseDirectory + "Settings.json";
             MissionSettingsFilePath = BaseDirectory + "MissionSettings.json";
             MissionsFilePath = BaseDirectory + "Missions.json";
+            ShitpostingDirectory = Environment.CurrentDirectory + "/Shitposting/";
+            QuotesDirectory = ShitpostingDirectory + "/Quotes/";
+            QuoteSettingsFilePath = QuotesDirectory + "QuoteSettings.json";
         }
 
         public static bool CheckSettingsFilesExistence()
@@ -32,6 +39,8 @@ namespace Ciridium
             await SettingsModel.SaveSettings();
             await MissionSettingsModel.SaveMissionSettings();
             await MissionModel.SaveMissions();
+            Directory.CreateDirectory(ShitpostingDirectory);
+            Directory.CreateDirectory(QuotesDirectory);
         }
 
         #region Save/Load
