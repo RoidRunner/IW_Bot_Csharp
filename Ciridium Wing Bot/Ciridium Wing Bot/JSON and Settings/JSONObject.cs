@@ -113,67 +113,67 @@ public class JSONObject : IEnumerable
 }
 #endif
     public JSONObject(int i)
-{
-    type = Type.NUMBER;
-    this.i = i;
-    useInt = true;
-    n = i;
-}
-public JSONObject(long l)
-{
-    type = Type.NUMBER;
-    i = l;
-    useInt = true;
-    n = l;
-}
-public JSONObject(Dictionary<string, string> dic)
-{
-    type = Type.OBJECT;
-    keys = new List<string>();
-    list = new List<JSONObject>();
-    //Not sure if it's worth removing the foreach here
-    foreach (KeyValuePair<string, string> kvp in dic)
     {
-        keys.Add(kvp.Key);
-        list.Add(CreateStringObject(kvp.Value));
+        type = Type.NUMBER;
+        this.i = i;
+        useInt = true;
+        n = i;
     }
-}
-public JSONObject(Dictionary<string, JSONObject> dic)
-{
-    type = Type.OBJECT;
-    keys = new List<string>();
-    list = new List<JSONObject>();
-    //Not sure if it's worth removing the foreach here
-    foreach (KeyValuePair<string, JSONObject> kvp in dic)
+    public JSONObject(long l)
     {
-        keys.Add(kvp.Key);
-        list.Add(kvp.Value);
+        type = Type.NUMBER;
+        i = l;
+        useInt = true;
+        n = l;
     }
-}
-public JSONObject(AddJSONContents content)
-{
-    content.Invoke(this);
-}
-public JSONObject(JSONObject[] objs)
-{
-    type = Type.ARRAY;
-    list = new List<JSONObject>(objs);
-}
-//Convenience function for creating a JSONObject containing a string.  This is not part of the constructor so that malformed JSON data doesn't just turn into a string object
-public static JSONObject StringObject(string val) { return CreateStringObject(val); }
-public void Absorb(JSONObject obj)
-{
-    list.AddRange(obj.list);
-    keys.AddRange(obj.keys);
-    str = obj.str;
-    n = obj.n;
-    useInt = obj.useInt;
-    i = obj.i;
-    b = obj.b;
-    type = obj.type;
-}
-public static JSONObject Create()
-{
+    public JSONObject(Dictionary<string, string> dic)
+    {
+        type = Type.OBJECT;
+        keys = new List<string>();
+        list = new List<JSONObject>();
+        //Not sure if it's worth removing the foreach here
+        foreach (KeyValuePair<string, string> kvp in dic)
+        {
+            keys.Add(kvp.Key);
+            list.Add(CreateStringObject(kvp.Value));
+        }
+    }
+    public JSONObject(Dictionary<string, JSONObject> dic)
+    {
+        type = Type.OBJECT;
+        keys = new List<string>();
+        list = new List<JSONObject>();
+        //Not sure if it's worth removing the foreach here
+        foreach (KeyValuePair<string, JSONObject> kvp in dic)
+        {
+            keys.Add(kvp.Key);
+            list.Add(kvp.Value);
+        }
+    }
+    public JSONObject(AddJSONContents content)
+    {
+        content.Invoke(this);
+    }
+    public JSONObject(JSONObject[] objs)
+    {
+        type = Type.ARRAY;
+        list = new List<JSONObject>(objs);
+    }
+    //Convenience function for creating a JSONObject containing a string.  This is not part of the constructor so that malformed JSON data doesn't just turn into a string object
+    public static JSONObject StringObject(string val) { return CreateStringObject(val); }
+    public void Absorb(JSONObject obj)
+    {
+        list.AddRange(obj.list);
+        keys.AddRange(obj.keys);
+        str = obj.str;
+        n = obj.n;
+        useInt = obj.useInt;
+        i = obj.i;
+        b = obj.b;
+        type = obj.type;
+    }
+    public static JSONObject Create()
+    {
 #if POOLING
 		JSONObject result = null;
 		while(result == null && releaseQueue.Count > 0) {
@@ -189,150 +189,156 @@ public static JSONObject Create()
 		if(result != null)
 			return result;
 #endif
-    return new JSONObject();
-}
-public static JSONObject Create(Type t)
-{
-    JSONObject obj = Create();
-    obj.type = t;
-    switch (t)
-    {
-        case Type.ARRAY:
-            obj.list = new List<JSONObject>();
-            break;
-        case Type.OBJECT:
-            obj.list = new List<JSONObject>();
-            obj.keys = new List<string>();
-            break;
+        return new JSONObject();
     }
-    return obj;
-}
-public static JSONObject Create(bool val)
-{
-    JSONObject obj = Create();
-    obj.type = Type.BOOL;
-    obj.b = val;
-    return obj;
-}
-public static JSONObject Create(float val)
-{
-    JSONObject obj = Create();
-    obj.type = Type.NUMBER;
-    obj.n = val;
-    return obj;
-}
-public static JSONObject Create(int val)
-{
-    JSONObject obj = Create();
-    obj.type = Type.NUMBER;
-    obj.n = val;
-    obj.useInt = true;
-    obj.i = val;
-    return obj;
-}
-public static JSONObject Create(long val)
-{
-    JSONObject obj = Create();
-    obj.type = Type.NUMBER;
-    obj.n = val;
-    obj.useInt = true;
-    obj.i = val;
-    return obj;
-}
-public static JSONObject CreateStringObject(string val)
-{
-    JSONObject obj = Create();
-    obj.type = Type.STRING;
-    obj.str = val;
-    return obj;
-}
-public static JSONObject CreateBakedObject(string val)
-{
-    JSONObject bakedObject = Create();
-    bakedObject.type = Type.BAKED;
-    bakedObject.str = val;
-    return bakedObject;
-}
-/// <summary>
-/// Create a JSONObject by parsing string data
-/// </summary>
-/// <param name="val">The string to be parsed</param>
-/// <param name="maxDepth">The maximum depth for the parser to search.  Set this to to 1 for the first level, 
-/// 2 for the first 2 levels, etc.  It defaults to -2 because -1 is the depth value that is parsed (see below)</param>
-/// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked JSONObjects</param>
-/// <param name="strict">Whether to be strict in the parsing. For example, non-strict parsing will successfully 
-/// parse "a string" into a string-type </param>
-/// <returns></returns>
-public static JSONObject Create(string val, int maxDepth = -2, bool storeExcessLevels = false, bool strict = false)
-{
-    JSONObject obj = Create();
-    obj.Parse(val, maxDepth, storeExcessLevels, strict);
-    return obj;
-}
-public static JSONObject Create(AddJSONContents content)
-{
-    JSONObject obj = Create();
-    content.Invoke(obj);
-    return obj;
-}
-public static JSONObject Create(Dictionary<string, string> dic)
-{
-    JSONObject obj = Create();
-    obj.type = Type.OBJECT;
-    obj.keys = new List<string>();
-    obj.list = new List<JSONObject>();
-    //Not sure if it's worth removing the foreach here
-    foreach (KeyValuePair<string, string> kvp in dic)
+    public static JSONObject Create(Type t)
     {
-        obj.keys.Add(kvp.Key);
-        obj.list.Add(CreateStringObject(kvp.Value));
-    }
-    return obj;
-}
-public JSONObject() { }
-#region PARSE
-public JSONObject(string str, int maxDepth = -2, bool storeExcessLevels = false, bool strict = false)
-{   //create a new JSONObject from a string (this will also create any children, and parse the whole string)
-    Parse(str, maxDepth, storeExcessLevels, strict);
-}
-void Parse(string str, int maxDepth = -2, bool storeExcessLevels = false, bool strict = false)
-{
-    if (!string.IsNullOrEmpty(str))
-    {
-        str = str.Trim(WHITESPACE);
-        if (strict)
+        JSONObject obj = Create();
+        obj.type = t;
+        switch (t)
         {
-            if (str[0] != '[' && str[0] != '{')
-            {
-                type = Type.NULL;
-                return;
-            }
+            case Type.ARRAY:
+                obj.list = new List<JSONObject>();
+                break;
+            case Type.OBJECT:
+                obj.list = new List<JSONObject>();
+                obj.keys = new List<string>();
+                break;
         }
-        if (str.Length > 0)
+        return obj;
+    }
+    public static JSONObject Create(bool val)
+    {
+        JSONObject obj = Create();
+        obj.type = Type.BOOL;
+        obj.b = val;
+        return obj;
+    }
+    public static JSONObject Create(float val)
+    {
+        JSONObject obj = Create();
+        obj.type = Type.NUMBER;
+        obj.n = val;
+        return obj;
+    }
+    public static JSONObject Create(int val)
+    {
+        JSONObject obj = Create();
+        obj.type = Type.NUMBER;
+        obj.n = val;
+        obj.useInt = true;
+        obj.i = val;
+        return obj;
+    }
+    public static JSONObject Create(long val)
+    {
+        JSONObject obj = Create();
+        obj.type = Type.NUMBER;
+        obj.n = val;
+        obj.useInt = true;
+        obj.i = val;
+        return obj;
+    }
+    public static JSONObject CreateStringObject(string val)
+    {
+        JSONObject obj = Create();
+        obj.type = Type.STRING;
+        obj.str = val;
+        return obj;
+    }
+    public static JSONObject CreateBakedObject(string val)
+    {
+        JSONObject bakedObject = Create();
+        bakedObject.type = Type.BAKED;
+        bakedObject.str = val;
+        return bakedObject;
+    }
+    /// <summary>
+    /// Create a JSONObject by parsing string data
+    /// </summary>
+    /// <param name="val">The string to be parsed</param>
+    /// <param name="maxDepth">The maximum depth for the parser to search.  Set this to to 1 for the first level, 
+    /// 2 for the first 2 levels, etc.  It defaults to -2 because -1 is the depth value that is parsed (see below)</param>
+    /// <param name="storeExcessLevels">Whether to store levels beyond maxDepth in baked JSONObjects</param>
+    /// <param name="strict">Whether to be strict in the parsing. For example, non-strict parsing will successfully 
+    /// parse "a string" into a string-type </param>
+    /// <returns></returns>
+    public static JSONObject Create(string val, int maxDepth = -2, bool storeExcessLevels = false, bool strict = false)
+    {
+        JSONObject obj = Create();
+        obj.Parse(val, maxDepth, storeExcessLevels, strict);
+        return obj;
+    }
+    public static JSONObject Create(AddJSONContents content)
+    {
+        JSONObject obj = Create();
+        content.Invoke(obj);
+        return obj;
+    }
+    public static JSONObject Create(Dictionary<string, string> dic)
+    {
+        JSONObject obj = Create();
+        obj.type = Type.OBJECT;
+        obj.keys = new List<string>();
+        obj.list = new List<JSONObject>();
+        //Not sure if it's worth removing the foreach here
+        foreach (KeyValuePair<string, string> kvp in dic)
         {
-            if (string.Compare(str, "true", true) == 0)
+            obj.keys.Add(kvp.Key);
+            obj.list.Add(CreateStringObject(kvp.Value));
+        }
+        return obj;
+    }
+    public JSONObject() { }
+    #region PARSE
+    public JSONObject(string str, int maxDepth = -2, bool storeExcessLevels = false, bool strict = false)
+    {   //create a new JSONObject from a string (this will also create any children, and parse the whole string)
+        Parse(str, maxDepth, storeExcessLevels, strict);
+    }
+    void Parse(string str, int maxDepth = -2, bool storeExcessLevels = false, bool strict = false)
+    {
+        if (!string.IsNullOrEmpty(str))
+        {
+            str = str.Trim(WHITESPACE);
+            if (strict)
             {
-                type = Type.BOOL;
-                b = true;
+                if (str[0] != '[' && str[0] != '{')
+                {
+                    type = Type.NULL;
+                    return;
+                }
             }
-            else if (string.Compare(str, "false", true) == 0)
+            if (str.Length > 0)
             {
-                type = Type.BOOL;
-                b = false;
-            }
-            else if (string.Compare(str, "null", true) == 0)
-            {
-                type = Type.NULL;
+                if (string.Compare(str, "true", true) == 0)
+                {
+                    type = Type.BOOL;
+                    b = true;
+                }
+                else if (string.Compare(str, "false", true) == 0)
+                {
+                    type = Type.BOOL;
+                    b = false;
+                }
+                else if (string.Compare(str, "null", true) == 0)
+                {
+                    type = Type.NULL;
 #if USEFLOAT
-				} else if(str == INFINITY) {
-					type = Type.NUMBER;
-					n = float.PositiveInfinity;
-				} else if(str == NEGINFINITY) {
-					type = Type.NUMBER;
-					n = float.NegativeInfinity;
-				} else if(str == NaN) {
-					type = Type.NUMBER;
-					n = float.NaN;
+                }
+                else if (str == INFINITY)
+                {
+                    type = Type.NUMBER;
+                    n = float.PositiveInfinity;
+                }
+                else if (str == NEGINFINITY)
+                {
+                    type = Type.NUMBER;
+                    n = float.NegativeInfinity;
+                }
+                else if (str == NaN)
+                {
+                    type = Type.NUMBER;
+                    n = float.NaN;
 #else
             }
             else if (str == INFINITY)
@@ -350,870 +356,876 @@ void Parse(string str, int maxDepth = -2, bool storeExcessLevels = false, bool s
                 type = Type.NUMBER;
                 n = double.NaN;
 #endif
-            }
-            else if (str[0] == '"')
-            {
-                type = Type.STRING;
-                this.str = str.Substring(1, str.Length - 2);
-            }
-            else
-            {
-                int tokenTmp = 1;
-                /*
-                 * Checking for the following formatting (www.json.org)
-                 * object - {"field1":value,"field2":value}
-                 * array - [value,value,value]
-                 * value - string	- "string"
-                 *		 - number	- 0.0
-                 *		 - bool		- true -or- false
-                 *		 - null		- null
-                 */
-                int offset = 0;
-                switch (str[offset])
+                }
+                else if (str[0] == '"')
                 {
-                    case '{':
-                        type = Type.OBJECT;
-                        keys = new List<string>();
-                        list = new List<JSONObject>();
-                        break;
-                    case '[':
-                        type = Type.ARRAY;
-                        list = new List<JSONObject>();
-                        break;
-                    default:
-                        try
-                        {
+                    type = Type.STRING;
+                    this.str = str.Substring(1, str.Length - 2);
+                }
+                else
+                {
+                    int tokenTmp = 1;
+                    /*
+                     * Checking for the following formatting (www.json.org)
+                     * object - {"field1":value,"field2":value}
+                     * array - [value,value,value]
+                     * value - string	- "string"
+                     *		 - number	- 0.0
+                     *		 - bool		- true -or- false
+                     *		 - null		- null
+                     */
+                    int offset = 0;
+                    switch (str[offset])
+                    {
+                        case '{':
+                            type = Type.OBJECT;
+                            keys = new List<string>();
+                            list = new List<JSONObject>();
+                            break;
+                        case '[':
+                            type = Type.ARRAY;
+                            list = new List<JSONObject>();
+                            break;
+                        default:
+                            try
+                            {
 #if USEFLOAT
-								n = System.Convert.ToSingle(str, CultureInfo.InvariantCulture);
+                                n = System.Convert.ToSingle(str, CultureInfo.InvariantCulture);
 #else
                             n = System.Convert.ToDouble(str, CultureInfo.InvariantCulture);
 #endif
-                            if (!str.Contains("."))
-                            {
-                                i = System.Convert.ToInt64(str);
-                                useInt = true;
+                                if (!str.Contains("."))
+                                {
+                                    i = System.Convert.ToInt64(str);
+                                    useInt = true;
+                                }
+                                type = Type.NUMBER;
                             }
-                            type = Type.NUMBER;
-                        }
-                        catch (System.FormatException)
-                        {
-                            type = Type.NULL;
-                        }
-                        return;
-                }
-                string propName = "";
-                bool openQuote = false;
-                bool inProp = false;
-                int depth = 0;
-                while (++offset < str.Length)
-                {
-                    if (System.Array.IndexOf(WHITESPACE, str[offset]) > -1)
-                        continue;
-                    if (str[offset] == '\\')
-                    {
-                        offset += 1;
-                        continue;
+                            catch (System.FormatException)
+                            {
+                                type = Type.NULL;
+                            }
+                            return;
                     }
-                    if (str[offset] == '"')
+                    string propName = "";
+                    bool openQuote = false;
+                    bool inProp = false;
+                    int depth = 0;
+                    while (++offset < str.Length)
                     {
+                        if (System.Array.IndexOf(WHITESPACE, str[offset]) > -1)
+                            continue;
+                        if (str[offset] == '\\')
+                        {
+                            offset += 1;
+                            continue;
+                        }
+                        if (str[offset] == '"')
+                        {
+                            if (openQuote)
+                            {
+                                if (!inProp && depth == 0 && type == Type.OBJECT)
+                                    propName = str.Substring(tokenTmp + 1, offset - tokenTmp - 1);
+                                openQuote = false;
+                            }
+                            else
+                            {
+                                if (depth == 0 && type == Type.OBJECT)
+                                    tokenTmp = offset;
+                                openQuote = true;
+                            }
+                        }
                         if (openQuote)
+                            continue;
+                        if (type == Type.OBJECT && depth == 0)
                         {
-                            if (!inProp && depth == 0 && type == Type.OBJECT)
-                                propName = str.Substring(tokenTmp + 1, offset - tokenTmp - 1);
-                            openQuote = false;
+                            if (str[offset] == ':')
+                            {
+                                tokenTmp = offset + 1;
+                                inProp = true;
+                            }
                         }
-                        else
+
+                        if (str[offset] == '[' || str[offset] == '{')
                         {
-                            if (depth == 0 && type == Type.OBJECT)
-                                tokenTmp = offset;
-                            openQuote = true;
+                            depth++;
                         }
-                    }
-                    if (openQuote)
-                        continue;
-                    if (type == Type.OBJECT && depth == 0)
-                    {
-                        if (str[offset] == ':')
+                        else if (str[offset] == ']' || str[offset] == '}')
                         {
+                            depth--;
+                        }
+                        //if  (encounter a ',' at top level)  || a closing ]/}
+                        if ((str[offset] == ',' && depth == 0) || depth < 0)
+                        {
+                            inProp = false;
+                            string inner = str.Substring(tokenTmp, offset - tokenTmp).Trim(WHITESPACE);
+                            if (inner.Length > 0)
+                            {
+                                if (type == Type.OBJECT)
+                                    keys.Add(propName);
+                                if (maxDepth != -1)                                                         //maxDepth of -1 is the end of the line
+                                    list.Add(Create(inner, (maxDepth < -1) ? -2 : maxDepth - 1, storeExcessLevels));
+                                else if (storeExcessLevels)
+                                    list.Add(CreateBakedObject(inner));
+
+                            }
                             tokenTmp = offset + 1;
-                            inProp = true;
                         }
-                    }
-
-                    if (str[offset] == '[' || str[offset] == '{')
-                    {
-                        depth++;
-                    }
-                    else if (str[offset] == ']' || str[offset] == '}')
-                    {
-                        depth--;
-                    }
-                    //if  (encounter a ',' at top level)  || a closing ]/}
-                    if ((str[offset] == ',' && depth == 0) || depth < 0)
-                    {
-                        inProp = false;
-                        string inner = str.Substring(tokenTmp, offset - tokenTmp).Trim(WHITESPACE);
-                        if (inner.Length > 0)
-                        {
-                            if (type == Type.OBJECT)
-                                keys.Add(propName);
-                            if (maxDepth != -1)                                                         //maxDepth of -1 is the end of the line
-                                list.Add(Create(inner, (maxDepth < -1) ? -2 : maxDepth - 1, storeExcessLevels));
-                            else if (storeExcessLevels)
-                                list.Add(CreateBakedObject(inner));
-
-                        }
-                        tokenTmp = offset + 1;
                     }
                 }
             }
+            else type = Type.NULL;
         }
-        else type = Type.NULL;
+        else type = Type.NULL;  //If the string is missing, this is a null
+                                //Profiler.EndSample();
     }
-    else type = Type.NULL;  //If the string is missing, this is a null
-                            //Profiler.EndSample();
-}
-#endregion
-public bool IsNumber { get { return type == Type.NUMBER; } }
-public bool IsNull { get { return type == Type.NULL; } }
-public bool IsString { get { return type == Type.STRING; } }
-public bool IsBool { get { return type == Type.BOOL; } }
-public bool IsArray { get { return type == Type.ARRAY; } }
-public bool IsObject { get { return type == Type.OBJECT || type == Type.BAKED; } }
-public void Add(bool val)
-{
-    Add(Create(val));
-}
-public void Add(float val)
-{
-    Add(Create(val));
-}
-public void Add(int val)
-{
-    Add(Create(val));
-}
-public void Add(string str)
-{
-    Add(CreateStringObject(str));
-}
-public void Add(AddJSONContents content)
-{
-    Add(Create(content));
-}
-public void Add(JSONObject obj)
-{
-    if (obj)
-    {       //Don't do anything if the object is null
-        if (type != Type.ARRAY)
-        {
-            type = Type.ARRAY;      //Congratulations, son, you're an ARRAY now
-            if (list == null)
-                list = new List<JSONObject>();
-        }
-        list.Add(obj);
+    #endregion
+    public bool IsNumber { get { return type == Type.NUMBER; } }
+    public bool IsNull { get { return type == Type.NULL; } }
+    public bool IsString { get { return type == Type.STRING; } }
+    public bool IsBool { get { return type == Type.BOOL; } }
+    public bool IsArray { get { return type == Type.ARRAY; } }
+    public bool IsObject { get { return type == Type.OBJECT || type == Type.BAKED; } }
+    public void Add(bool val)
+    {
+        Add(Create(val));
     }
-}
-public void AddField(string name, bool val)
-{
-    AddField(name, Create(val));
-}
-public void AddField(string name, float val)
-{
-    AddField(name, Create(val));
-}
-public void AddField(string name, int val)
-{
-    AddField(name, Create(val));
-}
-public void AddField(string name, long val)
-{
-    AddField(name, Create(val));
-}
-public void AddField(string name, AddJSONContents content)
-{
-    AddField(name, Create(content));
-}
-public void AddField(string name, string val)
-{
-    AddField(name, CreateStringObject(val));
-}
-public void AddField(string name, JSONObject obj)
-{
-    if (obj)
-    {       //Don't do anything if the object is null
-        if (type != Type.OBJECT)
-        {
-            if (keys == null)
-                keys = new List<string>();
-            if (type == Type.ARRAY)
+    public void Add(float val)
+    {
+        Add(Create(val));
+    }
+    public void Add(int val)
+    {
+        Add(Create(val));
+    }
+    public void Add(string str)
+    {
+        Add(CreateStringObject(str));
+    }
+    public void Add(AddJSONContents content)
+    {
+        Add(Create(content));
+    }
+    public void Add(JSONObject obj)
+    {
+        if (obj)
+        {       //Don't do anything if the object is null
+            if (type != Type.ARRAY)
             {
-                for (int i = 0; i < list.Count; i++)
-                    keys.Add(i + "");
-            }
-            else
+                type = Type.ARRAY;      //Congratulations, son, you're an ARRAY now
                 if (list == null)
-                list = new List<JSONObject>();
-            type = Type.OBJECT;     //Congratulations, son, you're an OBJECT now
+                    list = new List<JSONObject>();
+            }
+            list.Add(obj);
         }
-        keys.Add(name);
-        list.Add(obj);
     }
-}
-public void SetField(string name, string val) { SetField(name, CreateStringObject(val)); }
-public void SetField(string name, bool val) { SetField(name, Create(val)); }
-public void SetField(string name, float val) { SetField(name, Create(val)); }
-public void SetField(string name, int val) { SetField(name, Create(val)); }
-public void SetField(string name, JSONObject obj)
-{
-    if (HasField(name))
+    public void AddField(string name, bool val)
     {
-        list.Remove(this[name]);
-        keys.Remove(name);
+        AddField(name, Create(val));
     }
-    AddField(name, obj);
-}
-public void RemoveField(string name)
-{
-    if (keys.IndexOf(name) > -1)
+    public void AddField(string name, float val)
     {
-        list.RemoveAt(keys.IndexOf(name));
-        keys.Remove(name);
+        AddField(name, Create(val));
     }
-}
-public delegate void FieldNotFound(string name);
-public delegate void GetFieldResponse(JSONObject obj);
-public bool GetField(out bool field, string name, bool fallback)
-{
-    field = fallback;
-    return GetField(ref field, name);
-}
-public bool GetField(ref bool field, string name, FieldNotFound fail = null)
-{
-    if (type == Type.OBJECT)
+    public void AddField(string name, int val)
     {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
+        AddField(name, Create(val));
+    }
+    public void AddField(string name, long val)
+    {
+        AddField(name, Create(val));
+    }
+    public void AddField(string name, AddJSONContents content)
+    {
+        AddField(name, Create(content));
+    }
+    public void AddField(string name, string val)
+    {
+        AddField(name, CreateStringObject(val));
+    }
+    public void AddField(string name, JSONObject obj)
+    {
+        if (obj)
+        {       //Don't do anything if the object is null
+            if (type != Type.OBJECT)
+            {
+                if (keys == null)
+                    keys = new List<string>();
+                if (type == Type.ARRAY)
+                {
+                    for (int i = 0; i < list.Count; i++)
+                        keys.Add(i + "");
+                }
+                else
+                    if (list == null)
+                    list = new List<JSONObject>();
+                type = Type.OBJECT;     //Congratulations, son, you're an OBJECT now
+            }
+            keys.Add(name);
+            list.Add(obj);
+        }
+    }
+    public void SetField(string name, string val) { SetField(name, CreateStringObject(val)); }
+    public void SetField(string name, bool val) { SetField(name, Create(val)); }
+    public void SetField(string name, float val) { SetField(name, Create(val)); }
+    public void SetField(string name, int val) { SetField(name, Create(val)); }
+    public void SetField(string name, JSONObject obj)
+    {
+        if (HasField(name))
         {
-            field = list[index].b;
-            return true;
+            list.Remove(this[name]);
+            keys.Remove(name);
+        }
+        AddField(name, obj);
+    }
+    public void RemoveField(string name)
+    {
+        if (keys.IndexOf(name) > -1)
+        {
+            list.RemoveAt(keys.IndexOf(name));
+            keys.Remove(name);
         }
     }
-    if (fail != null) fail.Invoke(name);
-    return false;
-}
+    public delegate void FieldNotFound(string name);
+    public delegate void GetFieldResponse(JSONObject obj);
+    public bool GetField(out bool field, string name, bool fallback)
+    {
+        field = fallback;
+        return GetField(ref field, name);
+    }
+    public bool GetField(ref bool field, string name, FieldNotFound fail = null)
+    {
+        if (type == Type.OBJECT)
+        {
+            int index = keys.IndexOf(name);
+            if (index >= 0)
+            {
+                field = list[index].b;
+                return true;
+            }
+        }
+        if (fail != null) fail.Invoke(name);
+        return false;
+    }
 #if USEFLOAT
-	public bool GetField(out float field, string name, float fallback) {
+    public bool GetField(out float field, string name, float fallback)
+    {
 #else
 public bool GetField(out double field, string name, double fallback)
 {
 #endif
-    field = fallback;
-    return GetField(ref field, name);
-}
+        field = fallback;
+        return GetField(ref field, name);
+    }
 #if USEFLOAT
-	public bool GetField(ref float field, string name, FieldNotFound fail = null) {
+    public bool GetField(ref float field, string name, FieldNotFound fail = null)
+    {
 #else
 public bool GetField(ref double field, string name, FieldNotFound fail = null)
 {
 #endif
-    if (type == Type.OBJECT)
-    {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
+        if (type == Type.OBJECT)
         {
-            field = list[index].n;
-            return true;
+            int index = keys.IndexOf(name);
+            if (index >= 0)
+            {
+                field = list[index].n;
+                return true;
+            }
         }
-    }
-    if (fail != null) fail.Invoke(name);
-    return false;
-}
-public bool GetField(out int field, string name, int fallback)
-{
-    field = fallback;
-    return GetField(ref field, name);
-}
-public bool GetField(ref int field, string name, FieldNotFound fail = null)
-{
-    if (IsObject)
-    {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
-        {
-            field = (int)list[index].n;
-            return true;
-        }
-    }
-    if (fail != null) fail.Invoke(name);
-    return false;
-}
-public bool GetField(out long field, string name, long fallback)
-{
-    field = fallback;
-    return GetField(ref field, name);
-}
-public bool GetField(ref long field, string name, FieldNotFound fail = null)
-{
-    if (IsObject)
-    {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
-        {
-            field = (long)list[index].n;
-            return true;
-        }
-    }
-    if (fail != null) fail.Invoke(name);
-    return false;
-}
-public bool GetField(out uint field, string name, uint fallback)
-{
-    field = fallback;
-    return GetField(ref field, name);
-}
-public bool GetField(ref uint field, string name, FieldNotFound fail = null)
-{
-    if (IsObject)
-    {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
-        {
-            field = (uint)list[index].n;
-            return true;
-        }
-    }
-    if (fail != null) fail.Invoke(name);
-    return false;
-}
-public bool GetField(out string field, string name, string fallback)
-{
-    field = fallback;
-    return GetField(ref field, name);
-}
-public bool GetField(ref string field, string name, FieldNotFound fail = null)
-{
-    if (IsObject)
-    {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
-        {
-            field = list[index].str;
-            return true;
-        }
-    }
-    if (fail != null) fail.Invoke(name);
-    return false;
-}
-public void GetField(string name, GetFieldResponse response, FieldNotFound fail = null)
-{
-    if (response != null && IsObject)
-    {
-        int index = keys.IndexOf(name);
-        if (index >= 0)
-        {
-            response.Invoke(list[index]);
-            return;
-        }
-    }
-    if (fail != null) fail.Invoke(name);
-}
-public JSONObject GetField(string name)
-{
-    if (IsObject)
-        for (int i = 0; i < keys.Count; i++)
-            if (keys[i] == name)
-                return list[i];
-    return null;
-}
-public bool HasFields(string[] names)
-{
-    if (!IsObject)
+        if (fail != null) fail.Invoke(name);
         return false;
-    for (int i = 0; i < names.Length; i++)
-        if (!keys.Contains(names[i]))
-            return false;
-    return true;
-}
-public bool HasField(string name)
-{
-    if (!IsObject)
+    }
+    public bool GetField(out int field, string name, int fallback)
+    {
+        field = fallback;
+        return GetField(ref field, name);
+    }
+    public bool GetField(ref int field, string name, FieldNotFound fail = null)
+    {
+        if (IsObject)
+        {
+            int index = keys.IndexOf(name);
+            if (index >= 0)
+            {
+                field = (int)list[index].n;
+                return true;
+            }
+        }
+        if (fail != null) fail.Invoke(name);
         return false;
-    for (int i = 0; i < keys.Count; i++)
-        if (keys[i] == name)
-            return true;
-    return false;
-}
-public void Clear()
-{
-    type = Type.NULL;
-    if (list != null)
-        list.Clear();
-    if (keys != null)
-        keys.Clear();
-    str = "";
-    n = 0;
-    b = false;
-}
-/// <summary>
-/// Copy a JSONObject. This could probably work better
-/// </summary>
-/// <returns></returns>
-public JSONObject Copy()
-{
-    return Create(Print());
-}
-/*
- * The Merge function is experimental. Use at your own risk.
- */
-public void Merge(JSONObject obj)
-{
-    MergeRecur(this, obj);
-}
-/// <summary>
-/// Merge object right into left recursively
-/// </summary>
-/// <param name="left">The left (base) object</param>
-/// <param name="right">The right (new) object</param>
-static void MergeRecur(JSONObject left, JSONObject right)
-{
-    if (left.type == Type.NULL)
-        left.Absorb(right);
-    else if (left.type == Type.OBJECT && right.type == Type.OBJECT)
+    }
+    public bool GetField(out long field, string name, long fallback)
     {
-        for (int i = 0; i < right.list.Count; i++)
+        field = fallback;
+        return GetField(ref field, name);
+    }
+    public bool GetField(ref long field, string name, FieldNotFound fail = null)
+    {
+        if (IsObject)
         {
-            string key = right.keys[i];
-            if (right[i].isContainer)
+            int index = keys.IndexOf(name);
+            if (index >= 0)
             {
-                if (left.HasField(key))
-                    MergeRecur(left[key], right[i]);
-                else
-                    left.AddField(key, right[i]);
-            }
-            else
-            {
-                if (left.HasField(key))
-                    left.SetField(key, right[i]);
-                else
-                    left.AddField(key, right[i]);
+                field = (long)list[index].n;
+                return true;
             }
         }
+        if (fail != null) fail.Invoke(name);
+        return false;
     }
-    else if (left.type == Type.ARRAY && right.type == Type.ARRAY)
+    public bool GetField(out uint field, string name, uint fallback)
     {
-        if (right.Count > left.Count)
-        {
-            return;
-        }
-        for (int i = 0; i < right.list.Count; i++)
-        {
-            if (left[i].type == right[i].type)
-            {           //Only overwrite with the same type
-                if (left[i].isContainer)
-                    MergeRecur(left[i], right[i]);
-                else
-                {
-                    left[i] = right[i];
-                }
-            }
-        }
+        field = fallback;
+        return GetField(ref field, name);
     }
-}
-public void Bake()
-{
-    if (type != Type.BAKED)
+    public bool GetField(ref uint field, string name, FieldNotFound fail = null)
     {
-        str = Print();
-        type = Type.BAKED;
-    }
-}
-public IEnumerable BakeAsync()
-{
-    if (type != Type.BAKED)
-    {
-        foreach (string s in PrintAsync())
+        if (IsObject)
         {
-            if (s == null)
-                yield return s;
-            else
+            int index = keys.IndexOf(name);
+            if (index >= 0)
             {
-                str = s;
+                field = (uint)list[index].n;
+                return true;
             }
         }
-        type = Type.BAKED;
+        if (fail != null) fail.Invoke(name);
+        return false;
     }
-}
-#pragma warning disable 219
-public string Print(bool pretty = false)
-{
-    StringBuilder builder = new StringBuilder();
-    Stringify(0, builder, pretty);
-    return builder.ToString();
-}
-public IEnumerable<string> PrintAsync(bool pretty = false)
-{
-    StringBuilder builder = new StringBuilder();
-    printWatch.Reset();
-    printWatch.Start();
-    foreach (IEnumerable e in StringifyAsync(0, builder, pretty))
+    public bool GetField(out string field, string name, string fallback)
     {
-        yield return null;
+        field = fallback;
+        return GetField(ref field, name);
     }
-    yield return builder.ToString();
-}
-#pragma warning restore 219
-#region STRINGIFY
-const float maxFrameTime = 0.008f;
-static readonly Stopwatch printWatch = new Stopwatch();
-IEnumerable StringifyAsync(int depth, StringBuilder builder, bool pretty = false)
-{   //Convert the JSONObject into a string
-    //Profiler.BeginSample("JSONprint");
-    if (depth++ > MAX_DEPTH)
+    public bool GetField(ref string field, string name, FieldNotFound fail = null)
     {
-        yield break;
+        if (IsObject)
+        {
+            int index = keys.IndexOf(name);
+            if (index >= 0)
+            {
+                field = list[index].str;
+                return true;
+            }
+        }
+        if (fail != null) fail.Invoke(name);
+        return false;
     }
-    if (printWatch.Elapsed.TotalSeconds > maxFrameTime)
+    public void GetField(string name, GetFieldResponse response, FieldNotFound fail = null)
     {
-        printWatch.Reset();
-        yield return null;
-        printWatch.Start();
+        if (response != null && IsObject)
+        {
+            int index = keys.IndexOf(name);
+            if (index >= 0)
+            {
+                response.Invoke(list[index]);
+                return;
+            }
+        }
+        if (fail != null) fail.Invoke(name);
     }
-    switch (type)
+    public JSONObject GetField(string name)
     {
-        case Type.BAKED:
-            builder.Append(str);
-            break;
-        case Type.STRING:
-            builder.AppendFormat("\"{0}\"", str);
-            break;
-        case Type.NUMBER:
-            if (useInt)
-            {
-                builder.Append(i.ToString());
-            }
-            else
-            {
-#if USEFLOAT
-					if(float.IsInfinity(n))
-						builder.Append(INFINITY);
-					else if(float.IsNegativeInfinity(n))
-						builder.Append(NEGINFINITY);
-					else if(float.IsNaN(n))
-						builder.Append(NaN);
-#else
-                if (double.IsInfinity(n))
-                    builder.Append(INFINITY);
-                else if (double.IsNegativeInfinity(n))
-                    builder.Append(NEGINFINITY);
-                else if (double.IsNaN(n))
-                    builder.Append(NaN);
-#endif
-                else
-                    builder.Append(n.ToString());
-            }
-            break;
-        case Type.OBJECT:
-            builder.Append("{");
-            if (list.Count > 0)
-            {
-#if (PRETTY)        //for a bit more readability, comment the define above to disable system-wide
-					if(pretty)
-						builder.Append("\n");
-#endif
-                for (int i = 0; i < list.Count; i++)
-                {
-                    string key = keys[i];
-                    JSONObject obj = list[i];
-                    if (obj)
-                    {
-#if (PRETTY)
-							if(pretty)
-								for(int j = 0; j < depth; j++)
-									builder.Append("\t"); //for a bit more readability
-#endif
-                        builder.AppendFormat("\"{0}\":", key);
-                        foreach (IEnumerable e in obj.StringifyAsync(depth, builder, pretty))
-                            yield return e;
-                        builder.Append(",");
-#if (PRETTY)
-							if(pretty)
-								builder.Append("\n");
-#endif
-                    }
-                }
-#if (PRETTY)
-					if(pretty)
-						builder.Length -= 2;
-					else
-#endif
-                builder.Length--;
-            }
-#if (PRETTY)
-				if(pretty && list.Count > 0) {
-					builder.Append("\n");
-					for(int j = 0; j < depth - 1; j++)
-						builder.Append("\t"); //for a bit more readability
-				}
-#endif
-            builder.Append("}");
-            break;
-        case Type.ARRAY:
-            builder.Append("[");
-            if (list.Count > 0)
-            {
-#if (PRETTY)
-					if(pretty)
-						builder.Append("\n"); //for a bit more readability
-#endif
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (list[i])
-                    {
-#if (PRETTY)
-							if(pretty)
-								for(int j = 0; j < depth; j++)
-									builder.Append("\t"); //for a bit more readability
-#endif
-                        foreach (IEnumerable e in list[i].StringifyAsync(depth, builder, pretty))
-                            yield return e;
-                        builder.Append(",");
-#if (PRETTY)
-							if(pretty)
-								builder.Append("\n"); //for a bit more readability
-#endif
-                    }
-                }
-#if (PRETTY)
-					if(pretty)
-						builder.Length -= 2;
-					else
-#endif
-                builder.Length--;
-            }
-#if (PRETTY)
-				if(pretty && list.Count > 0) {
-					builder.Append("\n");
-					for(int j = 0; j < depth - 1; j++)
-						builder.Append("\t"); //for a bit more readability
-				}
-#endif
-            builder.Append("]");
-            break;
-        case Type.BOOL:
-            if (b)
-                builder.Append("true");
-            else
-                builder.Append("false");
-            break;
-        case Type.NULL:
-            builder.Append("null");
-            break;
-    }
-    //Profiler.EndSample();
-}
-//TODO: Refactor Stringify functions to share core logic
-/*
- * I know, I know, this is really bad form.  It turns out that there is a
- * significant amount of garbage created when calling as a coroutine, so this
- * method is duplicated.  Hopefully there won't be too many future changes, but
- * I would still like a more elegant way to optionaly yield
- */
-void Stringify(int depth, StringBuilder builder, bool pretty = false)
-{   //Convert the JSONObject into a string
-    //Profiler.BeginSample("JSONprint");
-    if (depth++ > MAX_DEPTH)
-    {
-        return;
-    }
-    switch (type)
-    {
-        case Type.BAKED:
-            builder.Append(str);
-            break;
-        case Type.STRING:
-            builder.AppendFormat("\"{0}\"", str);
-            break;
-        case Type.NUMBER:
-            if (useInt)
-            {
-                builder.Append(i.ToString());
-            }
-            else
-            {
-#if USEFLOAT
-					if(float.IsInfinity(n))
-						builder.Append(INFINITY);
-					else if(float.IsNegativeInfinity(n))
-						builder.Append(NEGINFINITY);
-					else if(float.IsNaN(n))
-						builder.Append(NaN);
-#else
-                if (double.IsInfinity(n))
-                    builder.Append(INFINITY);
-                else if (double.IsNegativeInfinity(n))
-                    builder.Append(NEGINFINITY);
-                else if (double.IsNaN(n))
-                    builder.Append(NaN);
-#endif
-                else
-                    builder.Append(n.ToString());
-            }
-            break;
-        case Type.OBJECT:
-            builder.Append("{");
-            if (list.Count > 0)
-            {
-#if (PRETTY)        //for a bit more readability, comment the define above to disable system-wide
-					if(pretty)
-						builder.Append("\n");
-#endif
-                for (int i = 0; i < list.Count; i++)
-                {
-                    string key = keys[i];
-                    JSONObject obj = list[i];
-                    if (obj)
-                    {
-#if (PRETTY)
-							if(pretty)
-								for(int j = 0; j < depth; j++)
-									builder.Append("\t"); //for a bit more readability
-#endif
-                        builder.AppendFormat("\"{0}\":", key);
-                        obj.Stringify(depth, builder, pretty);
-                        builder.Append(",");
-#if (PRETTY)
-							if(pretty)
-								builder.Append("\n");
-#endif
-                    }
-                }
-#if (PRETTY)
-					if(pretty)
-						builder.Length -= 2;
-					else
-#endif
-                builder.Length--;
-            }
-#if (PRETTY)
-				if(pretty && list.Count > 0) {
-					builder.Append("\n");
-					for(int j = 0; j < depth - 1; j++)
-						builder.Append("\t"); //for a bit more readability
-				}
-#endif
-            builder.Append("}");
-            break;
-        case Type.ARRAY:
-            builder.Append("[");
-            if (list.Count > 0)
-            {
-#if (PRETTY)
-					if(pretty)
-						builder.Append("\n"); //for a bit more readability
-#endif
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (list[i])
-                    {
-#if (PRETTY)
-							if(pretty)
-								for(int j = 0; j < depth; j++)
-									builder.Append("\t"); //for a bit more readability
-#endif
-                        list[i].Stringify(depth, builder, pretty);
-                        builder.Append(",");
-#if (PRETTY)
-							if(pretty)
-								builder.Append("\n"); //for a bit more readability
-#endif
-                    }
-                }
-#if (PRETTY)
-					if(pretty)
-						builder.Length -= 2;
-					else
-#endif
-                builder.Length--;
-            }
-#if (PRETTY)
-				if(pretty && list.Count > 0) {
-					builder.Append("\n");
-					for(int j = 0; j < depth - 1; j++)
-						builder.Append("\t"); //for a bit more readability
-				}
-#endif
-            builder.Append("]");
-            break;
-        case Type.BOOL:
-            if (b)
-                builder.Append("true");
-            else
-                builder.Append("false");
-            break;
-        case Type.NULL:
-            builder.Append("null");
-            break;
-    }
-    //Profiler.EndSample();
-}
-#endregion
-public JSONObject this[int index]
-{
-    get
-    {
-        if (list.Count > index) return list[index];
+        if (IsObject)
+            for (int i = 0; i < keys.Count; i++)
+                if (keys[i] == name)
+                    return list[i];
         return null;
     }
-    set
+    public bool HasFields(string[] names)
     {
-        if (list.Count > index)
-            list[index] = value;
+        if (!IsObject)
+            return false;
+        for (int i = 0; i < names.Length; i++)
+            if (!keys.Contains(names[i]))
+                return false;
+        return true;
     }
-}
-public JSONObject this[string index]
-{
-    get
+    public bool HasField(string name)
     {
-        return GetField(index);
+        if (!IsObject)
+            return false;
+        for (int i = 0; i < keys.Count; i++)
+            if (keys[i] == name)
+                return true;
+        return false;
     }
-    set
+    public void Clear()
     {
-        SetField(index, value);
+        type = Type.NULL;
+        if (list != null)
+            list.Clear();
+        if (keys != null)
+            keys.Clear();
+        str = "";
+        n = 0;
+        b = false;
     }
-}
-public override string ToString()
-{
-    return Print();
-}
-public string ToString(bool pretty)
-{
-    return Print(pretty);
-}
-public Dictionary<string, string> ToDictionary()
-{
-    if (type == Type.OBJECT)
+    /// <summary>
+    /// Copy a JSONObject. This could probably work better
+    /// </summary>
+    /// <returns></returns>
+    public JSONObject Copy()
     {
-        Dictionary<string, string> result = new Dictionary<string, string>();
-        for (int i = 0; i < list.Count; i++)
+        return Create(Print());
+    }
+    /*
+     * The Merge function is experimental. Use at your own risk.
+     */
+    public void Merge(JSONObject obj)
+    {
+        MergeRecur(this, obj);
+    }
+    /// <summary>
+    /// Merge object right into left recursively
+    /// </summary>
+    /// <param name="left">The left (base) object</param>
+    /// <param name="right">The right (new) object</param>
+    static void MergeRecur(JSONObject left, JSONObject right)
+    {
+        if (left.type == Type.NULL)
+            left.Absorb(right);
+        else if (left.type == Type.OBJECT && right.type == Type.OBJECT)
         {
-            JSONObject val = list[i];
-            switch (val.type)
+            for (int i = 0; i < right.list.Count; i++)
             {
-                case Type.STRING: result.Add(keys[i], val.str); break;
-                case Type.NUMBER: result.Add(keys[i], val.n + ""); break;
-                case Type.BOOL: result.Add(keys[i], val.b + ""); break;
-                default:
-                    break;
+                string key = right.keys[i];
+                if (right[i].isContainer)
+                {
+                    if (left.HasField(key))
+                        MergeRecur(left[key], right[i]);
+                    else
+                        left.AddField(key, right[i]);
+                }
+                else
+                {
+                    if (left.HasField(key))
+                        left.SetField(key, right[i]);
+                    else
+                        left.AddField(key, right[i]);
+                }
             }
         }
-        return result;
+        else if (left.type == Type.ARRAY && right.type == Type.ARRAY)
+        {
+            if (right.Count > left.Count)
+            {
+                return;
+            }
+            for (int i = 0; i < right.list.Count; i++)
+            {
+                if (left[i].type == right[i].type)
+                {           //Only overwrite with the same type
+                    if (left[i].isContainer)
+                        MergeRecur(left[i], right[i]);
+                    else
+                    {
+                        left[i] = right[i];
+                    }
+                }
+            }
+        }
     }
-    return null;
-}
-public static implicit operator bool(JSONObject o)
-{
-    return o != null;
-}
+    public void Bake()
+    {
+        if (type != Type.BAKED)
+        {
+            str = Print();
+            type = Type.BAKED;
+        }
+    }
+    public IEnumerable BakeAsync()
+    {
+        if (type != Type.BAKED)
+        {
+            foreach (string s in PrintAsync())
+            {
+                if (s == null)
+                    yield return s;
+                else
+                {
+                    str = s;
+                }
+            }
+            type = Type.BAKED;
+        }
+    }
+#pragma warning disable 219
+    public string Print(bool pretty = false)
+    {
+        StringBuilder builder = new StringBuilder();
+        Stringify(0, builder, pretty);
+        return builder.ToString();
+    }
+    public IEnumerable<string> PrintAsync(bool pretty = false)
+    {
+        StringBuilder builder = new StringBuilder();
+        printWatch.Reset();
+        printWatch.Start();
+        foreach (IEnumerable e in StringifyAsync(0, builder, pretty))
+        {
+            yield return null;
+        }
+        yield return builder.ToString();
+    }
+#pragma warning restore 219
+    #region STRINGIFY
+    const float maxFrameTime = 0.008f;
+    static readonly Stopwatch printWatch = new Stopwatch();
+    IEnumerable StringifyAsync(int depth, StringBuilder builder, bool pretty = false)
+    {   //Convert the JSONObject into a string
+        //Profiler.BeginSample("JSONprint");
+        if (depth++ > MAX_DEPTH)
+        {
+            yield break;
+        }
+        if (printWatch.Elapsed.TotalSeconds > maxFrameTime)
+        {
+            printWatch.Reset();
+            yield return null;
+            printWatch.Start();
+        }
+        switch (type)
+        {
+            case Type.BAKED:
+                builder.Append(str);
+                break;
+            case Type.STRING:
+                builder.AppendFormat("\"{0}\"", str);
+                break;
+            case Type.NUMBER:
+                if (useInt)
+                {
+                    builder.Append(i.ToString());
+                }
+                else
+                {
+#if USEFLOAT
+                    if (float.IsInfinity(n))
+                        builder.Append(INFINITY);
+                    else if (float.IsNegativeInfinity(n))
+                        builder.Append(NEGINFINITY);
+                    else if (float.IsNaN(n))
+                        builder.Append(NaN);
+#else
+                if (double.IsInfinity(n))
+                    builder.Append(INFINITY);
+                else if (double.IsNegativeInfinity(n))
+                    builder.Append(NEGINFINITY);
+                else if (double.IsNaN(n))
+                    builder.Append(NaN);
+#endif
+                    else
+                        builder.Append(n.ToString());
+                }
+                break;
+            case Type.OBJECT:
+                builder.Append("{");
+                if (list.Count > 0)
+                {
+#if (PRETTY)        //for a bit more readability, comment the define above to disable system-wide
+                    if (pretty)
+                        builder.Append("\n");
+#endif
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        string key = keys[i];
+                        JSONObject obj = list[i];
+                        if (obj)
+                        {
+#if (PRETTY)
+                            if (pretty)
+                                for (int j = 0; j < depth; j++)
+                                    builder.Append("\t"); //for a bit more readability
+#endif
+                            builder.AppendFormat("\"{0}\":", key);
+                            foreach (IEnumerable e in obj.StringifyAsync(depth, builder, pretty))
+                                yield return e;
+                            builder.Append(",");
+#if (PRETTY)
+                            if (pretty)
+                                builder.Append("\n");
+#endif
+                        }
+                    }
+#if (PRETTY)
+                    if (pretty)
+                        builder.Length -= 2;
+                    else
+#endif
+                        builder.Length--;
+                }
+#if (PRETTY)
+                if (pretty && list.Count > 0)
+                {
+                    builder.Append("\n");
+                    for (int j = 0; j < depth - 1; j++)
+                        builder.Append("\t"); //for a bit more readability
+                }
+#endif
+                builder.Append("}");
+                break;
+            case Type.ARRAY:
+                builder.Append("[");
+                if (list.Count > 0)
+                {
+#if (PRETTY)
+                    if (pretty)
+                        builder.Append("\n"); //for a bit more readability
+#endif
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        if (list[i])
+                        {
+#if (PRETTY)
+                            if (pretty)
+                                for (int j = 0; j < depth; j++)
+                                    builder.Append("\t"); //for a bit more readability
+#endif
+                            foreach (IEnumerable e in list[i].StringifyAsync(depth, builder, pretty))
+                                yield return e;
+                            builder.Append(",");
+#if (PRETTY)
+                            if (pretty)
+                                builder.Append("\n"); //for a bit more readability
+#endif
+                        }
+                    }
+#if (PRETTY)
+                    if (pretty)
+                        builder.Length -= 2;
+                    else
+#endif
+                        builder.Length--;
+                }
+#if (PRETTY)
+                if (pretty && list.Count > 0)
+                {
+                    builder.Append("\n");
+                    for (int j = 0; j < depth - 1; j++)
+                        builder.Append("\t"); //for a bit more readability
+                }
+#endif
+                builder.Append("]");
+                break;
+            case Type.BOOL:
+                if (b)
+                    builder.Append("true");
+                else
+                    builder.Append("false");
+                break;
+            case Type.NULL:
+                builder.Append("null");
+                break;
+        }
+        //Profiler.EndSample();
+    }
+    //TODO: Refactor Stringify functions to share core logic
+    /*
+     * I know, I know, this is really bad form.  It turns out that there is a
+     * significant amount of garbage created when calling as a coroutine, so this
+     * method is duplicated.  Hopefully there won't be too many future changes, but
+     * I would still like a more elegant way to optionaly yield
+     */
+    void Stringify(int depth, StringBuilder builder, bool pretty = false)
+    {   //Convert the JSONObject into a string
+        //Profiler.BeginSample("JSONprint");
+        if (depth++ > MAX_DEPTH)
+        {
+            return;
+        }
+        switch (type)
+        {
+            case Type.BAKED:
+                builder.Append(str);
+                break;
+            case Type.STRING:
+                builder.AppendFormat("\"{0}\"", str);
+                break;
+            case Type.NUMBER:
+                if (useInt)
+                {
+                    builder.Append(i.ToString());
+                }
+                else
+                {
+#if USEFLOAT
+                    if (float.IsInfinity(n))
+                        builder.Append(INFINITY);
+                    else if (float.IsNegativeInfinity(n))
+                        builder.Append(NEGINFINITY);
+                    else if (float.IsNaN(n))
+                        builder.Append(NaN);
+#else
+                if (double.IsInfinity(n))
+                    builder.Append(INFINITY);
+                else if (double.IsNegativeInfinity(n))
+                    builder.Append(NEGINFINITY);
+                else if (double.IsNaN(n))
+                    builder.Append(NaN);
+#endif
+                    else
+                        builder.Append(n.ToString());
+                }
+                break;
+            case Type.OBJECT:
+                builder.Append("{");
+                if (list.Count > 0)
+                {
+#if (PRETTY)        //for a bit more readability, comment the define above to disable system-wide
+                    if (pretty)
+                        builder.Append("\n");
+#endif
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        string key = keys[i];
+                        JSONObject obj = list[i];
+                        if (obj)
+                        {
+#if (PRETTY)
+                            if (pretty)
+                                for (int j = 0; j < depth; j++)
+                                    builder.Append("\t"); //for a bit more readability
+#endif
+                            builder.AppendFormat("\"{0}\":", key);
+                            obj.Stringify(depth, builder, pretty);
+                            builder.Append(",");
+#if (PRETTY)
+                            if (pretty)
+                                builder.Append("\n");
+#endif
+                        }
+                    }
+#if (PRETTY)
+                    if (pretty)
+                        builder.Length -= 2;
+                    else
+#endif
+                        builder.Length--;
+                }
+#if (PRETTY)
+                if (pretty && list.Count > 0)
+                {
+                    builder.Append("\n");
+                    for (int j = 0; j < depth - 1; j++)
+                        builder.Append("\t"); //for a bit more readability
+                }
+#endif
+                builder.Append("}");
+                break;
+            case Type.ARRAY:
+                builder.Append("[");
+                if (list.Count > 0)
+                {
+#if (PRETTY)
+                    if (pretty)
+                        builder.Append("\n"); //for a bit more readability
+#endif
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        if (list[i])
+                        {
+#if (PRETTY)
+                            if (pretty)
+                                for (int j = 0; j < depth; j++)
+                                    builder.Append("\t"); //for a bit more readability
+#endif
+                            list[i].Stringify(depth, builder, pretty);
+                            builder.Append(",");
+#if (PRETTY)
+                            if (pretty)
+                                builder.Append("\n"); //for a bit more readability
+#endif
+                        }
+                    }
+#if (PRETTY)
+                    if (pretty)
+                        builder.Length -= 2;
+                    else
+#endif
+                        builder.Length--;
+                }
+#if (PRETTY)
+                if (pretty && list.Count > 0)
+                {
+                    builder.Append("\n");
+                    for (int j = 0; j < depth - 1; j++)
+                        builder.Append("\t"); //for a bit more readability
+                }
+#endif
+                builder.Append("]");
+                break;
+            case Type.BOOL:
+                if (b)
+                    builder.Append("true");
+                else
+                    builder.Append("false");
+                break;
+            case Type.NULL:
+                builder.Append("null");
+                break;
+        }
+        //Profiler.EndSample();
+    }
+    #endregion
+    public JSONObject this[int index]
+    {
+        get
+        {
+            if (list.Count > index) return list[index];
+            return null;
+        }
+        set
+        {
+            if (list.Count > index)
+                list[index] = value;
+        }
+    }
+    public JSONObject this[string index]
+    {
+        get
+        {
+            return GetField(index);
+        }
+        set
+        {
+            SetField(index, value);
+        }
+    }
+    public override string ToString()
+    {
+        return Print();
+    }
+    public string ToString(bool pretty)
+    {
+        return Print(pretty);
+    }
+    public Dictionary<string, string> ToDictionary()
+    {
+        if (type == Type.OBJECT)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                JSONObject val = list[i];
+                switch (val.type)
+                {
+                    case Type.STRING: result.Add(keys[i], val.str); break;
+                    case Type.NUMBER: result.Add(keys[i], val.n + ""); break;
+                    case Type.BOOL: result.Add(keys[i], val.b + ""); break;
+                    default:
+                        break;
+                }
+            }
+            return result;
+        }
+        return null;
+    }
+    public static implicit operator bool(JSONObject o)
+    {
+        return o != null;
+    }
 #if POOLING
 	static bool pool = true;
 	public static void ClearPool() {
@@ -1235,15 +1247,59 @@ public static implicit operator bool(JSONObject o)
 	}
 #endif
 
-IEnumerator IEnumerable.GetEnumerator()
-{
-    return (IEnumerator)GetEnumerator();
-}
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return (IEnumerator)GetEnumerator();
+    }
 
-public JSONObjectEnumer GetEnumerator()
-{
-    return new JSONObjectEnumer(this);
-}
+    public JSONObjectEnumer GetEnumerator()
+    {
+        return new JSONObjectEnumer(this);
+    }
+
+    public static readonly List<char> unsafeStringChars = new List<char>(new char[] { '"', '\\', '/', '\b', '\f', '\n', '\r', '\t' });
+
+    public static string GetSafeJSONString(string s)
+    {
+        int cursor = 0;
+        char[] old = s.ToCharArray();
+        char[] newS = new char[old.Length * 2];
+        for (int i = 0; i < old.Length; i++)
+        {
+            if (unsafeStringChars.Contains(old[i]))
+            {
+                newS[cursor] = '\\';
+                cursor++;
+            }
+            newS[cursor] = old[i];
+            cursor++;
+        }
+        string result = new string(newS);
+        return result.TrimEnd('\0');
+    }
+
+    public static string ReturnToUnsafeJSONString(string s)
+    {
+        int cursor = 0;
+        char[] old = s.ToCharArray();
+        char[] newS = new char[old.Length];
+        for (int i = 0; i < old.Length - 1; i++)
+        {
+            if (old[i] == '\\')
+            {
+                newS[i + cursor] = old[i + 1];
+                i++;
+                cursor--;
+            }
+            else
+            {
+                newS[i + cursor] = old[i];
+            }
+        }
+        newS[old.Length - 1 + cursor] = old[old.Length - 1];
+        string result = new string(newS);
+        return result.TrimEnd('\0');
+    }
 }
 
 public class JSONObjectEnumer : IEnumerator

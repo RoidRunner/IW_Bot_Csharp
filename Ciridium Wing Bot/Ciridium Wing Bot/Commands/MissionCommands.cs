@@ -11,26 +11,26 @@ namespace Ciridium
 {
     class MissionCommands
     {
-        public MissionCommands(CommandService service)
+        public MissionCommands()
         {
             // createmission
-            service.AddCommand(new CommandKeys(CMDKEYS_CREATEMISSION, 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, CMDSUMMARY_CREATEMISSION, CMDSYNTAX_CREATEMISSION, CMDARGS_CREATEMISSION);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_CREATEMISSION, 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, CMDSUMMARY_CREATEMISSION, CMDSYNTAX_CREATEMISSION, CMDARGS_CREATEMISSION);
             // enlistmission
-            service.AddCommand(new CommandKeys(CMDKEYS_ENLISTMISSION, 2, 2), HandleEnlistMissionCommand, AccessLevel.Director, CMDSUMMARY_ENLISTMISSION, CMDSYNTAX_ENLISTMISSION, CMDARGS_ENLISTMISSION);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_ENLISTMISSION, 2, 2), HandleEnlistMissionCommand, AccessLevel.Director, CMDSUMMARY_ENLISTMISSION, CMDSYNTAX_ENLISTMISSION, CMDARGS_ENLISTMISSION);
             // completemission
-            service.AddCommand(new CommandKeys(CMDKEYS_COMPLETEMISSION), HandleCompleteMissionCommand, AccessLevel.Pilot, CMDSUMMARY_COMPLETEMISSION, CMDSYNTAX_COMPLETEMISSION, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_COMPLETEMISSION), HandleCompleteMissionCommand, AccessLevel.Pilot, CMDSUMMARY_COMPLETEMISSION, CMDSYNTAX_COMPLETEMISSION, Command.NO_ARGUMENTS);
             // closemission
-            service.AddCommand(new CommandKeys(CMDKEYS_CLOSEMISSION, 2, 2), HandleCloseMissionCommand, AccessLevel.Dispatch, CMDSUMMARY_CLOSEMISSION, CMDSYNTAX_CLOSEMISSION, CMDARGS_CLOSEMISSION);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_CLOSEMISSION, 2, 2), HandleCloseMissionCommand, AccessLevel.Dispatch, CMDSUMMARY_CLOSEMISSION, CMDSYNTAX_CLOSEMISSION, CMDARGS_CLOSEMISSION);
             // unlistmission
-            service.AddCommand(new CommandKeys(CMDKEYS_UNLISTMISSION, 2, 2), HandleUnlistMissionCommand, AccessLevel.Director, CMDSUMMARY_UNLISTMISSION, CMDSYNTAX_UNLISTMISSION, CMDARGS_UNLISTMISSION);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_UNLISTMISSION, 2, 2), HandleUnlistMissionCommand, AccessLevel.Director, CMDSUMMARY_UNLISTMISSION, CMDSYNTAX_UNLISTMISSION, CMDARGS_UNLISTMISSION);
             // listmissions
-            service.AddCommand(new CommandKeys(CMDKEYS_LISTMISSIONS), HandleListMissionsCommand, AccessLevel.Director, CMDSUMMARY_LISTMISSIONS, CMDSYNTAX_LISTMISSIONS, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_LISTMISSIONS), HandleListMissionsCommand, AccessLevel.Director, CMDSUMMARY_LISTMISSIONS, CMDSYNTAX_LISTMISSIONS, Command.NO_ARGUMENTS);
         }
 
         #region /createmission
 
         private const string CMDKEYS_CREATEMISSION = "createmission";
-        private const string CMDSYNTAX_CREATEMISSION = "/createmission <NameSuffixes> {<@Explorers>}";
+        private const string CMDSYNTAX_CREATEMISSION = "createmission <NameSuffixes> {<@Explorers>}";
         private const string CMDSUMMARY_CREATEMISSION = "Creates a new mission room";
         private const string CMDARGS_CREATEMISSION =
                 "    <NameSuffixes>\n" +
@@ -56,7 +56,7 @@ namespace Ciridium
         #region /enlistmission
 
         private const string CMDKEYS_ENLISTMISSION = "enlistmission";
-        private const string CMDSYNTAX_ENLISTMISSION = "/enlistmission <ChannelId>";
+        private const string CMDSYNTAX_ENLISTMISSION = "enlistmission <ChannelId>";
         private const string CMDSUMMARY_ENLISTMISSION = "Adds an unlisted channel to the list of mission rooms";
         private const string CMDARGS_ENLISTMISSION =
                 "    <ChannelId>\n" +
@@ -126,7 +126,7 @@ namespace Ciridium
         #region /completemission
 
         private const string CMDKEYS_COMPLETEMISSION = "completemission";
-        private const string CMDSYNTAX_COMPLETEMISSION = "/completemission";
+        private const string CMDSYNTAX_COMPLETEMISSION = "completemission";
         private const string CMDSUMMARY_COMPLETEMISSION = "Notifies the explorer to leave a testimonial and the dispatch to file a mission report";
 
         public async Task HandleCompleteMissionCommand(CommandContext context)
@@ -151,7 +151,7 @@ namespace Ciridium
         #region /closemission
 
         private const string CMDKEYS_CLOSEMISSION = "closemission";
-        private const string CMDSYNTAX_CLOSEMISSION = "/closemission <ChannelId>";
+        private const string CMDSYNTAX_CLOSEMISSION = "closemission <ChannelId>";
         private const string CMDSUMMARY_CLOSEMISSION = "Closes a mission room";
         private const string CMDARGS_CLOSEMISSION =
                 "    <ChannelId>\n" +
@@ -200,7 +200,7 @@ namespace Ciridium
         #region /unlistmission
 
         private const string CMDKEYS_UNLISTMISSION = "unlistmission";
-        private const string CMDSYNTAX_UNLISTMISSION = "/unlistmission <MissionId>";
+        private const string CMDSYNTAX_UNLISTMISSION = "unlistmission <MissionId>";
         private const string CMDSUMMARY_UNLISTMISSION = "Removes a (most likely lost) mission room from the mission list";
         private const string CMDARGS_UNLISTMISSION =
                 "    <ChannelId>\n" +
@@ -236,7 +236,7 @@ namespace Ciridium
         #region /listmissions
 
         private const string CMDKEYS_LISTMISSIONS = "listmissions";
-        private const string CMDSYNTAX_LISTMISSIONS = "/listmissions";
+        private const string CMDSYNTAX_LISTMISSIONS = "listmissions";
         private const string CMDSUMMARY_LISTMISSIONS = "Lists all stored missions";
 
         public async Task HandleListMissionsCommand(CommandContext context)
