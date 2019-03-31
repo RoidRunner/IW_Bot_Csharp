@@ -18,7 +18,7 @@ using Ciridium.Reactions;
 public static class Var
 {
     internal static string INARA_APPNAME = "CiridiumWingBot";
-    internal readonly static Version VERSION = new Version(1, 2);
+    internal readonly static Version VERSION = new Version(1, 3);
     /// <summary>
     /// When put to false will stop the program
     /// </summary>
@@ -40,7 +40,7 @@ public static class Var
     /// </summary>
     internal static string RestartPath = string.Empty;
     internal static CultureInfo Culture = new CultureInfo("en-us");
-    internal const ulong GuildId = 531241586529402900;
+    internal static ulong GuildId = 0;
     internal static SocketGuild Guild
     {
         get
@@ -100,6 +100,7 @@ namespace Ciridium {
                 SettingsModel.DebugMessage += Logger;
                 Var.client.Connected += ScheduleConnectDebugMessage;
                 Var.client.ReactionAdded += HandleReactionAdded;
+                Var.client.ChannelUpdated += ChannelUpdatedHandler;
                 QuoteReactions quoteReact = new QuoteReactions();
 
                 await Var.client.LoginAsync(TokenType.Bot, SettingsModel.token);
@@ -143,6 +144,33 @@ namespace Ciridium {
             if (!string.IsNullOrEmpty(Var.RestartPath))
             {
                 System.Diagnostics.Process.Start(Var.RestartPath);
+            }
+        }
+
+        private async Task ChannelUpdatedHandler(SocketChannel arg1, SocketChannel arg2)
+        {
+            SocketTextChannel old_version = arg1 as SocketTextChannel;
+            SocketTextChannel new_version = arg2 as SocketTextChannel;
+
+            if (old_version != null && new_version != null)
+            {
+                if (!old_version.Topic.Equals(new_version.Topic))
+                {
+                    await HandleTopicUpdated(new_version);
+                }
+            }
+        }
+
+        private async Task HandleTopicUpdated(SocketTextChannel channel)
+        {
+            ISocketMessageChannel debugChannel = Var.client.GetChannel(SettingsModel.DebugMessageChannelId) as ISocketMessageChannel;
+            if (debugChannel != null)
+            {
+                EmbedBuilder debugembed = new EmbedBuilder();
+                debugembed.Color = Var.BOTCOLOR;
+                debugembed.Title = string.Format("Channel #{0}: Topic updated", channel.Name);
+                debugembed.Description = string.Format("{0}```\n{1}```", channel.Mention, channel.Topic);
+                await debugChannel.SendEmbedAsync(debugembed);
             }
         }
 

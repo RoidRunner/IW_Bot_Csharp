@@ -12,37 +12,52 @@ namespace Ciridium
         public const string NO_ARGUMENTS = "None";
         public readonly bool async;
 
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp)
+        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false)
         {
             async = true;
             Key = key;
             AccessLevel = accessLevel;
             HandleCommand = handleCommand;
             HandleSynchronousCommand = null;
-            Summary = summary;
+            this.summary = summary;
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
+            IsShitposting = isShitposting;
         }
 
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleSynchronousCommand handleCommand, string summary, string syntax, string argumentHelp)
+        public Command(CommandKeys key, AccessLevel accessLevel, HandleSynchronousCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false)
         {
             async = false;
             Key = key;
             AccessLevel = accessLevel;
             HandleCommand = null;
             HandleSynchronousCommand = handleCommand;
-            Summary = summary;
+            this.summary = summary;
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
+            IsShitposting = isShitposting;
         }
 
         internal CommandKeys Key { get; private set; }
         internal AccessLevel AccessLevel { get; private set; }
         internal HandleCommand HandleCommand { get; private set; }
         internal HandleSynchronousCommand HandleSynchronousCommand { get; private set; }
-        internal string Summary { get; private set; }
+        private string summary;
+        internal string Summary {
+            get {
+                if (!IsShitposting)
+                {
+                    return summary;
+                }
+                else
+                {
+                    return "(Shitposting) " + summary;
+                }
+            }
+        }
         internal string Syntax { get; private set; }
         internal string ArgumentHelp { get; private set; }
+        internal bool IsShitposting { get; private set; }
 
 
         public override string ToString()

@@ -52,6 +52,7 @@ namespace Ciridium
         /// The Formatting string for the Welcoming Message. {0} is replaced with the new users mention.
         /// </summary>
         public static string welcomingMessage = "Hi {0}";
+        public static List<ulong> ShitpostingEnabledChannels;
 
         #endregion
         #region Initialization
@@ -59,6 +60,7 @@ namespace Ciridium
         static SettingsModel()
         {
             botAdminIDs = new List<ulong>();
+            ShitpostingEnabledChannels = new List<ulong>();
         }
 
         /// <summary>
@@ -87,6 +89,8 @@ namespace Ciridium
         private const string JSON_DISPATCHROLE = "DispatchRole";
         private const string JSON_INARA_APIKEY = "InaraAPIKey";
         private const string JSON_PREFIX = "Prefix";
+        private const string JSON_SHITPOSTINGCHANNELS = "ShitpostingChannels";
+        private const string JSON_GUILDID = "GuildId";
 
         /// <summary>
         /// Loads and applies Settings from appdata/locallow/Ciridium Wing Bot/Settings.json
@@ -98,7 +102,7 @@ namespace Ciridium
             if (operation.Success)
             {
                 JSONObject json = operation.Result;
-                if (json.GetField(ref token, JSON_BOTTOKEN) && json.HasField(JSON_ADMINIDS))
+                if (json.GetField(ref token, JSON_BOTTOKEN) && json.HasFields(new string[] { JSON_ADMINIDS, JSON_GUILDID }))
                 {
                     JSONObject botadmins = json[JSON_ADMINIDS];
                     if (botadmins.IsArray && botadmins.list != null)
@@ -158,7 +162,25 @@ namespace Ciridium
                             CommandService.Prefix = prefix_str[0];
                         }
                     }
-                    
+                    JSONObject shitpostingChannels = json[JSON_SHITPOSTINGCHANNELS];
+                    if (shitpostingChannels != null)
+                    {
+                        if (shitpostingChannels.IsArray && shitpostingChannels.list != null)
+                        {
+                            foreach (var channelId in shitpostingChannels.list)
+                            {
+                                ulong nID;
+                                if (ulong.TryParse(channelId.str, out nID))
+                                {
+                                    ShitpostingEnabledChannels.Add(nID);
+                                }
+                            }
+                        }
+                    }
+                    if (json.GetField(ref id, JSON_GUILDID))
+                    {
+                        ulong.TryParse(id, out Var.GuildId);
+                    }
                 }
             }
         }
@@ -177,6 +199,7 @@ namespace Ciridium
                 adminIDs.Add(adminID.ToString());
             }
             json.AddField(JSON_ADMINIDS, adminIDs);
+            json.AddField(JSON_GUILDID, Var.GuildId.ToString());
             JSONObject debugSettings = new JSONObject();
             foreach (bool b in debugLogging)
             {
@@ -191,7 +214,13 @@ namespace Ciridium
             json.AddField(JSON_BOTDEVROLE, BotDevRole.ToString());
             json.AddField(JSON_DISPATCHROLE, DispatchRole.ToString());
             json.AddField(JSON_INARA_APIKEY, Inara_APIkey);
-            json.AddField(JSON_PREFIX, CommandService.Prefix);
+            json.AddField(JSON_PREFIX, CommandService.Prefix.ToString());
+            JSONObject shitpostingChannels = new JSONObject();
+            foreach (var channelId in ShitpostingEnabledChannels)
+            {
+                shitpostingChannels.Add(channelId.ToString());
+            }
+            json.AddField(JSON_SHITPOSTINGCHANNELS, shitpostingChannels);
 
 
             await ResourcesModel.WriteJSONObjectToFile(ResourcesModel.SettingsFilePath, json);

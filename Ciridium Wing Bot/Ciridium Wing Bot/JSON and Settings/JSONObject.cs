@@ -1261,6 +1261,10 @@ public bool GetField(ref double field, string name, FieldNotFound fail = null)
 
     public static string GetSafeJSONString(string s)
     {
+        if (string.IsNullOrEmpty(s))
+        {
+            return s;
+        }
         int cursor = 0;
         char[] old = s.ToCharArray();
         char[] newS = new char[old.Length * 2];
@@ -1280,6 +1284,10 @@ public bool GetField(ref double field, string name, FieldNotFound fail = null)
 
     public static string ReturnToUnsafeJSONString(string s)
     {
+        if (string.IsNullOrEmpty(s))
+        {
+            return s;
+        }
         int cursor = 0;
         char[] old = s.ToCharArray();
         char[] newS = new char[old.Length];

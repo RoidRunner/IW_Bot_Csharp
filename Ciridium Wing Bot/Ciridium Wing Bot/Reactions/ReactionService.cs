@@ -36,7 +36,10 @@ namespace Ciridium.Reactions
                         ReactionContext context = new ReactionContext(message, user, channel, reaction);
                         try
                         {
-                            await reactionCommand.HandleReaction(context);
+                            if (!reactionCommand.IsShitposting || SettingsModel.ShitpostingEnabledChannels.Contains(context.Channel.Id) || userLevel >= AccessLevel.Director)
+                            {
+                                await reactionCommand.HandleReaction(context);
+                            }
                         }
                         catch (Exception e)
                         {

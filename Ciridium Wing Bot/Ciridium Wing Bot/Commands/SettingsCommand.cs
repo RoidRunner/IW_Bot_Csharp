@@ -24,7 +24,9 @@ namespace Ciridium
             // settings setmissionnumber
             CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
             // settings template
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 4, 1000), HandleTemplateCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 3, 1000), HandleTemplateCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE);
+            // settings prefix
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_PREFIX, 3, 3), HandlePrefixCommand, AccessLevel.Director, CMDKEYS_SETTINGS_PREFIX, CMDSYNTAX_SETTINGS_PREFIX, CMDARGS_SETTINGS_PREFIX);
 #if WELCOMING_MESSAGES
             // settings setjoinmsg
             s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETJOINMSG, 3, 1000), HandleWelcomingMessageCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETJOINMSG, CMDSYNTAX_SETTINGS_SETJOINMSG, CMDARGS_SETTINGS_SETJOINMSG);
@@ -205,28 +207,53 @@ namespace Ciridium
         {
             bool success = true;
             string message;
-            switch (context.Args[2].ToLower())
+            if (context.ArgCnt == 3)
             {
-                case TEMPLATE_MISSIONCHANNELTOPIC:
-                    MissionSettingsModel.DefaultTopic = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_MISSIONCHANNELTOPIC.Length);
-                    message = "Successfully set mission channel default topic!";
-                    break;
-                case TEMPLATE_EXPLORERQUESTIONS:
-                    MissionSettingsModel.ExplorerQuestions = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_EXPLORERQUESTIONS.Length);
-                    message = "Successfully set mission channel explorer questions!";
-                    break;
-                case TEMPLATE_TESTIMONIALPROMPT:
-                    MissionSettingsModel.TestimonialPrompt = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_TESTIMONIALPROMPT.Length);
-                    message = "Successfully set mission channel testimonial prompt!";
-                    break;
-                case TEMPLATE_FILEREPORTPROMPT:
-                    MissionSettingsModel.FileReportPrompt = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_FILEREPORTPROMPT.Length);
-                    message = "Successfully set mission channel report filing prompt!";
-                    break;
-                default:
-                    message = "Could not recognise this template!";
-                    success = false;
-                    break;
+                switch (context.Args[2].ToLower())
+                {
+                    case TEMPLATE_MISSIONCHANNELTOPIC:
+                        message = string.Format("Current Template for `{0}`:```{1}```", TEMPLATE_MISSIONCHANNELTOPIC, MissionSettingsModel.DefaultTopic);
+                        break;
+                    case TEMPLATE_EXPLORERQUESTIONS:
+                        message = string.Format("Current Template for `{0}`:```{1}```", TEMPLATE_EXPLORERQUESTIONS, MissionSettingsModel.ExplorerQuestions);
+                        break;
+                    case TEMPLATE_TESTIMONIALPROMPT:
+                        message = string.Format("Current Template for `{0}`:```{1}```", TEMPLATE_TESTIMONIALPROMPT, MissionSettingsModel.TestimonialPrompt);
+                        break;
+                    case TEMPLATE_FILEREPORTPROMPT:
+                        message = string.Format("Current Template for `{0}`:```{1}```", TEMPLATE_FILEREPORTPROMPT, MissionSettingsModel.FileReportPrompt);
+                        break;
+                    default:
+                        message = "Could not recognise this template!";
+                        success = false;
+                        break;
+                }
+            }
+            else
+            {
+                switch (context.Args[2].ToLower())
+                {
+                    case TEMPLATE_MISSIONCHANNELTOPIC:
+                        MissionSettingsModel.DefaultTopic = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_MISSIONCHANNELTOPIC.Length);
+                        message = "Successfully set mission channel default topic!";
+                        break;
+                    case TEMPLATE_EXPLORERQUESTIONS:
+                        MissionSettingsModel.ExplorerQuestions = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_EXPLORERQUESTIONS.Length);
+                        message = "Successfully set mission channel explorer questions!";
+                        break;
+                    case TEMPLATE_TESTIMONIALPROMPT:
+                        MissionSettingsModel.TestimonialPrompt = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_TESTIMONIALPROMPT.Length);
+                        message = "Successfully set mission channel testimonial prompt!";
+                        break;
+                    case TEMPLATE_FILEREPORTPROMPT:
+                        MissionSettingsModel.FileReportPrompt = context.Message.Content.Substring(TEMPLATE_BASELENGTH + TEMPLATE_FILEREPORTPROMPT.Length);
+                        message = "Successfully set mission channel report filing prompt!";
+                        break;
+                    default:
+                        message = "Could not recognise this template!";
+                        success = false;
+                        break;
+                }
             }
             if (success)
             {
@@ -243,7 +270,7 @@ namespace Ciridium
         private const string CMDSUMMARY_SETTINGS_CHANNEL = "Sets the channel used for debug, welcoming and the mission channel category";
         private const string CMDARGS_SETTINGS_CHANNEL =
                 "    <Channel>\n" +
-                "Which default channel setting you wish to override. Available are 'debug', 'welcoming' & 'missioncategory'\n" +
+                "Which default channel setting you wish to override. Available are 'debug', 'welcoming' & 'missioncategory', and 'allowshitposting', 'denyshitposting' for shitposting channel management\n" +
                 "    <ChannelId>\n" +
                 "Specify the channel you want to assign either by mention, as uInt64 Id or by the keyword 'this'";
 
@@ -283,17 +310,41 @@ namespace Ciridium
                     case "debug":
                         SettingsModel.DebugMessageChannelId = (ulong)channelId;
                         await SettingsModel.SaveSettings();
-                        message = "Debug channel successfully set to " + context.Guild.GetChannel((ulong)channelId).Name;
+                        message = "Debug channel successfully set to " + context.Guild.GetChannel((ulong)channelId)?.Name;
                         break;
                     case "welcoming":
                         SettingsModel.WelcomeMessageChannelId = (ulong)channelId;
                         await SettingsModel.SaveSettings();
-                        message = "Welcoming channel successfully set to " + context.Guild.GetChannel((ulong)channelId).Name;
+                        message = "Welcoming channel successfully set to " + context.Guild.GetChannel((ulong)channelId)?.Name;
                         break;
                     case "missioncategory":
                         MissionSettingsModel.MissionCategoryId = (ulong)channelId;
                         await MissionSettingsModel.SaveMissionSettings();
-                        message = "Mission category successfully set to " + context.Guild.GetChannel((ulong)channelId).Name;
+                        message = "Mission category successfully set to " + context.Guild.GetChannel((ulong)channelId)?.Name;
+                        break;
+                    case "allowshitposting":
+                        if (!SettingsModel.ShitpostingEnabledChannels.Contains((ulong)channelId))
+                        {
+                            SettingsModel.ShitpostingEnabledChannels.Add((ulong)channelId);
+                            await SettingsModel.SaveSettings();
+                            message = string.Format("{0} is now a fun-enabled zone!", context.Guild.GetChannel((ulong)channelId)?.Name);
+                        }
+                        else
+                        {
+                            message = "Shitposting is already rocking high in " + context.Guild.GetChannel((ulong)channelId)?.Name;
+                        }
+                        break;
+                    case "denyshitposting":
+                        if (SettingsModel.ShitpostingEnabledChannels.Contains((ulong)channelId))
+                        {
+                            SettingsModel.ShitpostingEnabledChannels.Remove((ulong)channelId);
+                            await SettingsModel.SaveSettings();
+                            message = string.Format("{0} is now a no-fun-allowed zone!", context.Guild.GetChannel((ulong)channelId)?.Name);
+                        }
+                        else
+                        {
+                            message = "Nobody was shitposting there before anyways";
+                        }
                         break;
                     default:
                         error = true;
@@ -340,6 +391,23 @@ namespace Ciridium
             }
 
             await context.Channel.SendEmbedAsync(message, error);
+        }
+
+        #endregion
+        #region /settings prefix
+
+        private const string CMDKEYS_SETTINGS_PREFIX = "settings prefix";
+        private const string CMDSYNTAX_SETTINGS_PREFIX = "settings prefix <Number>";
+        private const string CMDSUMMARY_SETTINGS_PREFIX = "Sets the command prefix";
+        private const string CMDARGS_SETTINGS_PREFIX =
+                "    <Character>\n" +
+                "Specify the character identifying commands";
+
+        private static async Task HandlePrefixCommand(CommandContext context)
+        {
+            CommandService.Prefix = context.Args[2][0];
+            await SettingsModel.SaveSettings();
+            await context.Channel.SendEmbedAsync(string.Format("Commandprefix updated to `{0}`", CommandService.Prefix));
         }
 
         #endregion

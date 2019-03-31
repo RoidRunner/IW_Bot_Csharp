@@ -19,6 +19,8 @@ namespace Ciridium
             CommandService.AddCommand(new CommandKeys(CMDKEYS_TOPIC), HandleTopicCommand, AccessLevel.Pilot, CMDSUMMARY_TOPIC, CMDSYNTAX_TOPIC, Command.NO_ARGUMENTS);
             // about
             CommandService.AddCommand(new CommandKeys(CMDKEYS_ABOUT), HandleAboutCommand, AccessLevel.Basic, CMDSUMMARY_ABOUT, CMDSYNTAX_ABOUT, Command.NO_ARGUMENTS);
+            // send
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SEND, 3, 1000), HandleSendCommand, AccessLevel.Director, CMDSUMMARY_SEND, CMDSYNTAX_SEND, CMDARGS_SEND);
         }
 
         #region /ping
@@ -65,6 +67,56 @@ namespace Ciridium
             embed.AddField("Credits", "Programming: <@!117260771200598019>\nSupport: <@!181013221661081600>");
             embed.AddField("Data Sources", "[EDSM](https://www.edsm.net/), [Inara](https://inara.cz/), [EDAssets](https://edassets.org/#/)");
             await context.Channel.SendEmbedAsync(embed);
+        }
+
+        #endregion
+        #region /send
+
+        private const string CMDKEYS_SEND = "send";
+        private const string CMDSYNTAX_SEND = "send <ChannelId> {<Words>}";
+        private const string CMDSUMMARY_SEND = "Sends an embedded Message to the channel <ChannelId>";
+        private const string CMDARGS_SEND =
+        "    <ChannelId>\n" +
+        "Specifies the channel to send to. Can be 'this' for current channel, uInt64 Id or channel mention" +
+        "    {<Words>}\n" +
+        "All words following the initial arguments will be sent in an embedded form to the target channel. All roles and users mentioned in the original message will be pinged.";
+
+
+        public async Task HandleSendCommand(CommandContext context)
+        {
+            if (Macros.TryParseChannel(context.Args[1], out ulong channelId, context.Channel.Id))
+            {
+                SocketTextChannel channel = Var.Guild.GetTextChannel(channelId);
+
+                if (channel != null)
+                {
+                    int startpos = context.Args[0].Length + context.Args[1].Length + 3;
+                    string sendmessage = context.Message.Content.Substring(startpos);
+                    StringBuilder pings = new StringBuilder();
+                    pings.Append("On behalf of ");
+                    pings.Append(context.User.Mention);
+                    pings.Append(": ");
+                    foreach (SocketRole role in context.Message.MentionedRoles)
+                    {
+                        pings.Append(role.Mention);
+                    }
+                    foreach (SocketUser user in context.Message.MentionedUsers)
+                    {
+                        pings.Append(user.Mention);
+                    }
+
+                    await channel.SendEmbedAsync(pings.ToString(), sendmessage);
+                    await context.Channel.SendEmbedAsync("Done! Check it out: " + channel.Mention);
+                }
+                else
+                {
+                    await context.Channel.SendEmbedAsync("Could not parse Channel argument!", true);
+                }
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("Could not parse Channel argument!", true);
+            }
         }
 
         #endregion

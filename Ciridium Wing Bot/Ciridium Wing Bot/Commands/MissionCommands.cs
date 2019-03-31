@@ -25,6 +25,10 @@ namespace Ciridium
             CommandService.AddCommand(new CommandKeys(CMDKEYS_UNLISTMISSION, 2, 2), HandleUnlistMissionCommand, AccessLevel.Director, CMDSUMMARY_UNLISTMISSION, CMDSYNTAX_UNLISTMISSION, CMDARGS_UNLISTMISSION);
             // listmissions
             CommandService.AddCommand(new CommandKeys(CMDKEYS_LISTMISSIONS), HandleListMissionsCommand, AccessLevel.Director, CMDSUMMARY_LISTMISSIONS, CMDSYNTAX_LISTMISSIONS, Command.NO_ARGUMENTS);
+            // gettopic
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_GETTOPIC), HandleGetTopicCommand, AccessLevel.Dispatch, CMDSUMMARY_GETTOPIC, CMDSYNTAX_GETTOPIC, Command.NO_ARGUMENTS);
+            // settopic
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTOPIC, 3, 1000), HandleSetTopicCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTOPIC, CMDSYNTAX_SETTOPIC, CMDARGS_SETTOPIC);
         }
 
         #region /createmission
@@ -261,6 +265,79 @@ namespace Ciridium
                     }
                 }
                 await context.Channel.SendSafeEmbedList("**__Currently active mission channels__**", embed);
+            }
+        }
+
+        #endregion
+        #region /gettopic
+
+        private const string CMDKEYS_GETTOPIC = "gettopic";
+        private const string CMDSYNTAX_GETTOPIC = "gettopic";
+        private const string CMDSUMMARY_GETTOPIC = "PMs the user an easy to edit version of the mission topic";
+
+        public async Task HandleGetTopicCommand(CommandContext context)
+        {
+            if (MissionModel.IsMissionChannel(context.Channel.Id, context.Guild.Id))
+            {
+                ITextChannel channel = context.Channel as ITextChannel;
+                if (channel != null)
+                {
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.Color = Var.BOTCOLOR;
+                    embed.Title = string.Format("Channel topic of channel #{0}", channel.Name);
+                    embed.Description = Macros.MultiLineCodeBlock(channel.Topic);
+                    embed.AddField("How to apply changes", string.Format("Back in the original mission channel, use the command `{0}settopic <New Topic>` with the updated topic", CommandService.Prefix));
+                    await context.User.SendMessageAsync(string.Empty, false, embed.Build());
+                    await context.Channel.SendEmbedAsync(string.Format("{0}, I have sent you a direct message!", context.User.Mention));
+                }
+                else
+                {
+                    await context.Channel.SendEmbedAsync("Internal problem converting this channel into the required channel type!", true);
+                }
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("Could not verify this channel as a mission channel!", true);
+            }
+        }
+
+        #endregion
+        #region /settopic
+
+        private const string CMDKEYS_SETTOPIC = "settopic";
+        private const string CMDSYNTAX_SETTOPIC = "settopic <MissionChannel> {<NewTopic>}";
+        private const string CMDSUMMARY_SETTOPIC = "Sets the channel topic. (!) Oftentimes pings the explorer (!)";
+        private const string CMDARGS_SETTOPIC =
+                "    <MissionChannel>\n" +
+                "Either a uInt64 channel Id, a channel mention or 'this' (for current channel) that marks the mission channel to be closed" +
+                "    {<NewTopic>}\n" +
+                "All arguments following the initial command identifier are copied as the new channel topic";
+
+        public async Task HandleSetTopicCommand(CommandContext context)
+        {
+            if (Macros.TryParseChannel(context.Args[1], out ulong channelId, context.Channel.Id))
+            {
+                if (MissionModel.IsMissionChannel(channelId, context.Guild.Id))
+                {
+                    string newTopic = context.Message.Content.Substring(CMDKEYS_SETTOPIC.Length + context.Args[1].Length + 3);
+                    ITextChannel channel = Var.Guild.GetTextChannel(channelId);
+                    if (channel != null)
+                    {
+                        await channel.ModifyAsync(TextChannelProperties =>
+                        {
+                            TextChannelProperties.Topic = newTopic;
+                        });
+                        await context.Channel.SendEmbedAsync("Done");
+                    }
+                    else
+                    {
+                        await context.Channel.SendEmbedAsync("Internal problem converting this channel into the required channel type!", true);
+                    }
+                }
+                else
+                {
+                    await context.Channel.SendEmbedAsync("Could not verify this channel as a mission channel!", true);
+                }
             }
         }
 

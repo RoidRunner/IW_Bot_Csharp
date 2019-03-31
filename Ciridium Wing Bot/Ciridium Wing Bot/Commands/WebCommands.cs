@@ -18,6 +18,7 @@ namespace Ciridium.WebRequests
             CommandService.AddCommand(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO);
             CommandService.AddCommand(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE);
             CommandService.AddCommand(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_FACTION, 2, 10), HandleFactionCommand, AccessLevel.Basic, CMDSUMMARY_FACTION, CMDSYNTAX_FACTION, CMDARGS_FACTION);
         }
 
         #region /systeminfo
@@ -35,7 +36,7 @@ namespace Ciridium.WebRequests
             bool listStations = context.Args[1].Equals("list");
 
             string requestedSystem;
-            if (printJSON || listStations)
+            if ((printJSON || listStations) && context.ArgCnt > 2)
             {
                 requestedSystem = context.Message.Content.Substring(CMDKEYS_SYSTEMINFO.Length + 7);
             }
@@ -564,7 +565,7 @@ namespace Ciridium.WebRequests
         {
             string cmdrName;
             bool printJSON = context.Args[1].Equals("json");
-            if (printJSON)
+            if (printJSON && context.ArgCnt > 2)
             {
                 cmdrName = context.Message.Content.Substring(CMDKEYS_CMDR.Length + 7);
             }
@@ -788,6 +789,98 @@ namespace Ciridium.WebRequests
             return new string(newString);
         }
 
+
+        #endregion
+        #region /faction
+
+
+        private const string CMDKEYS_FACTION = "faction";
+        private const string CMDSYNTAX_FACTION = "faction <FactionName>";
+        private const string CMDSUMMARY_FACTION = "Gets faction status information";
+        private const string CMDARGS_FACTION =
+                "    <FactionName>\n" +
+                "Write out the full exact Faction Name here";
+
+        public async Task HandleFactionCommand(CommandContext context)
+        {
+            string factionName;
+            bool printJSON = context.Args[1].Equals("json");
+            if (printJSON && context.ArgCnt > 2)
+            {
+                factionName = context.Message.Content.Substring(CMDKEYS_FACTION.Length + 7);
+            }
+            else
+            {
+                factionName = context.Message.Content.Substring(CMDKEYS_FACTION.Length + 2);
+            }
+
+            RequestJSONResult requestFaction = await WebRequestService.GetWebJSONAsync(WebRequestService.BGSBOT_FactionStatus(factionName));
+            if (requestFaction.IsSuccess)
+            {
+                if (printJSON)
+                {
+                    await context.Channel.SendEmbedAsync("Faction Info JSON Dump", string.Format("```json\n{0}```", requestFaction.Object.Print(true).MaxLength(2037)));
+                }
+                JSONObject docs = requestFaction.Object["docs"];
+                if ((docs != null) && docs.IsArray && docs.Count > 0)
+                {
+                    await FactionCommand_HandleFactionResponse(docs[0], context);
+                }
+            }
+            else if (requestFaction.IsException)
+            {
+                await context.Channel.SendEmbedAsync(string.Format("Could not connect to BGSBots services. Exception Message: `{0}`", requestFaction.ThrownException.Message), true);
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync(string.Format("Could not connect to BGSBots services. HTTP Error Message: `{0} {1}`", (int)requestFaction.Status, requestFaction.Status.ToString()), true);
+            }
+        }
+
+        private async Task FactionCommand_HandleFactionResponse(JSONObject faction, CommandContext context)
+        {
+            EmbedBuilder result = new EmbedBuilder();
+
+            JSONObject presences = faction["faction_presence"];
+            if ((presences != null) && presences.IsArray && presences.Count > 0)
+            {
+                string faction_name = string.Empty;
+                string faction_gov = string.Empty;
+                string faction_allegiance = string.Empty;
+                int faction_id = 0;
+                faction.GetField(ref faction_name, "name");
+                faction.GetField(ref faction_gov, "government");
+                faction.GetField(ref faction_allegiance, "allegiance");
+
+                string faction_edsm_link = null;
+
+                if (faction.GetField(ref faction_id, "eddb_id"))
+                {
+                    faction_edsm_link = "https://eddb.io/faction/" + faction_id;
+                }
+
+                result.Color = Var.BOTCOLOR;
+                result.Title = faction_name;
+                result.Description = string.Format("{0}Government: **{1}**\nAllegiance: **{2}**", 
+                    string.IsNullOrEmpty(faction_edsm_link) ? "" : string.Format("[**EDDB Link**]({0})\n", faction_edsm_link),
+                    faction_gov.FirstToUpper(), faction_allegiance.FirstToUpper());
+
+                List<EmbedField> presenceList = new List<EmbedField>();
+                foreach (JSONObject system in presences)
+                {
+                    string system_name = string.Empty;
+                    string state = string.Empty;
+                    float influence = 0;
+                    system.GetField(ref system_name, "system_name");
+                    system.GetField(ref state, "state");
+                    system.GetField(ref influence, "influence");
+                    presenceList.Add(new EmbedField(system_name, string.Format("State: **{0}**, Influence: **{1}**", state.FirstToUpper(), influence.ToString("P"))));
+                }
+                await context.Channel.SendEmbedAsync(result);
+                await context.Channel.SendSafeEmbedList("System presences of " + faction_name, presenceList);
+            }
+
+        }
 
         #endregion
     }

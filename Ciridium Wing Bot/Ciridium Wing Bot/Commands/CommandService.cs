@@ -2,6 +2,7 @@
 
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -43,15 +44,15 @@ namespace Ciridium
         /// </summary>
         /// <param name="key">The key to identify the command</param>
         /// <param name="command">The command object defining the commands behaviour</param>
-        public static void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
+        public static void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, bool isShitposting = false)
         {
-            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp);
+            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp, isShitposting);
             commands.Add(cmd);
         }
 
-        public static void AddSynchronousCommand(CommandKeys keys, HandleSynchronousCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp)
+        public static void AddSynchronousCommand(CommandKeys keys, HandleSynchronousCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, bool isShitposting = false)
         {
-            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp);
+            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp, isShitposting);
             commands.Add(cmd);
         }
 
@@ -81,13 +82,25 @@ namespace Ciridium
                             {
                                 using (msg.Channel.EnterTypingState())
                                 {
-                                    if (cmd.async)
+                                    if (!cmd.IsShitposting || SettingsModel.ShitpostingEnabledChannels.Contains(context.Channel.Id) || userLevel >= AccessLevel.Director)
                                     {
-                                        await cmd.HandleCommand(context);
+                                        if (cmd.async)
+                                        {
+                                            await cmd.HandleCommand(context);
+                                        }
+                                        else
+                                        {
+                                            cmd.HandleSynchronousCommand(context);
+                                        }
                                     }
                                     else
                                     {
-                                        cmd.HandleSynchronousCommand(context);
+                                        RestUserMessage message =  await context.Channel.SendEmbedAsync(user.Mention, "This channel is a **no-fun-zone**!", true);
+                                        TimingThread.AddScheduleDelegate(() => {
+                                            context.Message.DeleteAsync();
+                                            message.DeleteAsync();
+                                            return Task.CompletedTask;
+                                        }, 5000);
                                     }
                                 }
                             }
@@ -112,6 +125,7 @@ namespace Ciridium
                 }
                 else
                 {
+                    await context.Message.AddReactionAsync(new Emote(Emotes.question));
                     await SettingsModel.SendDebugMessage(string.Format("A potential command `{0}` could not be identified", msg.Content), DebugCategories.misc);
                 }
             }

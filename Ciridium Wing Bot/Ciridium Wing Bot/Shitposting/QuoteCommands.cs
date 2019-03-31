@@ -11,8 +11,9 @@ namespace Ciridium.Shitposting
     {
         public QuoteCommands()
         {
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE), HandleQuoteCommand, AccessLevel.Basic, CMDSUMMARY_QUOTE, CMDSYNTAX_QUOTE, Command.NO_ARGUMENTS);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE_ADD, 4, 4), HandleAddQuoteCommand, AccessLevel.Pilot, CMDSUMMARY_QUOTE_ADD, CMDSYNTAX_QUOTE_ADD, CMDARGS_QUOTE_ADD);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE), HandleQuoteCommand, AccessLevel.Basic, CMDSUMMARY_QUOTE, CMDSYNTAX_QUOTE, Command.NO_ARGUMENTS, true);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE_ADD, 4, 4), HandleAddQuoteCommand, AccessLevel.Pilot, CMDSUMMARY_QUOTE_ADD, CMDSYNTAX_QUOTE_ADD, CMDARGS_QUOTE_ADD, true);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE_DELETE, 3, 3), HandleDeleteQuoteCommand, AccessLevel.Director, CMDSUMMARY_QUOTE_DELETE, CMDSYNTAX_QUOTE_DELETE, CMDARGS_QUOTE_DELETE);
         }
 
         #region quote
@@ -76,11 +77,11 @@ namespace Ciridium.Shitposting
                         List<IAttachment> attachments = new List<IAttachment>(quotedMessage.Attachments);
                         if (attachments.Count > 0)
                         {
-                            newQuote = new Quote(channel.Name, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(context.Guild.Id), attachments[0].Url);
+                            newQuote = new Quote(channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(context.Guild.Id), attachments[0].Url);
                         }
                         else
                         {
-                            newQuote = new Quote(channel.Name, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(context.Guild.Id));
+                            newQuote = new Quote(channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(context.Guild.Id));
                         }
                         await QuoteService.AddQuote(newQuote);
                         error = false;
@@ -105,34 +106,42 @@ namespace Ciridium.Shitposting
             }
             else
             {
-                await context.Channel.SendMessageAsync("Stored a new Quote", embed: newQuote.GetEmbed().Build());
+                await context.Channel.SendEmbedAsync(newQuote.GetEmbed());
             }
-        }
-
-        #endregion
-            #region quote list
-
-        private const string CMDKEYS_QUOTE_LIST = "quote list";
-        private const string CMDSYNTAX_QUOTE_LIST = "quote list";
-        private const string CMDSUMMARY_QUOTE_LIST = "";
-        private const string CMDARGS_QUOTE_LIST = "";
-
-        internal async Task HandleListQuotesCommand(CommandContext context)
-        {
-
         }
 
         #endregion
         #region quote delete
 
-        private const string CMDKEYS_QUOTE_DELETE = "";
-        private const string CMDSYNTAX_QUOTE_DELETE = "";
-        private const string CMDSUMMARY_QUOTE_DELETE = "";
-        private const string CMDARGS_QUOTE_DELETE = "";
+        private const string CMDKEYS_QUOTE_DELETE = "quote delete";
+        private const string CMDSYNTAX_QUOTE_DELETE = "quote delete <QuoteId>";
+        private const string CMDSUMMARY_QUOTE_DELETE = "Removes a Quote from the list of saved quotes";
+        private const string CMDARGS_QUOTE_DELETE =
+            "    <QuoteId>" +
+            "The quote Id of the Quote you want deleted";
 
         internal async Task HandleDeleteQuoteCommand(CommandContext context)
         {
-
+            string message = string.Empty;
+            bool error = true;
+            if (int.TryParse(context.Args[2], out int quoteId))
+            {
+                if (QuoteService.HasQuote(quoteId))
+                {
+                    await QuoteService.RemoveQuote(quoteId);
+                    message = "Successfully yeeted quote #" + quoteId;
+                    error = false;
+                }
+                else
+                {
+                    message = "Sowwy, but I don't have that quoteId";
+                }
+            }
+            else
+            {
+                message = "That aint no integer you gave me there to parse!";
+            }
+            await context.Channel.SendEmbedAsync(message, error);
         }
 
         #endregion

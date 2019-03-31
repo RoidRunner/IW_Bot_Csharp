@@ -10,6 +10,7 @@ namespace Ciridium.Shitposting
     {
         internal int Id;
         internal string ChannelName;
+        internal ulong MessageId;
         internal string MessageContent;
         internal string ImageURL;
         internal ulong AuthorId;
@@ -22,15 +23,33 @@ namespace Ciridium.Shitposting
 
         }
 
-        public Quote(string channelName, string messageContent, ulong authorId, string authorName, DateTime timestamp, string messageLink, string linkedImage = null)
+        public Quote(string channelName, ulong messageId, string messageContent, ulong authorId, string authorName, DateTime timestamp, string messageLink, string linkedImage = null)
         {
             ChannelName = channelName;
+            MessageId = messageId;
             MessageContent = messageContent;
             ImageURL = linkedImage;
             AuthorId = authorId;
             AuthorName = authorName;
             Timestamp = timestamp;
             MessageURL = messageLink;
+            SecureNulls();
+        }
+
+        private void SecureNulls()
+        {
+            if (ChannelName == null)
+            {
+                ChannelName = "Unknown Channel";
+            }
+            if (MessageContent == null)
+            {
+                MessageContent = string.Empty;
+            }
+            if (AuthorName == null)
+            {
+                AuthorName = "Unkown Author";
+            }
         }
 
         internal EmbedBuilder GetEmbed()
@@ -40,10 +59,14 @@ namespace Ciridium.Shitposting
             quote.Description = MessageContent;
             EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
 
-            SocketGuildUser author = Var.Guild.GetUser(AuthorId);
+            SocketGuild guild = Var.Guild;
+            SocketGuildUser author = null;
+            if (guild != null) {
+                author = guild.GetUser(AuthorId);
+            }
             if (author != null)
             {
-                if (author.Nickname != null)
+                if (!string.IsNullOrEmpty(author.Nickname))
                 {
                     authorBuilder.Name = author.Nickname;
                 }
@@ -78,6 +101,7 @@ namespace Ciridium.Shitposting
 
         private const string JSON_ID = "Id";
         private const string JSON_CHANNEL_NAME = "ChannelName";
+        private const string JSON_MESSAGE_ID = "MessageId";
         private const string JSON_CONTENT = "Content";
         private const string JSON_IMAGE_URL = "ImageURL";
         private const string JSON_AUTHOR_ID = "AuthorId";
@@ -89,11 +113,13 @@ namespace Ciridium.Shitposting
         {
             string authorId_str = string.Empty;
             string timestamp_str = string.Empty;
+            string messageId_str = string.Empty;
             json.GetField(ref authorId_str, JSON_AUTHOR_ID);
             json.GetField(ref timestamp_str, JSON_TIMESTAMP);
             json.GetField(ref ImageURL, JSON_IMAGE_URL);
+            json.GetField(ref messageId_str, JSON_MESSAGE_ID);
             bool success = json.GetField(ref Id, JSON_ID) && json.GetField(ref MessageContent, JSON_CONTENT) && ulong.TryParse(authorId_str, out AuthorId) && json.GetField(ref AuthorName, JSON_AUTHOR_NAME)
-                && json.GetField(ref MessageURL, JSON_MESSAGE_URL) && DateTime.TryParse(timestamp_str, Var.Culture, System.Globalization.DateTimeStyles.AssumeUniversal, out Timestamp) && json.GetField(ref ChannelName, JSON_CHANNEL_NAME);
+                && json.GetField(ref MessageURL, JSON_MESSAGE_URL) && DateTime.TryParse(timestamp_str, Var.Culture, System.Globalization.DateTimeStyles.AssumeUniversal, out Timestamp) && json.GetField(ref ChannelName, JSON_CHANNEL_NAME) && ulong.TryParse(messageId_str, out MessageId);
             if (success)
             {
                 Timestamp = DateTime.SpecifyKind(Timestamp, DateTimeKind.Utc);
@@ -106,6 +132,7 @@ namespace Ciridium.Shitposting
         {
             JSONObject result = new JSONObject();
             result.AddField(JSON_ID, Id);
+            result.AddField(JSON_MESSAGE_ID, MessageId.ToString());
             result.AddField(JSON_CHANNEL_NAME, ChannelName);
             result.AddField(JSON_CONTENT, JSONObject.GetSafeJSONString(MessageContent));
             result.AddField(JSON_IMAGE_URL, ImageURL);

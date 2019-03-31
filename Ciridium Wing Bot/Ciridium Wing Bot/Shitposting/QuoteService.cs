@@ -50,9 +50,40 @@ namespace Ciridium.Shitposting
 
         internal static async Task AddQuote(Quote newQuote)
         {
-            newQuote.Id = ConsumeQuoteId;
-            QuoteList.Add(newQuote);
-            await SafeQuote(QuoteList.Count - 1);
+            if (!HasQuote(newQuote.MessageId))
+            {
+                newQuote.Id = ConsumeQuoteId;
+                QuoteList.Add(newQuote);
+                await SafeQuote(QuoteList.Count - 1);
+            }
+        }
+
+        internal static bool HasQuote(ulong MessageId)
+        {
+            foreach (Quote quote in QuoteList)
+            {
+                if (quote.MessageId == MessageId)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        internal static bool HasQuote(int QuoteId)
+        {
+            if (QuoteId >= nextQuoteId)
+            {
+                return false;
+            }
+            foreach (Quote quote in QuoteList)
+            {
+                if (quote.Id == QuoteId)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal static async Task RemoveQuote(int QuoteId)
@@ -73,7 +104,7 @@ namespace Ciridium.Shitposting
             QuoteList = new List<Quote>();
         }
 
-        private const int QUOTE_PAGESIZE = 2;
+        private const int QUOTE_PAGESIZE = 64;
         private const string JSON_QUOTEID = "QuoteId";
 
         internal static async Task SafeQuote(int listLocation = -1)
@@ -84,6 +115,13 @@ namespace Ciridium.Shitposting
 
             if (listLocation == -1)
             {
+                foreach (string file in Directory.GetFiles(ResourcesModel.QuotesDirectory))
+                {
+                    if (file.Contains("quotes-") && file.EndsWith(".json"))
+                    {
+                        File.Delete(file);
+                    }
+                }
                 int pages = (QuoteList.Count - 1) / QUOTE_PAGESIZE;
                 for (int i = 0; i <= pages; i++)
                 {
@@ -143,7 +181,10 @@ namespace Ciridium.Shitposting
                     Quote loadedQuote = new Quote();
                     if (loadedQuote.FromJSON(quoteJSON))
                     {
-                        QuoteList.Add(loadedQuote);
+                        if (!HasQuote(loadedQuote.Id))
+                        {
+                            QuoteList.Add(loadedQuote);
+                        }
                     }
                 }
             }

@@ -109,6 +109,42 @@ namespace Ciridium
                 return str.Substring(0, maxLength);
             }
         }
+
+        public static bool TryParseChannel(string channel, out ulong channelId, ulong channelself = ulong.MaxValue)
+        {
+            channelId = 0;
+            if (ulong.TryParse(channel, out ulong Id))
+            {
+                channelId = Id;
+                return true;
+            }
+            else if (channel.StartsWith("<#") && channel.EndsWith('>') && channel.Length > 3)
+            {
+                if (ulong.TryParse(channel.Substring(2, channel.Length-3), out ulong Id2))
+                {
+                    channelId = Id2;
+                    return true;
+                }
+            }
+            else if (channel.Equals("this"))
+            {
+                channelId = channelself;
+                return true;
+            }
+            return false;
+        }
+
+        public static string FirstToUpper(this string str)
+        {
+            if (string.IsNullOrEmpty(str))
+            {
+                return str;
+            }
+            else
+            {
+                return str.Substring(0, 1).ToUpper() + str.Substring(1);
+            }
+        }
     }
 
     public struct EmbedField

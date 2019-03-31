@@ -8,10 +8,10 @@ namespace Ciridium.Reactions
 {
     internal struct ReactionContext
     {
-        internal IMessage Message;
-        internal SocketGuildUser User;
-        internal ISocketMessageChannel Channel;
-        internal SocketReaction Reaction;
+        internal IMessage Message { get; private set; }
+        internal SocketGuildUser User { get; private set; }
+        internal ISocketMessageChannel Channel { get; private set; }
+        internal SocketReaction Reaction { get; private set; }
 
         public ReactionContext(IMessage message, SocketGuildUser user, ISocketMessageChannel channel, SocketReaction reaction)
         {
@@ -27,12 +27,14 @@ namespace Ciridium.Reactions
         internal string Emote;
         internal AccessLevel RequiredAccess;
         internal HandleReaction HandleReaction;
+        internal bool IsShitposting { get; private set; }
 
-        public ReactionCommand(string emote, AccessLevel requiredAccess, HandleReaction handleReaction)
+        public ReactionCommand(string emote, AccessLevel requiredAccess, HandleReaction handleReaction, bool isShitposting = false)
         {
             Emote = emote;
             RequiredAccess = requiredAccess;
             HandleReaction = handleReaction;
+            IsShitposting = isShitposting;
         }
 
         internal bool HasPermission(AccessLevel userlevel)

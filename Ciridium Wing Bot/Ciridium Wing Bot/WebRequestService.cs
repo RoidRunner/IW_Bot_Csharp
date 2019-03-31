@@ -124,7 +124,7 @@ namespace Ciridium.WebRequests
                 {
                     result.Append("&systemName[]=");
                 }
-                result.Append(systemName);
+                result.Append(systemName.Replace(' ', '+'));
             }
             if (showId)
             {
@@ -181,6 +181,11 @@ namespace Ciridium.WebRequests
                 result.Append("&showCoordinates=1");
             }
             return result.ToString();
+        }
+
+        internal static string BGSBOT_FactionStatus(string factionName)
+        {
+            return "https://elitebgs.app/api/ebgs/v4/factions?name=" + factionName.Replace(' ', '+');
         }
 
         internal static JSONObject Inara_CMDR_Profile(string cmdrName)

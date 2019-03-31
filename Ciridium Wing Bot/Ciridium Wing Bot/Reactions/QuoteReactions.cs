@@ -11,7 +11,7 @@ namespace Ciridium.Reactions
     {
         internal QuoteReactions()
         {
-            ReactionService.AddReactionCommand(new ReactionCommand("quote", AccessLevel.Pilot, HandleQuoteReaction));
+            ReactionService.AddReactionCommand(new ReactionCommand("quote", AccessLevel.Pilot, HandleQuoteReaction, true));
         }
 
         private async Task HandleQuoteReaction(ReactionContext context)
@@ -22,14 +22,14 @@ namespace Ciridium.Reactions
             List<IAttachment> attachments = new List<IAttachment>(quotedMessage.Attachments);
             if (attachments.Count > 0)
             {
-                newQuote = new Quote(context.Channel.Name, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(Var.Guild.Id), attachments[0].Url);
+                newQuote = new Quote(context.Channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(Var.Guild.Id), attachments[0].Url);
             }
             else
             {
-                newQuote = new Quote(context.Channel.Name, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(Var.Guild.Id));
+                newQuote = new Quote(context.Channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(Var.Guild.Id));
             }
             await QuoteService.AddQuote(newQuote);
-            await context.Channel.SendMessageAsync("Stored a new Quote", embed: newQuote.GetEmbed().Build());
+            await context.Channel.SendEmbedAsync(newQuote.GetEmbed());
         }
     }
 }
