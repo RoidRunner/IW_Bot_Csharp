@@ -15,10 +15,10 @@ namespace Ciridium.WebRequests
 
         public WebCommands()
         {
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO, useTyping:true);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE, useTyping: true);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR, useTyping: true);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_FACTION, 2, 10), HandleFactionCommand, AccessLevel.Basic, CMDSUMMARY_FACTION, CMDSYNTAX_FACTION, CMDARGS_FACTION, useTyping: true);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO, useTyping:true));
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE, useTyping: true));
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR, useTyping: true));
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_FACTION, 2, 10), HandleFactionCommand, AccessLevel.Basic, CMDSUMMARY_FACTION, CMDSYNTAX_FACTION, CMDARGS_FACTION, useTyping: true));
         }
 
         #region /systeminfo
@@ -303,8 +303,8 @@ namespace Ciridium.WebRequests
             public bool HasShipyard;
             public bool HasOutfitting;
             public bool HasUniversalCartographics;
-            private string SystemName;
-            private long SystemId;
+            private readonly string SystemName;
+            private readonly long SystemId;
 
             public bool HasLargePadOrbital
             {
@@ -459,43 +459,14 @@ namespace Ciridium.WebRequests
         public async Task HandleDistanceCommand(CommandContext context)
         {
             // Parse input systems
-            string requestedSystem1 = string.Empty;
-            string requestedSystem2 = string.Empty;
-            bool commaEncountered = false;
-            for (int i = 1; i < context.ArgCnt; i++)
-            {
-                string partial = context.Args[i];
-                if (partial.EndsWith(','))
-                {
-                    if (!string.IsNullOrEmpty(requestedSystem1))
-                    {
-                        requestedSystem1 += ' ';
-                    }
-                    requestedSystem1 += partial.Substring(0, partial.Length - 1);
-                    commaEncountered = true;
-                }
-                else if (commaEncountered)
-                {
-                    if (!string.IsNullOrEmpty(requestedSystem2))
-                    {
-                        requestedSystem2 += ' ';
-                    }
+            string[] systems = context.Message.Content.Substring(CMDKEYS_DISTANCE.Length + 2).Split(',');
 
-                    requestedSystem2 += partial;
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(requestedSystem1))
-                    {
-                        requestedSystem1 += '+';
-                    }
-                    requestedSystem1 += partial;
-                }
-            }
-
-            // two systems found, make the request
-            if (commaEncountered)
+            if (systems.Length == 2)
             {
+                // two systems found, make the request
+                string requestedSystem1 = systems[0].Trim();
+                string requestedSystem2 = systems[1].Trim();
+
                 string requestURL = WebRequestService.EDSM_MultipleSystemsInfo_URL(new string[] { requestedSystem1, requestedSystem2 }, false, true, false, false, false);
                 RequestJSONResult requestResult = await WebRequestService.GetWebJSONAsync(requestURL);
                 if (requestResult.IsSuccess)
@@ -520,7 +491,7 @@ namespace Ciridium.WebRequests
                         }
                         else
                         {
-                            await context.Channel.SendEmbedAsync("Could not find both of your mentioned systems!", true);
+                            await context.Channel.SendEmbedAsync("Could not find either of your mentioned systems!", true);
                         }
                     }
                 }
@@ -713,11 +684,13 @@ namespace Ciridium.WebRequests
                 if (cmdr != null)
                 {
 
-                    EmbedBuilder message = new EmbedBuilder();
-                    message.Color = Var.BOTCOLOR;
-                    message.Title = string.Format("Inara profile of {0}", cmdr_name);
-                    message.ThumbnailUrl = cmdr_avatar_url;
-                    message.Url = cmdr_inara_url;
+                    EmbedBuilder message = new EmbedBuilder
+                    {
+                        Color = Var.BOTCOLOR,
+                        Title = string.Format("Inara profile of {0}", cmdr_name),
+                        ThumbnailUrl = cmdr_avatar_url,
+                        Url = cmdr_inara_url
+                    };
                     if (!string.IsNullOrEmpty(cmdr_gameRole))
                     {
                         message.AddField("Preffered Role", cmdr_gameRole);
@@ -739,8 +712,10 @@ namespace Ciridium.WebRequests
             }
             else if (eventStatus == 204)
             {
-                EmbedBuilder errormessage = new EmbedBuilder();
-                errormessage.Color = Var.ERRORCOLOR;
+                EmbedBuilder errormessage = new EmbedBuilder
+                {
+                    Color = Var.ERRORCOLOR
+                };
                 string eventResult = resultevent["eventStatusText"].str;
                 if (eventResult.Equals("No results found."))
                 {
@@ -750,10 +725,12 @@ namespace Ciridium.WebRequests
                 return errormessage;
             }
 
-            EmbedBuilder error = new EmbedBuilder();
-            error.Title = "Unknown Error!";
-            error.Description = string.Format("```json\n{0}```", resultevent.Print(true).MaxLength(2037));
-            error.Color = Var.ERRORCOLOR;
+            EmbedBuilder error = new EmbedBuilder
+            {
+                Title = "Unknown Error!",
+                Description = string.Format("```json\n{0}```", resultevent.Print(true).MaxLength(2037)),
+                Color = Var.ERRORCOLOR
+            };
 
             return error;
         }

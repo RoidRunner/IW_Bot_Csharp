@@ -28,13 +28,17 @@ namespace Ciridium.Reactions
         internal AccessLevel RequiredAccess;
         internal HandleReaction HandleReaction;
         internal bool IsShitposting { get; private set; }
+        internal bool RequiresMissionChannel { get; private set; }
+        internal SpecialChannelType RequiredChannelType { get; private set; }
 
-        public ReactionCommand(string emote, AccessLevel requiredAccess, HandleReaction handleReaction, bool isShitposting = false)
+        public ReactionCommand(string emote, AccessLevel requiredAccess, HandleReaction handleReaction, SpecialChannelType channelType = SpecialChannelType.Normal)
         {
             Emote = emote;
             RequiredAccess = requiredAccess;
             HandleReaction = handleReaction;
-            IsShitposting = isShitposting;
+            RequiredChannelType = channelType;
+            IsShitposting = RequiredChannelType == SpecialChannelType.ShitpostingAllowed;
+            RequiresMissionChannel = RequiredChannelType == SpecialChannelType.Mission;
         }
 
         internal bool HasPermission(AccessLevel userlevel)

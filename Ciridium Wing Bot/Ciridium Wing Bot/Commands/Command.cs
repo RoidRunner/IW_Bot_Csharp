@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace Ciridium
         public const string NO_ARGUMENTS = "None";
         public readonly bool async;
 
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false, bool useTyping = false)
+        public Command(CommandKeys key, HandleCommand handleCommand, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, SpecialChannelType channelType = SpecialChannelType.Normal, bool useTyping = false)
         {
             async = true;
             Key = key;
@@ -22,11 +23,13 @@ namespace Ciridium
             this.summary = summary;
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
-            IsShitposting = isShitposting;
+            RequiredChannelType = channelType;
+            IsShitposting = RequiredChannelType == SpecialChannelType.ShitpostingAllowed;
+            RequiresMissionChannel = RequiredChannelType == SpecialChannelType.Mission;
             UseTyping = useTyping;
         }
 
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleSynchronousCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false, bool useTyping = false)
+        public Command(CommandKeys key, HandleSynchronousCommand handleCommand, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, SpecialChannelType channelType = SpecialChannelType.Normal, bool useTyping = false, bool isSynchronous = true)
         {
             async = false;
             Key = key;
@@ -36,7 +39,9 @@ namespace Ciridium
             this.summary = summary;
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
-            IsShitposting = isShitposting;
+            RequiredChannelType = channelType;
+            IsShitposting = RequiredChannelType == SpecialChannelType.ShitpostingAllowed;
+            RequiresMissionChannel = RequiredChannelType == SpecialChannelType.Mission;
             UseTyping = useTyping;
         }
 
@@ -44,22 +49,28 @@ namespace Ciridium
         internal AccessLevel AccessLevel { get; private set; }
         internal HandleCommand HandleCommand { get; private set; }
         internal HandleSynchronousCommand HandleSynchronousCommand { get; private set; }
-        private string summary;
+        private readonly string summary;
         internal string Summary {
             get {
-                if (!IsShitposting)
+                if (IsShitposting)
                 {
-                    return summary;
+                    return "(Shitposting) " + summary;
+                }
+                else if (RequiresMissionChannel)
+                {
+                    return "(MissionChannel) " + summary;
                 }
                 else
                 {
-                    return "(Shitposting) " + summary;
+                    return summary;
                 }
             }
         }
         internal string Syntax { get; private set; }
         internal string ArgumentHelp { get; private set; }
         internal bool IsShitposting { get; private set; }
+        internal bool RequiresMissionChannel { get; private set; }
+        internal SpecialChannelType RequiredChannelType { get; private set; }
         internal bool UseTyping { get; private set; }
 
 
@@ -68,7 +79,7 @@ namespace Ciridium
             return Syntax;
         }
 
-        internal bool HasPermission(AccessLevel userlevel)
+        internal bool UserHasPermission(AccessLevel userlevel)
         {
             return userlevel >= AccessLevel;
         }
@@ -169,11 +180,35 @@ namespace Ciridium
     {
         internal string[] Args { get; private set; }
         internal int ArgCnt { get; private set; }
+        internal AccessLevel UserAccessLevel { get; private set; }
+        internal bool ChannelAllowsShitposting { get; private set; }
+        internal bool ChannelIsMissionChannel { get; private set; }
+        internal SpecialChannelType ChannelType { get; private set; }
 
         internal CommandContext(DiscordSocketClient client, SocketUserMessage msg, string[] args) : base(client, msg)
         {
             Args = args;
             ArgCnt = args.Length;
+            SetUserAccesslevelAndChannelType();
+        }
+
+        private void SetUserAccesslevelAndChannelType()
+        {
+            UserAccessLevel = SettingsModel.GetUserAccessLevel(User as SocketGuildUser);
+            ChannelAllowsShitposting = SettingsModel.ShitpostingEnabledChannels.Contains(Channel.Id);
+            ChannelIsMissionChannel = MissionModel.IsMissionChannel(Channel as IGuildChannel);
+            if (ChannelIsMissionChannel)
+            {
+                ChannelType = SpecialChannelType.Mission;
+            }
+            else if (ChannelAllowsShitposting)
+            {
+                ChannelType = SpecialChannelType.ShitpostingAllowed;
+            }
+            else
+            {
+                ChannelType = SpecialChannelType.Normal;
+            }
         }
 
         internal CommandContext(DiscordSocketClient client, SocketUserMessage msg) : base(client, msg)
@@ -181,6 +216,14 @@ namespace Ciridium
             Args = msg.Content.Split(" ");
             Args[0] = Args[0].Substring(1);
             ArgCnt = Args.Length;
+            SetUserAccesslevelAndChannelType();
         }
+    }
+
+    internal enum SpecialChannelType
+    {
+        Normal,
+        Mission,
+        ShitpostingAllowed
     }
 }

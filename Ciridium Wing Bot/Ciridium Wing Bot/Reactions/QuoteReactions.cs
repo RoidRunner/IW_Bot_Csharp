@@ -11,7 +11,7 @@ namespace Ciridium.Reactions
     {
         internal QuoteReactions()
         {
-            ReactionService.AddReactionCommand(new ReactionCommand("quote", AccessLevel.Pilot, HandleQuoteReaction, true));
+            ReactionService.AddReactionCommand(new ReactionCommand("quote", AccessLevel.Pilot, HandleQuoteReaction, SpecialChannelType.ShitpostingAllowed));
         }
 
         private async Task HandleQuoteReaction(ReactionContext context)

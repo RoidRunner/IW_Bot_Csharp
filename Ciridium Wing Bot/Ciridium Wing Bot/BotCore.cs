@@ -166,10 +166,12 @@ namespace Ciridium {
             ISocketMessageChannel debugChannel = Var.client.GetChannel(SettingsModel.DebugMessageChannelId) as ISocketMessageChannel;
             if (debugChannel != null)
             {
-                EmbedBuilder debugembed = new EmbedBuilder();
-                debugembed.Color = Var.BOTCOLOR;
-                debugembed.Title = string.Format("Channel #{0}: Topic updated", channel.Name);
-                debugembed.Description = string.Format("{0}```\n{1}```", channel.Mention, channel.Topic);
+                EmbedBuilder debugembed = new EmbedBuilder
+                {
+                    Color = Var.BOTCOLOR,
+                    Title = string.Format("Channel #{0}: Topic updated", channel.Name),
+                    Description = string.Format("{0}```\n{1}```", channel.Mention, channel.Topic)
+                };
                 await debugChannel.SendEmbedAsync(debugembed);
             }
         }

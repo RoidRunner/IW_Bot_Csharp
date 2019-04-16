@@ -11,9 +11,9 @@ namespace Ciridium.Shitposting
     {
         public QuoteCommands()
         {
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE), HandleQuoteCommand, AccessLevel.Basic, CMDSUMMARY_QUOTE, CMDSYNTAX_QUOTE, Command.NO_ARGUMENTS, true);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE_ADD, 4, 4), HandleAddQuoteCommand, AccessLevel.Pilot, CMDSUMMARY_QUOTE_ADD, CMDSYNTAX_QUOTE_ADD, CMDARGS_QUOTE_ADD, true);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_QUOTE_DELETE, 3, 3), HandleDeleteQuoteCommand, AccessLevel.Director, CMDSUMMARY_QUOTE_DELETE, CMDSYNTAX_QUOTE_DELETE, CMDARGS_QUOTE_DELETE);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_QUOTE), HandleQuoteCommand, AccessLevel.Basic, CMDSUMMARY_QUOTE, CMDSYNTAX_QUOTE, Command.NO_ARGUMENTS, SpecialChannelType.ShitpostingAllowed));
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_QUOTE_ADD, 4, 4), HandleAddQuoteCommand, AccessLevel.Pilot, CMDSUMMARY_QUOTE_ADD, CMDSYNTAX_QUOTE_ADD, CMDARGS_QUOTE_ADD, SpecialChannelType.ShitpostingAllowed));
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_QUOTE_DELETE, 3, 3), HandleDeleteQuoteCommand, AccessLevel.Director, CMDSUMMARY_QUOTE_DELETE, CMDSYNTAX_QUOTE_DELETE, CMDARGS_QUOTE_DELETE));
         }
 
         #region quote
@@ -55,24 +55,32 @@ namespace Ciridium.Shitposting
             if (Macros.TryParseChannelId(context.Args[2], out ulong channelId, context.Channel.Id))
             {
                 SocketTextChannel channel = context.Guild.GetTextChannel(channelId);
-                if (SettingsModel.ShitpostingEnabledChannels.Contains(channel.Id) && channel != null)
+                if (channel != null)
                 {
-                    if (ulong.TryParse(context.Args[3], out ulong messageId))
+                    bool channelIsShitpostingEnabled = SettingsModel.ShitpostingEnabledChannels.Contains(channel.Id);
+                    if (channelIsShitpostingEnabled || context.UserAccessLevel >= AccessLevel.Director)
                     {
-                        IMessage quotedMessage = await channel.GetMessageAsync(messageId);
-                        newQuote = Quote.ParseMessageToQuote(quotedMessage);
-                        if (await QuoteService.AddQuote(newQuote))
+                        if (ulong.TryParse(context.Args[3], out ulong messageId))
                         {
-                            error = false;
+                            IMessage quotedMessage = await channel.GetMessageAsync(messageId);
+                            newQuote = Quote.ParseMessageToQuote(quotedMessage);
+                            if (await QuoteService.AddQuote(newQuote))
+                            {
+                                error = false;
+                            }
+                            else
+                            {
+                                message = "No love for duplicates";
+                            }
                         }
                         else
                         {
-                            message = "No love for duplicates";
+                            message = "U gonna give me a correct message Id, or I aint lifting a finger!";
                         }
                     }
                     else
                     {
-                        message = "U gonna give me a correct message Id, or I aint lifting a finger!";
+                        message = "Cannot quote from a channel that doesn't allow shitposting, sorry 'bout that";
                     }
                 }
                 else

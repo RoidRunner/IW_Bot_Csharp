@@ -14,13 +14,13 @@ namespace Ciridium
         public UtilityCommands()
         {
             // ping
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_PING), HandlePingCommand, AccessLevel.Basic, CMDSUMMARY_PING, CMDSYNTAX_PING, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_PING), HandlePingCommand, AccessLevel.Basic, CMDSUMMARY_PING, CMDSYNTAX_PING, Command.NO_ARGUMENTS));
             // topic
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_TOPIC), HandleTopicCommand, AccessLevel.Pilot, CMDSUMMARY_TOPIC, CMDSYNTAX_TOPIC, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_TOPIC), HandleTopicCommand, AccessLevel.Pilot, CMDSUMMARY_TOPIC, CMDSYNTAX_TOPIC, Command.NO_ARGUMENTS));
             // about
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_ABOUT), HandleAboutCommand, AccessLevel.Basic, CMDSUMMARY_ABOUT, CMDSYNTAX_ABOUT, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_ABOUT), HandleAboutCommand, AccessLevel.Basic, CMDSUMMARY_ABOUT, CMDSYNTAX_ABOUT, Command.NO_ARGUMENTS));
             // send
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SEND, 3, 1000), HandleSendCommand, AccessLevel.Director, CMDSUMMARY_SEND, CMDSYNTAX_SEND, CMDARGS_SEND);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SEND, 3, 1000), HandleSendCommand, AccessLevel.Director, CMDSUMMARY_SEND, CMDSYNTAX_SEND, CMDARGS_SEND));
         }
 
         #region /ping
@@ -59,10 +59,12 @@ namespace Ciridium
 
         public async Task HandleAboutCommand(CommandContext context)
         {
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.Color = Var.BOTCOLOR;
-            embed.Title = "Ciridium Wing Bot";
-            embed.ThumbnailUrl = Var.client.CurrentUser.GetAvatarUrl();
+            EmbedBuilder embed = new EmbedBuilder
+            {
+                Color = Var.BOTCOLOR,
+                Title = "Ciridium Wing Bot",
+                ThumbnailUrl = Var.client.CurrentUser.GetAvatarUrl()
+            };
             embed.AddField("Version", "v" + Var.VERSION.ToString());
             embed.AddField("Credits", "Programming: <@!117260771200598019>\nSupport: <@!181013221661081600>");
             embed.AddField("Data Sources", "[EDSM](https://www.edsm.net/), [Inara](https://inara.cz/), [EDAssets](https://edassets.org/#/)");
@@ -127,13 +129,13 @@ namespace Ciridium
         public DebugCommands()
         {
             // debug channels
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_DEBUG_CHANNELS), HandleListChannelsCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_CHANNELS, CMDSYNTAX_DEBUG_CHANNELS, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_CHANNELS), HandleListChannelsCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_CHANNELS, CMDSYNTAX_DEBUG_CHANNELS, Command.NO_ARGUMENTS));
             // debug roles
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_DEBUG_ROLES), HandleListRolesCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_ROLES, CMDSYNTAX_DEBUG_ROLES, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_ROLES), HandleListRolesCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_ROLES, CMDSYNTAX_DEBUG_ROLES, Command.NO_ARGUMENTS));
             // debug userinfo
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO));
             // debug guilds
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_DEBUG_GUILDS), HandleListGuildsCommand, AccessLevel.BotAdmin, CMDSUMMARY_DEBUG_GUILDS, CMDSYNTAX_DEBUG_GUILDS, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_GUILDS), HandleListGuildsCommand, AccessLevel.BotAdmin, CMDSUMMARY_DEBUG_GUILDS, CMDSYNTAX_DEBUG_GUILDS, Command.NO_ARGUMENTS));
         }
 
         #region /debug channels
@@ -241,10 +243,13 @@ namespace Ciridium
 
             foreach (SocketUser user in users)
             {
-                EmbedBuilder userembed = new EmbedBuilder();
-                userembed.Color = Var.BOTCOLOR;
-                userembed.Title = string.Format("**__User {0}__**", user.Username);
+                EmbedBuilder userembed = new EmbedBuilder
+                {
+                    Color = Var.BOTCOLOR,
+                    Title = string.Format("**__User {0}__**", user.Username)
+                };
 
+                userembed.AddField("Command Access Level", context.UserAccessLevel.ToString());
                 userembed.AddField("Discriminator", Macros.MultiLineCodeBlock(string.Format("{0}#{1}", user.Username, user.Discriminator)));
                 userembed.AddField("Mention", Macros.MultiLineCodeBlock(user.Mention));
                 userembed.AddField("uInt64 Id", Macros.MultiLineCodeBlock(user.Id));
@@ -265,11 +270,11 @@ namespace Ciridium
         public ShutdownCommands()
         {
             // shutdown
-            CommandService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Director, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SHUTDOWN), HandleShutdownCommand, AccessLevel.Director, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN, Command.NO_ARGUMENTS, isSynchronous:true));
             // kys
-            CommandService.AddSynchronousCommand(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Director, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SHUTDOWN_ALT), HandleShutdownCommand, AccessLevel.Director, CMDSUMMARY_SHUTDOWN, CMDSYNTAX_SHUTDOWN_ALT, Command.NO_ARGUMENTS, isSynchronous: true));
             // restart
-            CommandService.AddSynchronousCommand(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Director, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_RESTART), HandleRestartCommand, AccessLevel.Director, CMDSUMMARY_RESTART, CMDSYNTAX_RESTART, Command.NO_ARGUMENTS, isSynchronous: true));
         }
 
         #region /shutdown
@@ -309,9 +314,9 @@ namespace Ciridium
         public HelpCommands()
         {
             // help (list)
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_HELP_LIST), HandleHelpCommand, AccessLevel.Basic, CMDSUMMARY_HELP_LIST, CMDSYNTAX_HELP_LIST, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_HELP_LIST), HandleHelpCommand, AccessLevel.Basic, CMDSUMMARY_HELP_LIST, CMDSYNTAX_HELP_LIST, Command.NO_ARGUMENTS));
             // help (specific)
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_HELP_SPECIFIC, 2, 6), HandleHelpCommandSpecific, AccessLevel.Basic, CMDSUMMARY_HELP_SPECIFIC, CMDSYNTAX_HELP_SPECIFIC, CMDARGS_HELP_SPECIFIC);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_HELP_SPECIFIC, 2, 6), HandleHelpCommandSpecific, AccessLevel.Basic, CMDSUMMARY_HELP_SPECIFIC, CMDSYNTAX_HELP_SPECIFIC, CMDARGS_HELP_SPECIFIC));
         }
 
         #region /help (list)
@@ -322,18 +327,16 @@ namespace Ciridium
 
         public async Task HandleHelpCommand(CommandContext context)
         {
-            AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
-
             List<EmbedField> embeds = new List<EmbedField>();
 
             foreach (Command cmd in CommandService.commands)
             {
-                if (cmd.HasPermission(userLevel))
+                if (cmd.UserHasPermission(context.UserAccessLevel))
                 {
                     embeds.Add(new EmbedField(CommandService.Prefix + cmd.Syntax, cmd.Summary));
                 }
             }
-            await context.Channel.SendSafeEmbedList(string.Format("Your access level is `{0}`. Available commands:", userLevel.ToString()), embeds, string.Format("Use `{0}help <cmdname>` to see syntax.", CommandService.Prefix));
+            await context.Channel.SendSafeEmbedList(string.Format("Your access level is `{0}`. Available commands:", context.UserAccessLevel.ToString()), embeds, string.Format("Use `{0}help <cmdname>` to see syntax.", CommandService.Prefix));
         }
 
         #endregion
@@ -348,8 +351,6 @@ namespace Ciridium
 
         public async Task HandleHelpCommandSpecific(CommandContext context)
         {
-            AccessLevel userLevel = SettingsModel.GetUserAccessLevel(context.Guild.GetUser(context.User.Id));
-
             string[] keys = new string[context.ArgCnt - 1];
             for (int i = 1; i < context.ArgCnt; i++)
             {
@@ -359,11 +360,13 @@ namespace Ciridium
             {
                 foreach (Command cmd in cmds)
                 {
-                    if (cmd.HasPermission(userLevel))
+                    if (cmd.UserHasPermission(context.UserAccessLevel))
                     {
-                        EmbedBuilder embedmessage = new EmbedBuilder();
-                        embedmessage.Color = Var.BOTCOLOR;
-                        embedmessage.Title = string.Format("Help for command `{0}{1}`", CommandService.Prefix, cmd.Key.KeyList);
+                        EmbedBuilder embedmessage = new EmbedBuilder
+                        {
+                            Color = Var.BOTCOLOR,
+                            Title = string.Format("Help for command `{0}{1}`", CommandService.Prefix, cmd.Key.KeyList)
+                        };
                         embedmessage.AddField("Description", cmd.Summary);
                         embedmessage.AddField("Required Access Level", cmd.AccessLevel.ToString());
                         embedmessage.AddField("Syntax", Macros.MultiLineCodeBlock(CommandService.Prefix + cmd.Syntax));

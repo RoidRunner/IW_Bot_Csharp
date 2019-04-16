@@ -109,8 +109,7 @@ namespace Ciridium
                     {
                         foreach (var admin in botadmins.list)
                         {
-                            ulong nID;
-                            if (ulong.TryParse(admin.str, out nID))
+                            if (ulong.TryParse(admin.str, out ulong nID))
                             {
                                 botAdminIDs.Add(nID);
                             }
@@ -169,8 +168,7 @@ namespace Ciridium
                         {
                             foreach (var channelId in shitpostingChannels.list)
                             {
-                                ulong nID;
-                                if (ulong.TryParse(channelId.str, out nID))
+                                if (ulong.TryParse(channelId.str, out ulong nID))
                                 {
                                     ShitpostingEnabledChannels.Add(nID);
                                 }
@@ -257,9 +255,11 @@ namespace Ciridium
         {
             get
             {
-                EmbedBuilder result = new EmbedBuilder();
-                result.Color = Var.BOTCOLOR;
-                result.Title = "**__Current Settings__**";
+                EmbedBuilder result = new EmbedBuilder
+                {
+                    Color = Var.BOTCOLOR,
+                    Title = "**__Current Settings__**"
+                };
                 result.AddField("Bot Version", "Ciridium Wing Bot " + Var.VERSION.ToString());
                 StringBuilder debugSettings = new StringBuilder();
                 debugSettings.Append("```");
@@ -319,10 +319,12 @@ namespace Ciridium
                 ISocketMessageChannel channel = Var.client.GetChannel(DebugMessageChannelId) as ISocketMessageChannel;
                 if (channel != null)
                 {
-                    EmbedBuilder debugembed = new EmbedBuilder();
-                    debugembed.Color = Var.BOTCOLOR;
-                    debugembed.Title = string.Format("**__Debug: {0}__**", category.ToString().ToUpper());
-                    debugembed.Description = message;
+                    EmbedBuilder debugembed = new EmbedBuilder
+                    {
+                        Color = Var.BOTCOLOR,
+                        Title = string.Format("**__Debug: {0}__**", category.ToString().ToUpper()),
+                        Description = message
+                    };
                     await channel.SendEmbedAsync(debugembed);
                 }
             }

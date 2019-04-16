@@ -44,15 +44,8 @@ namespace Ciridium
         /// </summary>
         /// <param name="key">The key to identify the command</param>
         /// <param name="command">The command object defining the commands behaviour</param>
-        public static void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, bool isShitposting = false, bool useTyping = false)
+        public static void AddCommand(Command cmd)
         {
-            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp, isShitposting, useTyping);
-            commands.Add(cmd);
-        }
-
-        public static void AddSynchronousCommand(CommandKeys keys, HandleSynchronousCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, bool isShitposting = false)
-        {
-            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp, isShitposting);
             commands.Add(cmd);
         }
 
@@ -68,14 +61,40 @@ namespace Ciridium
         {
             if (IsCommand(msg.Content))
             {
-                Command cmd;
                 CommandContext context = new CommandContext(Var.client, msg);
-                if (TryGetCommand(context, out cmd))
+                if (TryGetCommand(context, out Command cmd))
                 {
-                    SocketGuildUser user = context.Guild.GetUser(context.User.Id);
-                    AccessLevel userLevel = SettingsModel.GetUserAccessLevel(user);
-                    if (cmd.HasPermission(userLevel))
+                    bool channelTypesMatch = cmd.RequiredChannelType == context.ChannelType;
+                    if (!cmd.UserHasPermission(context.UserAccessLevel))
                     {
+                        // User lacks permission to execute command
+
+                        await context.Channel.SendEmbedAsync(
+                            string.Format("Insufficient Permissions. `/{0}` requires {1} access, you have {2} access",
+                            cmd.Key.KeyList, cmd.AccessLevel.ToString(), context.UserAccessLevel.ToString()), true);
+                    }
+                    else if (cmd.IsShitposting && !context.ChannelAllowsShitposting && context.UserAccessLevel < AccessLevel.Director)
+                    {
+                        // Command requires shitposting, but is not in shitposting enabled channel, nor is the user Director or above to bypass this check
+
+                        RestUserMessage message = await context.Channel.SendEmbedAsync(context.User.Mention, "This channel is a **no-fun-zone**!", true);
+                        TimingThread.AddScheduleDelegate(() =>
+                        {
+                            context.Message.DeleteAsync();
+                            message.DeleteAsync();
+                            return Task.CompletedTask;
+                        }, 5000);
+                    }
+                    else if (cmd.RequiresMissionChannel && !context.ChannelIsMissionChannel)
+                    {
+                        // Command requires a mission channel, but wasn't executed in a mission channel
+
+                        await context.Channel.SendEmbedAsync("This command only functions in mission channels!", true);
+                    }
+                    else
+                    {
+                        // The command passed all checks and is now executed
+
                         if (context.ArgCnt >= cmd.Key.MinArgCnt)
                         {
                             try
@@ -84,12 +103,12 @@ namespace Ciridium
                                 {
                                     using (msg.Channel.EnterTypingState())
                                     {
-                                        await HandleCommand_Part2(cmd, context, user, userLevel);
+                                        await HandleCommand_Part2(cmd, context);
                                     }
                                 }
                                 else
                                 {
-                                    await HandleCommand_Part2(cmd, context, user, userLevel);
+                                    await HandleCommand_Part2(cmd, context);
                                 }
                             }
                             catch (Exception e)
@@ -104,12 +123,6 @@ namespace Ciridium
                                 ), true);
                         }
                     }
-                    else
-                    {
-                        await context.Channel.SendEmbedAsync(
-                            string.Format("Insufficient Permissions. `/{0}` requires {1} access, you have {2} access",
-                            cmd.Key.KeyList, cmd.AccessLevel.ToString(), userLevel.ToString()), true);
-                    }
                 }
                 else
                 {
@@ -119,28 +132,15 @@ namespace Ciridium
             }
         }
 
-        private static async Task HandleCommand_Part2(Command cmd, CommandContext context, SocketGuildUser user, AccessLevel userLevel)
+        private static async Task HandleCommand_Part2(Command cmd, CommandContext context)
         {
-            if (!cmd.IsShitposting || SettingsModel.ShitpostingEnabledChannels.Contains(context.Channel.Id) || userLevel >= AccessLevel.Director)
+            if (cmd.async)
             {
-                if (cmd.async)
-                {
-                    await cmd.HandleCommand(context);
-                }
-                else
-                {
-                    cmd.HandleSynchronousCommand(context);
-                }
+                await cmd.HandleCommand(context);
             }
             else
             {
-                RestUserMessage message = await context.Channel.SendEmbedAsync(user.Mention, "This channel is a **no-fun-zone**!", true);
-                TimingThread.AddScheduleDelegate(() =>
-                {
-                    context.Message.DeleteAsync();
-                    message.DeleteAsync();
-                    return Task.CompletedTask;
-                }, 5000);
+                cmd.HandleSynchronousCommand(context);
             }
         }
 
@@ -224,9 +224,11 @@ namespace Ciridium
             ISocketMessageChannel channel = Var.client.GetChannel(SettingsModel.DebugMessageChannelId) as ISocketMessageChannel;
             if (channel != null)
             {
-                EmbedBuilder embed = new EmbedBuilder();
-                embed.Color = Var.ERRORCOLOR;
-                embed.Title = "**__Exception__**";
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Color = Var.ERRORCOLOR,
+                    Title = "**__Exception__**"
+                };
                 embed.AddField("Command", cmd.Key.KeyList);
                 embed.AddField("Location", context.Guild.GetTextChannel(context.Channel.Id).Mention);
                 embed.AddField("Message", Macros.MultiLineCodeBlock(e.Message));
@@ -246,7 +248,7 @@ namespace Ciridium
                 {
                     message = botDevRole.Mention;
                 }
-                await channel.SendMessageAsync(message, embed:embed.Build());
+                await channel.SendMessageAsync(message, embed: embed.Build());
             }
             await BotCore.Logger(new LogMessage(LogSeverity.Error, "CMDSERVICE", string.Format("An Exception occured while trying to execute command `/{0}`.Message: '{1}'\nStackTrace {2}", cmd.Key.KeyList, e.Message, e.StackTrace)));
         }

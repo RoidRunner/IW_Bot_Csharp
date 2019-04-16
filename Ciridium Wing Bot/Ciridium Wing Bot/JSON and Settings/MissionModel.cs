@@ -97,8 +97,10 @@ namespace Ciridium
                 failcode++;
 
                 // [06] Sending explorer questions
-                EmbedBuilder embed = new EmbedBuilder();
-                embed.Color = Var.BOTCOLOR;
+                EmbedBuilder embed = new EmbedBuilder
+                {
+                    Color = Var.BOTCOLOR
+                };
                 if (MissionSettingsModel.ExplorerQuestions.Contains("{0}"))
                 {
                     embed.Description = string.Format(MissionSettingsModel.ExplorerQuestions, pingstring);
@@ -140,6 +142,11 @@ namespace Ciridium
             }
         }
 
+        internal static bool IsMissionChannel(IGuildChannel channel)
+        {
+            return channel.GuildId == Var.GuildId && IsMissionChannel(channel as IChannel);
+        }
+
         /// <summary>
         /// Check for a channel to be a mission channel
         /// </summary>
@@ -152,14 +159,18 @@ namespace Ciridium
             SocketGuild guild = Var.client.GetGuild(guildId);
             if (guild != null)
             {
-                SocketGuildChannel channel = guild.GetChannel(channelId);
+                ISocketMessageChannel channel = guild.GetTextChannel(channelId);
                 if (channel != null)
                 {
-                    result = missionList.Contains(channelId) && channel.Name.StartsWith("mission");
+                    result = IsMissionChannel(channel);
                 }
             }
             return result;
+        }
 
+        public static bool IsMissionChannel(IChannel channel)
+        {
+            return missionList.Contains(channel.Id) && channel.Name.StartsWith("mission");
         }
 
         #region JSON Save/Load
@@ -176,8 +187,7 @@ namespace Ciridium
                 {
                     foreach (JSONObject jMission in json.list)
                     {
-                        ulong nId;
-                        if (ulong.TryParse(jMission.str, out nId))
+                        if (ulong.TryParse(jMission.str, out ulong nId))
                         {
                             missionList.Add(nId);
                         }

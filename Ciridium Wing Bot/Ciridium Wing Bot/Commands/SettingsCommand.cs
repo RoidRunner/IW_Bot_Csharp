@@ -14,22 +14,22 @@ namespace Ciridium
         public SettingsCommands()
         {
             // settings
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS), HandleCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS, CMDSYNTAX_SETTINGS, Command.NO_ARGUMENTS);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS), HandleCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS, CMDSYNTAX_SETTINGS, Command.NO_ARGUMENTS));
             // settings debug
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_DEBUG, 4, 4), HandleDebugLoggingCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_DEBUG, CMDSYNTAX_SETTINGS_DEBUG, CMDARGS_SETTINGS_DEBUG);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_DEBUG, 4, 4), HandleDebugLoggingCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_DEBUG, CMDSYNTAX_SETTINGS_DEBUG, CMDARGS_SETTINGS_DEBUG));
             // settings channel
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_CHANNEL, 4, 4), HandleDefaultChannelCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_CHANNEL, CMDSYNTAX_SETTINGS_CHANNEL, CMDARGS_SETTINGS_CHANNEL);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_CHANNEL, 4, 4), HandleDefaultChannelCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_CHANNEL, CMDSYNTAX_SETTINGS_CHANNEL, CMDARGS_SETTINGS_CHANNEL));
             // settings role
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_ROLE, 4, 4), HandleSetRoleCommand, AccessLevel.BotAdmin, CMDSUMMARY_SETTINGS_ROLE, CMDSYNTAX_SETTINGS_ROLE, CMDARGS_SETTINGS_ROLE);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_ROLE, 4, 4), HandleSetRoleCommand, AccessLevel.BotAdmin, CMDSUMMARY_SETTINGS_ROLE, CMDSYNTAX_SETTINGS_ROLE, CMDARGS_SETTINGS_ROLE));
             // settings setmissionnumber
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_SETMISSIONNUMBER, 3, 3), HandleMissionNumberCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTINGS_SETMISSIONNUMBER, CMDSYNTAX_SETTINGS_SETMISSIONNUMBER, CMDARGS_SETTINGS_SETMISSIONNUMBER));
             // settings template
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 3, 1000), HandleTemplateCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_TEMPLATE, 3, 1000), HandleTemplateCommand, AccessLevel.Director, CMDSUMMARY_SETTINGS_TEMPLATE, CMDSYNTAX_SETTINGS_TEMPLATE, CMDARGS_SETTINGS_TEMPLATE));
             // settings prefix
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_PREFIX, 3, 3), HandlePrefixCommand, AccessLevel.Director, CMDKEYS_SETTINGS_PREFIX, CMDSYNTAX_SETTINGS_PREFIX, CMDARGS_SETTINGS_PREFIX);
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_PREFIX, 3, 3), HandlePrefixCommand, AccessLevel.Director, CMDKEYS_SETTINGS_PREFIX, CMDSYNTAX_SETTINGS_PREFIX, CMDARGS_SETTINGS_PREFIX));
 #if WELCOMING_MESSAGES
             // settings setjoinmsg
-            s.AddCommand(new CommandKeys(CMDKEYS_SETTINGS_SETJOINMSG, 3, 1000), HandleWelcomingMessageCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETJOINMSG, CMDSYNTAX_SETTINGS_SETJOINMSG, CMDARGS_SETTINGS_SETJOINMSG);
+            s.AddCommand(new Command(new CommandKeys(CMDKEYS_SETTINGS_SETJOINMSG, 3, 1000), HandleWelcomingMessageCommand, AccessLevel.Moderator, CMDSUMMARY_SETTINGS_SETJOINMSG, CMDSYNTAX_SETTINGS_SETJOINMSG, CMDARGS_SETTINGS_SETJOINMSG));
 #endif
         }
 
@@ -60,8 +60,7 @@ namespace Ciridium
         {
             string message;
             bool error = false;
-            DebugCategories debugcategory;
-            if (Enum.TryParse(context.Args[2], out debugcategory))
+            if (Enum.TryParse(context.Args[2], out DebugCategories debugcategory))
             {
                 bool oldsetting = SettingsModel.debugLogging[(int)debugcategory];
                 if (bool.TryParse(context.Args[3], out SettingsModel.debugLogging[(int)debugcategory]))
@@ -374,8 +373,7 @@ namespace Ciridium
         {
             string message = "";
             bool error = false;
-            int missionNr;
-            if (int.TryParse(context.Args[2], out missionNr))
+            if (int.TryParse(context.Args[2], out int missionNr))
             {
                 MissionSettingsModel.NextMissionNumber = missionNr;
                 message = "Next missions number successfuly set to " + missionNr;
