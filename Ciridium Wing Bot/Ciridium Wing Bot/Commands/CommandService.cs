@@ -44,9 +44,9 @@ namespace Ciridium
         /// </summary>
         /// <param name="key">The key to identify the command</param>
         /// <param name="command">The command object defining the commands behaviour</param>
-        public static void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, bool isShitposting = false)
+        public static void AddCommand(CommandKeys keys, HandleCommand commandHandler, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, bool isShitposting = false, bool useTyping = false)
         {
-            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp, isShitposting);
+            Command cmd = new Command(keys, accessLevel, commandHandler, summary, syntax, argumentHelp, isShitposting, useTyping);
             commands.Add(cmd);
         }
 
@@ -80,28 +80,16 @@ namespace Ciridium
                         {
                             try
                             {
-                                using (msg.Channel.EnterTypingState())
+                                if (cmd.UseTyping)
                                 {
-                                    if (!cmd.IsShitposting || SettingsModel.ShitpostingEnabledChannels.Contains(context.Channel.Id) || userLevel >= AccessLevel.Director)
+                                    using (msg.Channel.EnterTypingState())
                                     {
-                                        if (cmd.async)
-                                        {
-                                            await cmd.HandleCommand(context);
-                                        }
-                                        else
-                                        {
-                                            cmd.HandleSynchronousCommand(context);
-                                        }
+                                        await HandleCommand_Part2(cmd, context, user, userLevel);
                                     }
-                                    else
-                                    {
-                                        RestUserMessage message =  await context.Channel.SendEmbedAsync(user.Mention, "This channel is a **no-fun-zone**!", true);
-                                        TimingThread.AddScheduleDelegate(() => {
-                                            context.Message.DeleteAsync();
-                                            message.DeleteAsync();
-                                            return Task.CompletedTask;
-                                        }, 5000);
-                                    }
+                                }
+                                else
+                                {
+                                    await HandleCommand_Part2(cmd, context, user, userLevel);
                                 }
                             }
                             catch (Exception e)
@@ -128,6 +116,31 @@ namespace Ciridium
                     await context.Message.AddReactionAsync(new Emote(Emotes.question));
                     await SettingsModel.SendDebugMessage(string.Format("A potential command `{0}` could not be identified", msg.Content), DebugCategories.misc);
                 }
+            }
+        }
+
+        private static async Task HandleCommand_Part2(Command cmd, CommandContext context, SocketGuildUser user, AccessLevel userLevel)
+        {
+            if (!cmd.IsShitposting || SettingsModel.ShitpostingEnabledChannels.Contains(context.Channel.Id) || userLevel >= AccessLevel.Director)
+            {
+                if (cmd.async)
+                {
+                    await cmd.HandleCommand(context);
+                }
+                else
+                {
+                    cmd.HandleSynchronousCommand(context);
+                }
+            }
+            else
+            {
+                RestUserMessage message = await context.Channel.SendEmbedAsync(user.Mention, "This channel is a **no-fun-zone**!", true);
+                TimingThread.AddScheduleDelegate(() =>
+                {
+                    context.Message.DeleteAsync();
+                    message.DeleteAsync();
+                    return Task.CompletedTask;
+                }, 5000);
             }
         }
 

@@ -12,7 +12,7 @@ namespace Ciridium
         public const string NO_ARGUMENTS = "None";
         public readonly bool async;
 
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false)
+        public Command(CommandKeys key, AccessLevel accessLevel, HandleCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false, bool useTyping = false)
         {
             async = true;
             Key = key;
@@ -23,9 +23,10 @@ namespace Ciridium
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
             IsShitposting = isShitposting;
+            UseTyping = useTyping;
         }
 
-        public Command(CommandKeys key, AccessLevel accessLevel, HandleSynchronousCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false)
+        public Command(CommandKeys key, AccessLevel accessLevel, HandleSynchronousCommand handleCommand, string summary, string syntax, string argumentHelp, bool isShitposting = false, bool useTyping = false)
         {
             async = false;
             Key = key;
@@ -36,6 +37,7 @@ namespace Ciridium
             Syntax = syntax;
             ArgumentHelp = argumentHelp;
             IsShitposting = isShitposting;
+            UseTyping = useTyping;
         }
 
         internal CommandKeys Key { get; private set; }
@@ -58,6 +60,7 @@ namespace Ciridium
         internal string Syntax { get; private set; }
         internal string ArgumentHelp { get; private set; }
         internal bool IsShitposting { get; private set; }
+        internal bool UseTyping { get; private set; }
 
 
         public override string ToString()

@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Ciridium
@@ -110,7 +111,7 @@ namespace Ciridium
             }
         }
 
-        public static bool TryParseChannel(string channel, out ulong channelId, ulong channelself = ulong.MaxValue)
+        public static bool TryParseChannelId(string channel, out ulong channelId, ulong channelself = ulong.MaxValue)
         {
             channelId = 0;
             if (ulong.TryParse(channel, out ulong Id))
@@ -134,6 +135,35 @@ namespace Ciridium
             return false;
         }
 
+        public static bool TryParseUserId(string user, out ulong userId, ulong userself)
+        {
+            userId = 0;
+            if (user.Equals("self"))
+            {
+                userId = userself;
+                return true;
+            }
+            else if (user.StartsWith("<@") && user.EndsWith('>') && user.Length > 3)
+            {
+                if (ulong.TryParse(user.Substring(2, user.Length - 3), out userId))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (ulong.TryParse(user, out userId))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public static string FirstToUpper(this string str)
         {
             if (string.IsNullOrEmpty(str))
@@ -143,6 +173,91 @@ namespace Ciridium
             else
             {
                 return str.Substring(0, 1).ToUpper() + str.Substring(1);
+            }
+        }
+
+        public static bool IsValidImageURL(this string str)
+        {
+            return str.StartsWith("http") && str.Contains("://") && (str.EndsWith(".png") || str.EndsWith(".jpg") || str.EndsWith(".jpeg") || str.EndsWith(".gif") || str.EndsWith(".webp"));
+        }
+
+        public static string BuildListString<T>(IList<T> list)
+        {
+            if ((list == null) || list.Count == 0)
+            {
+                return "none";
+            }
+            else if (list.Count == 1)
+            {
+                return list[0].ToString();
+            }
+            else
+            {
+                StringBuilder result = new StringBuilder();
+                for (int i = 0; i < list.Count - 1; i++)
+                {
+                    result.Append(list[i].ToString());
+                    result.Append(", ");
+                }
+                result.Append(list[list.Count - 1].ToString());
+                return result.ToString();
+            }
+        }
+
+        public static string ToShortString(this float n)
+        {
+            if (n < 0 )
+            {
+                throw new ArgumentException("This parameter cannot be smaller than 0", "n");
+            }
+            int lvl = (int)(MathF.Log10(n)) / 3;
+            n = n / MathF.Pow(10, lvl * 3);
+            char lvlId;
+            switch (lvl)
+            {
+                case 0:
+                    lvlId = ' ';
+                    break;
+                case 1:
+                    lvlId = 'K';
+                    break;
+                case 2:
+                    lvlId = 'M';
+                    break;
+                case 3:
+                    lvlId = 'B';
+                    break;
+                case 4:
+                    lvlId = 'T';
+                    break;
+                default:
+                    lvlId = '?';
+                    break;
+            }
+            string nstr;
+            if (n >= 100)
+            {
+                nstr = n.ToString("000");
+            }
+            else if (n >= 10)
+            {
+                nstr = n.ToString("00.0");
+            }
+            else if (n >= 1)
+            {
+                nstr = n.ToString("0.00");
+            }
+            else
+            {
+                nstr = n.ToString("0.000");
+            }
+            if (lvlId == ' ')
+            {
+                return nstr;
+            }
+            else
+            {
+                return string.Format("{0} {1}", nstr, lvlId);
             }
         }
     }

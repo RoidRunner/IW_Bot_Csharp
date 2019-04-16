@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using Ciridium.Shitposting;
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -127,6 +128,30 @@ namespace Ciridium
             await SettingsModel.SendDebugMessage("Updated Time Activity to " + activity.Time + "!", DebugCategories.timing);
             
             AddScheduleDelegate(UpdateTimeActivity, (61 - now.Second) * 1000);
+        }
+
+        public const int RANDOMQUOTE_MINDELAY = 172800000;
+        public const int RANDOMQUOTE_MAXDELAY = 864000000;
+
+        public static async Task SendRandomQuoteToShitpostingChannel()
+        {
+            if (QuoteService.Count > 0 && SettingsModel.ShitpostingEnabledChannels.Count > 0 && Var.Guild != null)
+            {
+                Quote rngQuote = QuoteService.RandomQuote;
+                ulong channelId = SettingsModel.ShitpostingEnabledChannels[Macros.Rand.Next(SettingsModel.ShitpostingEnabledChannels.Count)];
+                ISocketMessageChannel channel = Var.Guild.GetTextChannel(channelId);
+                if (channel != null)
+                {
+                    await channel.SendEmbedAsync(rngQuote.GetEmbed());
+                }
+            }
+            ScheduleShitpostingQuote();
+        }
+
+        public static void ScheduleShitpostingQuote()
+        {
+            long delay = Macros.Rand.Next(RANDOMQUOTE_MINDELAY, RANDOMQUOTE_MAXDELAY);
+            AddScheduleDelegate(SendRandomQuoteToShitpostingChannel, delay);
         }
     }
 

@@ -36,6 +36,14 @@ namespace Ciridium.Shitposting
             }
         }
 
+        internal static int Count
+        {
+            get
+            {
+                return QuoteList.Count;
+            }
+        }
+
         internal static Quote GetQuote(int Id)
         {
             if (Id > 0 && Id < QuoteList.Count)
@@ -48,13 +56,18 @@ namespace Ciridium.Shitposting
             }
         }
 
-        internal static async Task AddQuote(Quote newQuote)
+        internal static async Task<bool> AddQuote(Quote newQuote)
         {
             if (!HasQuote(newQuote.MessageId))
             {
                 newQuote.Id = ConsumeQuoteId;
                 QuoteList.Add(newQuote);
                 await SafeQuote(QuoteList.Count - 1);
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 

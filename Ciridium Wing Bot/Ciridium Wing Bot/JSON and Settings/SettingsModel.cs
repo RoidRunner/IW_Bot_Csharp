@@ -285,6 +285,21 @@ namespace Ciridium
                     "Escort Pilot:      {1}\n" +
                     "Dispatch:          {2}\n" +
                     "Bot Dev:           {3}```", ModeratorRole, EscortPilotRole, DispatchRole, BotDevRole));
+
+                List<string> shitpostingchannelsMentioned = new List<string>();
+                foreach (ulong channelId in ShitpostingEnabledChannels)
+                {
+                    ITextChannel channel = Var.Guild.GetTextChannel(channelId);
+                    if (channel != null)
+                    {
+                        shitpostingchannelsMentioned.Add(channel.Mention);
+                    }
+                    else
+                    {
+                        shitpostingchannelsMentioned.Add(Macros.InlineCodeBlock(channelId.ToString()));
+                    }
+                }
+                result.AddField("Shitposting Channels", Macros.BuildListString(shitpostingchannelsMentioned));
                 return result;
             }
         }

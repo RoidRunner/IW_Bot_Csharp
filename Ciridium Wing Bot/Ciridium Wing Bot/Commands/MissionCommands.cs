@@ -14,7 +14,7 @@ namespace Ciridium
         public MissionCommands()
         {
             // createmission
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_CREATEMISSION, 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, CMDSUMMARY_CREATEMISSION, CMDSYNTAX_CREATEMISSION, CMDARGS_CREATEMISSION);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_CREATEMISSION, 3, 1000), HandleCreateRoomCommand, AccessLevel.Pilot, CMDSUMMARY_CREATEMISSION, CMDSYNTAX_CREATEMISSION, CMDARGS_CREATEMISSION, useTyping: true);
             // enlistmission
             CommandService.AddCommand(new CommandKeys(CMDKEYS_ENLISTMISSION, 2, 2), HandleEnlistMissionCommand, AccessLevel.Director, CMDSUMMARY_ENLISTMISSION, CMDSYNTAX_ENLISTMISSION, CMDARGS_ENLISTMISSION);
             // completemission
@@ -29,6 +29,10 @@ namespace Ciridium
             CommandService.AddCommand(new CommandKeys(CMDKEYS_GETTOPIC), HandleGetTopicCommand, AccessLevel.Dispatch, CMDSUMMARY_GETTOPIC, CMDSYNTAX_GETTOPIC, Command.NO_ARGUMENTS);
             // settopic
             CommandService.AddCommand(new CommandKeys(CMDKEYS_SETTOPIC, 3, 1000), HandleSetTopicCommand, AccessLevel.Dispatch, CMDSUMMARY_SETTOPIC, CMDSYNTAX_SETTOPIC, CMDARGS_SETTOPIC);
+            // missionpoll
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_MISSIONPOLL), HandleMissionPollCommand, AccessLevel.Dispatch, CMDSUMMARY_MISSIONPOLL, CMDSYNTAX_MISSIONPOLL, Command.NO_ARGUMENTS);
+            // voicemoveuser
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_VOICEMOVEUSER, 2, 2), HandleVoiceMoveUserCommand, AccessLevel.Dispatch, CMDSUMMARY_VOICEMOVEUSER, CMDSYNTAX_VOICEMOVEUSER, CMDARGS_VOICEMOVEUSER);
         }
 
         #region /createmission
@@ -306,16 +310,16 @@ namespace Ciridium
 
         private const string CMDKEYS_SETTOPIC = "settopic";
         private const string CMDSYNTAX_SETTOPIC = "settopic <MissionChannel> {<NewTopic>}";
-        private const string CMDSUMMARY_SETTOPIC = "Sets the channel topic. (!) Oftentimes pings the explorer (!)";
+        private const string CMDSUMMARY_SETTOPIC = "Sets the channel topic. (!) Usually mentions/pings the explorer (!)";
         private const string CMDARGS_SETTOPIC =
                 "    <MissionChannel>\n" +
-                "Either a uInt64 channel Id, a channel mention or 'this' (for current channel) that marks the mission channel to be closed" +
+                "Either a uInt64 channel Id, a channel mention or 'this' (for current channel) that marks the mission topic to update" +
                 "    {<NewTopic>}\n" +
                 "All arguments following the initial command identifier are copied as the new channel topic";
 
         public async Task HandleSetTopicCommand(CommandContext context)
         {
-            if (Macros.TryParseChannel(context.Args[1], out ulong channelId, context.Channel.Id))
+            if (Macros.TryParseChannelId(context.Args[1], out ulong channelId, context.Channel.Id))
             {
                 if (MissionModel.IsMissionChannel(channelId, context.Guild.Id))
                 {
@@ -339,6 +343,132 @@ namespace Ciridium
                     await context.Channel.SendEmbedAsync("Could not verify this channel as a mission channel!", true);
                 }
             }
+        }
+
+        #endregion
+        #region /missionpoll
+
+        private const string CMDKEYS_MISSIONPOLL = "missionpoll";
+        private const string CMDSYNTAX_MISSIONPOLL = "missionpoll";
+        private const string CMDSUMMARY_MISSIONPOLL = "Creates a new mission availability poll";
+
+        private readonly string MISSIONPOLL_FORMAT = string.Format("{0} Available\n{1} Not available\n{2} Unsure, deciding later", UnicodeEmoteService.GetEmote(Emotes.checkmark), UnicodeEmoteService.GetEmote(Emotes.cross), UnicodeEmoteService.GetEmote(Emotes.question));
+
+        public async Task HandleMissionPollCommand(CommandContext context)
+        {
+            if (MissionModel.IsMissionChannel(context.Channel.Id, context.Guild.Id))
+            {
+                ITextChannel channel =
+                    context.Channel as ITextChannel;
+                //Var.Guild.GetTextChannel(context.Channel.Id);
+                if (channel != null)
+                {
+                    SocketRole PilotRole = context.Guild.GetRole(SettingsModel.EscortPilotRole);
+                    EmbedBuilder embed = new EmbedBuilder();
+                    string message = string.Format("{0} Availability Poll for {1}", PilotRole.Mention, channel.Mention);
+                    embed.Color = Var.BOTCOLOR;
+                    embed.AddField("Mission Information", channel.Topic);
+                    embed.AddField("Poll Format", MISSIONPOLL_FORMAT);
+                    IUserMessage pollMessage = await channel.SendMessageAsync(message, embed: embed.Build());
+                    await pollMessage.AddReactionAsync(new Emote(Emotes.checkmark));
+                    await pollMessage.AddReactionAsync(new Emote(Emotes.cross));
+                    await pollMessage.AddReactionAsync(new Emote(Emotes.question));
+                }
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("Could not verify this channel as a mission channel!", true);
+            }
+        }
+
+        #endregion
+        #region /voicemoveuser
+
+        private const string CMDKEYS_VOICEMOVEUSER = "voicemovetome";
+        private const string CMDSYNTAX_VOICEMOVEUSER = "voicemovetome <@User>";
+        private const string CMDSUMMARY_VOICEMOVEUSER = "Moves a user into the channel the command issuer is currently in";
+        private const string CMDARGS_VOICEMOVEUSER =
+                "    <@User>\n" +
+                "Either a uInt64 user Id or a user mention that marks the user to be moved into the same channel as the command issuer";
+
+        public async Task HandleVoiceMoveUserCommand(CommandContext context)
+        {
+            string message = string.Empty;
+            bool error = true;
+
+            if (Macros.TryParseUserId(context.Args[1], out ulong userId, ulong.MaxValue))
+            {
+                SocketGuildUser targetUser = Var.Guild.GetUser(userId);
+                if (targetUser != null)
+                {
+                    if (targetUser.Id == context.User.Id)
+                    {
+                        message = "Target user cannot be the command issuer!";
+                    }
+                    else
+                    {
+                        List<SocketVoiceChannel> voicechannels = new List<SocketVoiceChannel>(Var.Guild.VoiceChannels);
+                        SocketVoiceChannel currentUserChannel = null;
+                        SocketVoiceChannel targetChannel = null;
+                        foreach (SocketVoiceChannel channel in voicechannels)
+                        {
+                            foreach (SocketGuildUser user in channel.Users)
+                            {
+                                if (user.Id == targetUser.Id)
+                                {
+                                    currentUserChannel = channel;
+                                }
+                                if (user.Id == context.User.Id)
+                                {
+                                    targetChannel = channel;
+                                }
+                            }
+                            if (targetChannel != null && currentUserChannel != null)
+                            {
+                                break;
+                            }
+                        }
+                        if (targetChannel != null && currentUserChannel != null)
+                        {
+                            if (targetChannel == currentUserChannel)
+                            {
+                                message = string.Format("{0} is already in voice channel {1} ;)", targetUser.Mention, targetChannel.Name);
+                                error = false;
+                            }
+                            else
+                            {
+                                await targetUser.ModifyAsync(GuildUserProperties =>
+                                {
+                                    GuildUserProperties.Channel = targetChannel;
+                                });
+                                message = string.Format("Successfully moved {0} to voice channel {1}", targetUser.Mention, targetChannel.Name);
+                                error = false;
+                            }
+                        }
+                        else if (targetChannel != null && currentUserChannel == null)
+                        {
+                            message = string.Format("Cannot move {0} because {0} is not connected to a voice channel!", targetUser.Mention);
+                        }
+                        else if (targetChannel == null && currentUserChannel != null)
+                        {
+                            message = string.Format("You need to be in a voice channel to use this command!", targetUser.Mention);
+                        }
+                        else
+                        {
+                            message = string.Format("Both the target user and the command issuer have to be in a voice channel!", targetUser.Mention);
+                        }
+                    }
+                }
+                else
+                {
+                    message = "Could not parse argument#1 as a user!";
+                }
+            }
+            else
+            {
+                message = "Could not parse argument#1 as a user!";
+            }
+            await context.Channel.SendEmbedAsync(message, error);
         }
 
         #endregion

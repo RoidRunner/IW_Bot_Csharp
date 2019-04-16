@@ -84,7 +84,7 @@ namespace Ciridium
 
         public async Task HandleSendCommand(CommandContext context)
         {
-            if (Macros.TryParseChannel(context.Args[1], out ulong channelId, context.Channel.Id))
+            if (Macros.TryParseChannelId(context.Args[1], out ulong channelId, context.Channel.Id))
             {
                 SocketTextChannel channel = Var.Guild.GetTextChannel(channelId);
 
@@ -277,7 +277,7 @@ namespace Ciridium
         private const string CMDKEYS_SHUTDOWN = "shutdown";
         private const string CMDKEYS_SHUTDOWN_ALT = "kys";
         private const string CMDSYNTAX_SHUTDOWN = "shutdown";
-        private const string CMDSYNTAX_SHUTDOWN_ALT = "/kys";
+        private const string CMDSYNTAX_SHUTDOWN_ALT = "kys";
         private const string CMDSUMMARY_SHUTDOWN = "Shuts down the bot";
 
         public void HandleShutdownCommand(CommandContext context)

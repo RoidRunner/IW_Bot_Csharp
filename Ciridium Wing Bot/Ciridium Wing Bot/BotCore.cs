@@ -18,7 +18,7 @@ using Ciridium.Reactions;
 public static class Var
 {
     internal static string INARA_APPNAME = "CiridiumWingBot";
-    internal readonly static Version VERSION = new Version(1, 3);
+    internal readonly static Version VERSION = new Version(1, 5);
     /// <summary>
     /// When put to false will stop the program
     /// </summary>
@@ -185,6 +185,7 @@ namespace Ciridium {
         private async Task SendConnectDebugMessage()
         {
             await SettingsModel.SendDebugMessage("I'm online, suckazzz", DebugCategories.misc);
+            TimingThread.ScheduleShitpostingQuote();
         }
 
         /// <summary>

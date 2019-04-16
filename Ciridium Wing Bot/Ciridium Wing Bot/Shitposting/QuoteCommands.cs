@@ -52,39 +52,23 @@ namespace Ciridium.Shitposting
             Quote newQuote = null;
             string message = string.Empty;
             bool error = true;
-            ulong? channelId = null;
-            if (context.Args[2].Equals("this"))
+            if (Macros.TryParseChannelId(context.Args[2], out ulong channelId, context.Channel.Id))
             {
-                channelId = context.Channel.Id;
-            }
-            else if (context.Message.MentionedChannels.Count > 0)
-            {
-                channelId = new List<SocketGuildChannel>(context.Message.MentionedChannels)[0].Id;
-            }
-            else if (ulong.TryParse(context.Args[2], out ulong parsedChannelId))
-            {
-                channelId = parsedChannelId;
-            }
-
-            if (channelId != null)
-            {
-                SocketTextChannel channel = context.Guild.GetTextChannel((ulong)channelId);
-                if (channel != null)
+                SocketTextChannel channel = context.Guild.GetTextChannel(channelId);
+                if (SettingsModel.ShitpostingEnabledChannels.Contains(channel.Id) && channel != null)
                 {
                     if (ulong.TryParse(context.Args[3], out ulong messageId))
                     {
                         IMessage quotedMessage = await channel.GetMessageAsync(messageId);
-                        List<IAttachment> attachments = new List<IAttachment>(quotedMessage.Attachments);
-                        if (attachments.Count > 0)
+                        newQuote = Quote.ParseMessageToQuote(quotedMessage);
+                        if (await QuoteService.AddQuote(newQuote))
                         {
-                            newQuote = new Quote(channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(context.Guild.Id), attachments[0].Url);
+                            error = false;
                         }
                         else
                         {
-                            newQuote = new Quote(channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(context.Guild.Id));
+                            message = "No love for duplicates";
                         }
-                        await QuoteService.AddQuote(newQuote);
-                        error = false;
                     }
                     else
                     {

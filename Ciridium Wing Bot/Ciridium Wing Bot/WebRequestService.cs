@@ -84,7 +84,7 @@ namespace Ciridium.WebRequests
         {
             StringBuilder result = new StringBuilder();
             result.Append("https://www.edsm.net/api-v1/system?sysname=");
-            result.Append(systemName.Replace(' ', '+'));
+            result.Append(systemName.MakeWebRequestSafe());
             if (showId)
             {
                 result.Append("&showId=1");
@@ -124,7 +124,7 @@ namespace Ciridium.WebRequests
                 {
                     result.Append("&systemName[]=");
                 }
-                result.Append(systemName.Replace(' ', '+'));
+                result.Append(systemName.MakeWebRequestSafe());
             }
             if (showId)
             {
@@ -153,7 +153,7 @@ namespace Ciridium.WebRequests
         {
             StringBuilder result = new StringBuilder();
             result.Append("https://www.edsm.net/api-system-v1/stations?systemName=");
-            result.Append(systemName.Replace(' ', '+'));
+            result.Append(systemName.MakeWebRequestSafe());
             return result.ToString();
         }
 
@@ -171,7 +171,7 @@ namespace Ciridium.WebRequests
         {
             StringBuilder result = new StringBuilder();
             result.Append("https://www.edsm.net/api-logs-v1/get-position?commanderName=");
-            result.Append(commanderName.Replace(' ', '+'));
+            result.Append(commanderName.MakeWebRequestSafe());
             if (showId)
             {
                 result.Append("&showId=1");
@@ -185,7 +185,7 @@ namespace Ciridium.WebRequests
 
         internal static string BGSBOT_FactionStatus(string factionName)
         {
-            return "https://elitebgs.app/api/ebgs/v4/factions?name=" + factionName.Replace(' ', '+');
+            return "https://elitebgs.app/api/ebgs/v4/factions?name=" + factionName.MakeWebRequestSafe();
         }
 
         internal static JSONObject Inara_CMDR_Profile(string cmdrName)
@@ -215,6 +215,10 @@ namespace Ciridium.WebRequests
             return result;
         }
 
+        internal static string MakeWebRequestSafe(this string str)
+        {
+            return str.Replace("+", "%2B").Replace(' ', '+');
+        }
 
         #endregion
     }

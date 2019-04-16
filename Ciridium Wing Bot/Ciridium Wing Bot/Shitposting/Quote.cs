@@ -61,7 +61,8 @@ namespace Ciridium.Shitposting
 
             SocketGuild guild = Var.Guild;
             SocketGuildUser author = null;
-            if (guild != null) {
+            if (guild != null)
+            {
                 author = guild.GetUser(AuthorId);
             }
             if (author != null)
@@ -141,6 +142,36 @@ namespace Ciridium.Shitposting
             result.AddField(JSON_MESSAGE_URL, MessageURL);
             result.AddField(JSON_TIMESTAMP, Timestamp.ToString("s", Var.Culture));
             return result;
+        }
+
+        internal static Quote ParseMessageToQuote(IMessage msg)
+        {
+            List<IAttachment> attachments = new List<IAttachment>(msg.Attachments);
+            if (attachments.Count > 0)
+            {
+                return new Quote(msg.Channel.Name, msg.Id, msg.Content, msg.Author.Id, msg.Author.Username, msg.Timestamp.UtcDateTime, msg.GetMessageURL(Var.Guild.Id), attachments[0].Url);
+            }
+            else
+            {
+                string attachment = null;
+                foreach (string word in msg.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    word.Trim();
+                    if (word.IsValidImageURL())
+                    {
+                        attachment = word;
+                        break;
+                    }
+                }
+                if (string.IsNullOrEmpty(attachment))
+                {
+                    return new Quote(msg.Channel.Name, msg.Id, msg.Content, msg.Author.Id, msg.Author.Username, msg.Timestamp.UtcDateTime, msg.GetMessageURL(Var.Guild.Id));
+                }
+                else
+                {
+                    return new Quote(msg.Channel.Name, msg.Id, msg.Content, msg.Author.Id, msg.Author.Username, msg.Timestamp.UtcDateTime, msg.GetMessageURL(Var.Guild.Id), attachment);
+                }
+            }
         }
     }
 }

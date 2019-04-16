@@ -17,19 +17,12 @@ namespace Ciridium.Reactions
         private async Task HandleQuoteReaction(ReactionContext context)
         {
 
-            Quote newQuote;
             IMessage quotedMessage = context.Message;
-            List<IAttachment> attachments = new List<IAttachment>(quotedMessage.Attachments);
-            if (attachments.Count > 0)
+            Quote newQuote = Quote.ParseMessageToQuote(quotedMessage);
+            if (await QuoteService.AddQuote(newQuote))
             {
-                newQuote = new Quote(context.Channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(Var.Guild.Id), attachments[0].Url);
+                await context.Channel.SendEmbedAsync(newQuote.GetEmbed());
             }
-            else
-            {
-                newQuote = new Quote(context.Channel.Name, quotedMessage.Id, quotedMessage.Content, quotedMessage.Author.Id, quotedMessage.Author.Username, quotedMessage.Timestamp.UtcDateTime, quotedMessage.GetMessageURL(Var.Guild.Id));
-            }
-            await QuoteService.AddQuote(newQuote);
-            await context.Channel.SendEmbedAsync(newQuote.GetEmbed());
         }
     }
 }

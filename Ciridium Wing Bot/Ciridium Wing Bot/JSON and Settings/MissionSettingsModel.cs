@@ -32,7 +32,7 @@ namespace Ciridium
 
         private static void InitPermissionsAndDefaultChannelProperties()
         {
-            ExplorerPerms = new OverwritePermissions(readMessages: PermValue.Allow, readMessageHistory: PermValue.Allow, sendMessages: PermValue.Allow, embedLinks: PermValue.Allow, attachFiles: PermValue.Allow);
+            ExplorerPerms = new OverwritePermissions(viewChannel: PermValue.Allow, readMessageHistory: PermValue.Allow, sendMessages: PermValue.Allow, embedLinks: PermValue.Allow, attachFiles: PermValue.Allow);
         }
 
         static MissionSettingsModel()

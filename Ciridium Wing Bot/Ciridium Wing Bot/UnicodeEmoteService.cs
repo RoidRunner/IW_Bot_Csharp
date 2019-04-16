@@ -13,6 +13,10 @@ namespace Ciridium
             {
                 case Emotes.question:
                     return "\u2753";
+                case Emotes.checkmark:
+                    return "\u2705";
+                case Emotes.cross:
+                    return "\u274c";
                 default:
                     return null;
             }
@@ -36,6 +40,8 @@ namespace Ciridium
 
     public enum Emotes
     {
-        question
+        question,
+        checkmark,
+        cross
     }
 }

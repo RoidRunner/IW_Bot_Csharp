@@ -15,10 +15,10 @@ namespace Ciridium.WebRequests
 
         public WebCommands()
         {
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR);
-            CommandService.AddCommand(new CommandKeys(CMDKEYS_FACTION, 2, 10), HandleFactionCommand, AccessLevel.Basic, CMDSUMMARY_FACTION, CMDSYNTAX_FACTION, CMDARGS_FACTION);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_SYSTEMINFO, 2, 10), HandleSystemInfoCommand, AccessLevel.Basic, CMDSUMMARY_SYSTEMINFO, CMDSYNTAX_SYSTEMINFO, CMDARGS_SYSTEMINFO, useTyping:true);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_DISTANCE, 3, 20), HandleDistanceCommand, AccessLevel.Basic, CMDSUMMARY_DISTANCE, CMDSYNTAX_DISTANCE, CMDARGS_DISTANCE, useTyping: true);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_CMDR, 2, 10), HandleCMDRCommand, AccessLevel.Basic, CMDSUMMARY_CMDR, CMDSYNTAX_CMDR, CMDARGS_CMDR, useTyping: true);
+            CommandService.AddCommand(new CommandKeys(CMDKEYS_FACTION, 2, 10), HandleFactionCommand, AccessLevel.Basic, CMDSUMMARY_FACTION, CMDSYNTAX_FACTION, CMDARGS_FACTION, useTyping: true);
         }
 
         #region /systeminfo
@@ -296,7 +296,7 @@ namespace Ciridium.WebRequests
             public string Name;
             public long Id;
             public StationType Type;
-            public int Distance;
+            public float Distance;
             public bool HasRestock;
             public bool HasRefuel;
             public bool HasRepair;
@@ -343,7 +343,7 @@ namespace Ciridium.WebRequests
                 SystemName = systemName;
                 SystemId = systemId;
                 Type = ParseStationType(type);
-                Distance = (int)distance;
+                Distance = distance;
             }
 
             public override string ToString()
@@ -355,8 +355,8 @@ namespace Ciridium.WebRequests
             {
                 get
                 {
-                    string distanceFormatted = Distance.ToString("N", culture);
-                    string result = string.Format("**{0} [{1}]({2})**: {3}, {4} ls", STATIONEMOJI[(int)Type], Name, EDSMLink, STATIONTYPENAMES[(int)Type], distanceFormatted.Substring(0, distanceFormatted.Length - 3));
+                    string distanceFormatted = Distance.ToString("### ### ###.00").Trim();
+                    string result = string.Format("**{0} [{1}]({2})**: {3}, {4} ls", STATIONEMOJI[(int)Type], Name, EDSMLink, STATIONTYPENAMES[(int)Type], distanceFormatted);
                     return result;
                 }
             }
@@ -365,8 +365,8 @@ namespace Ciridium.WebRequests
             {
                 get
                 {
-                    string distanceFormatted = Distance.ToString("N", culture);
-                    string result = string.Format("**{0} {1}**: {2}, {3} ls", STATIONEMOJI[(int)Type], Name, STATIONTYPENAMES[(int)Type], distanceFormatted.Substring(0, distanceFormatted.Length - 3));
+                    string distanceFormatted = Distance.ToString("### ### ###.00").Trim();
+                    string result = string.Format("**{0} {1}**: {2}, {3} ls", STATIONEMOJI[(int)Type], Name, STATIONTYPENAMES[(int)Type], distanceFormatted);
                     return result;
                 }
             }
@@ -469,7 +469,7 @@ namespace Ciridium.WebRequests
                 {
                     if (!string.IsNullOrEmpty(requestedSystem1))
                     {
-                        requestedSystem1 += '+';
+                        requestedSystem1 += ' ';
                     }
                     requestedSystem1 += partial.Substring(0, partial.Length - 1);
                     commaEncountered = true;
@@ -478,7 +478,7 @@ namespace Ciridium.WebRequests
                 {
                     if (!string.IsNullOrEmpty(requestedSystem2))
                     {
-                        requestedSystem2 += '+';
+                        requestedSystem2 += ' ';
                     }
 
                     requestedSystem2 += partial;
@@ -538,7 +538,7 @@ namespace Ciridium.WebRequests
             string system1_name = string.Empty, system2_name = string.Empty;
             system1.GetField(ref system1_name, "name");
             system2.GetField(ref system2_name, "name");
-            return string.Format("Distance **{0}** <-> **{1}** ```{2} ly```", system1_name, system2_name, Vector3.Distance(coords1, coords2).ToString("N"));
+            return string.Format("Distance **{0}** <-> **{1}** ```{2} ly```", system1_name, system2_name, Vector3.Distance(coords1, coords2).ToString("### ### ###.00").Trim());
         }
 
         public static Vector3 ParseCoords(JSONObject Coordinates)
