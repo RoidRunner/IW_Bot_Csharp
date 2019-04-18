@@ -6,9 +6,8 @@ using System.Text;
 
 namespace Ciridium.Shitposting
 {
-    internal class Quote
+    internal class Quote : PageStorable
     {
-        internal int Id;
         internal string ChannelName;
         internal ulong MessageId;
         internal string MessageContent;
@@ -54,9 +53,11 @@ namespace Ciridium.Shitposting
 
         internal EmbedBuilder GetEmbed()
         {
-            EmbedBuilder quote = new EmbedBuilder();
-            quote.Color = Var.BOTCOLOR;
-            quote.Description = MessageContent;
+            EmbedBuilder quote = new EmbedBuilder
+            {
+                Color = Var.BOTCOLOR,
+                Description = MessageContent
+            };
             EmbedAuthorBuilder authorBuilder = new EmbedAuthorBuilder();
 
             SocketGuild guild = Var.Guild;
@@ -90,9 +91,10 @@ namespace Ciridium.Shitposting
             {
                 quote.ImageUrl = ImageURL;
             }
-            EmbedFooterBuilder footer = new EmbedFooterBuilder();
-
-            footer.Text = string.Format("#{0}, QuoteId: {1}", ChannelName, Id);
+            EmbedFooterBuilder footer = new EmbedFooterBuilder
+            {
+                Text = string.Format("#{0}, QuoteId: {1}", ChannelName, Id)
+            };
 
             quote.Footer = footer;
             quote.Timestamp = new DateTimeOffset(Timestamp, TimeSpan.Zero);
@@ -110,7 +112,7 @@ namespace Ciridium.Shitposting
         private const string JSON_TIMESTAMP = "TimeStamp";
         private const string JSON_MESSAGE_URL = "MessageURL";
 
-        internal bool FromJSON(JSONObject json)
+        internal override bool FromJSON(JSONObject json)
         {
             string authorId_str = string.Empty;
             string timestamp_str = string.Empty;
@@ -129,10 +131,9 @@ namespace Ciridium.Shitposting
             return success;
         }
 
-        internal JSONObject ToJSON()
+        internal override JSONObject ToJSON()
         {
-            JSONObject result = new JSONObject();
-            result.AddField(JSON_ID, Id);
+            JSONObject result = IdJSON;
             result.AddField(JSON_MESSAGE_ID, MessageId.ToString());
             result.AddField(JSON_CHANNEL_NAME, ChannelName);
             result.AddField(JSON_CONTENT, JSONObject.GetSafeJSONString(MessageContent));

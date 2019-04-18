@@ -71,9 +71,11 @@ namespace Ciridium
             {
                 if (i % 25 == 0)
                 {
-                    CurrentBuilder = new EmbedBuilder();
-                    CurrentBuilder.Color = Var.BOTCOLOR;
-                    CurrentBuilder.Title = title;
+                    CurrentBuilder = new EmbedBuilder
+                    {
+                        Color = Var.BOTCOLOR,
+                        Title = title
+                    };
                     if (!string.IsNullOrEmpty(description))
                     {
                         CurrentBuilder.Description = description;
@@ -259,6 +261,51 @@ namespace Ciridium
             {
                 return string.Format("{0} {1}", nstr, lvlId);
             }
+        }
+
+
+
+        public static bool ContainsAny(this string str, char[] chars)
+        {
+            foreach (char ch in chars)
+            {
+                if (str.Contains(ch.ToString()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool TryGetImageURLFromText(string text, out string url)
+        {
+            url = null;
+            foreach (string word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            {
+                word.Trim();
+                if (word.IsValidImageURL())
+                {
+                    url = word;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Converts <see cref="TimeSpan"/> objects to a simple human-readable string.  Examples: 3.1 seconds, 2 minutes, 4.23 hours, etc.
+        /// </summary>
+        /// <param name="span">The timespan.</param>
+        /// <param name="significantDigits">Significant digits to use for output.</param>
+        /// <returns></returns>
+        public static string ToHumanTimeString(this TimeSpan span, int significantDigits = 3)
+        {
+            var format = "G" + significantDigits;
+            return span.TotalMilliseconds < 1000 ? span.TotalMilliseconds.ToString(format) + " milliseconds"
+                : (span.TotalSeconds < 60 ? span.TotalSeconds.ToString(format) + " seconds"
+                    : (span.TotalMinutes < 60 ? span.TotalMinutes.ToString(format) + " minutes"
+                        : (span.TotalHours < 24 ? span.TotalHours.ToString(format) + " hours"
+                                                : span.TotalDays.ToString(format) + " days")));
         }
     }
 

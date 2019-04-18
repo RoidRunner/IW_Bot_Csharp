@@ -11,6 +11,7 @@ using System.Threading;
 using Ciridium.Shitposting;
 using System.Globalization;
 using Ciridium.Reactions;
+using Ciridium.MacroEmbeds;
 
 // dotnet publish -c Release -r win10-x64
 // dotnet publish -c Release -r linux-x64
@@ -83,7 +84,8 @@ namespace Ciridium {
             {
                 await MissionSettingsModel.LoadMissionSettings();
                 await MissionModel.LoadMissions();
-                await QuoteService.LoadQuotes();
+                await QuoteService.Initialize();
+                await MacroService.Initialize();
 
                 Var.client = new DiscordSocketClient(new DiscordSocketConfig
                 {
@@ -128,7 +130,7 @@ namespace Ciridium {
             {
                 if (!filesExist)
                 {
-                    await Logger(new LogMessage(LogSeverity.Critical, "SETTINGS", string.Format("Could not find config files! Standard directory is \"{0}\".\nReply with 'y' if you want to generate basic files now!", ResourcesModel.BaseDirectory)));
+                    await Logger(new LogMessage(LogSeverity.Critical, "SETTINGS", string.Format("Could not find config files! Standard directory is \"{0}\".\nReply with 'y' if you want to generate basic files now!", ResourcesModel.SettingsDirectory)));
                     if (Console.ReadLine().ToCharArray()[0] == 'y')
                     {
                         await ResourcesModel.InitiateBasicFiles();
@@ -276,6 +278,7 @@ namespace Ciridium {
             MissionCommands missionCmds = new MissionCommands();
             WebCommands webCmds = new WebCommands();
             QuoteCommands quoteCmds = new QuoteCommands();
+            MacroCommands macroCmds = new MacroCommands();
 
             Var.client.MessageReceived += HandleCommandAsync;
         }

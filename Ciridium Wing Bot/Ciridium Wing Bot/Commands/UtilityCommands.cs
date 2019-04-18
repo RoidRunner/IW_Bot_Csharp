@@ -136,6 +136,7 @@ namespace Ciridium
             CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_USERINFO, 3, 1000), HandleUserInfoCommand, AccessLevel.Director, CMDSUMMARY_DEBUG_USERINFO, CMDSYNTAX_DEBUG_USERINFO, CMDARGS_DEBUG_USERINFO));
             // debug guilds
             CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_GUILDS), HandleListGuildsCommand, AccessLevel.BotAdmin, CMDSUMMARY_DEBUG_GUILDS, CMDSYNTAX_DEBUG_GUILDS, Command.NO_ARGUMENTS));
+            CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_DEBUG_SCHEDULEDS), HandleDebugScheduledsCommand, AccessLevel.BotAdmin, CMDSUMMARY_DEBUG_SCHEDULEDS, CMDSYNTAX_DEBUG_SCHEDULEDS));
         }
 
         #region /debug channels
@@ -259,6 +260,32 @@ namespace Ciridium
                     userembed.AddField("Add. Info", string.Format("```Bot: {0} Webhook: {1}```", user.IsBot, user.IsWebhook));
                 }
                 await context.Channel.SendEmbedAsync(userembed);
+            }
+        }
+
+        #endregion
+        #region /debug scheduleds
+
+        private const string CMDKEYS_DEBUG_SCHEDULEDS = "debug scheduleds";
+        private const string CMDSYNTAX_DEBUG_SCHEDULEDS = "debug scheduleds";
+        private const string CMDSUMMARY_DEBUG_SCHEDULEDS = "Prints out some debug info on all scheduled delegates currently running";
+
+        public async Task HandleDebugScheduledsCommand(CommandContext context)
+        {
+            IReadOnlyList<ScheduledCallback> scheduleds = TimingThread.ScheduledCallbacks;
+            if (scheduleds.Count > 0)
+            {
+                List<EmbedField> embeds = new List<EmbedField>();
+                foreach (ScheduledCallback scheduled in scheduleds)
+                {
+                    embeds.Add(new EmbedField(scheduled.callback.Method.ToString(), new TimeSpan(0, 0, 0, 0, (int)(scheduled.executeAt - TimingThread.Millis)).ToHumanTimeString()));
+                }
+
+                await context.Channel.SendSafeEmbedList(scheduleds.Count + " currently waiting Scheduleds", embeds);
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("No Scheduleds waiting!");
             }
         }
 

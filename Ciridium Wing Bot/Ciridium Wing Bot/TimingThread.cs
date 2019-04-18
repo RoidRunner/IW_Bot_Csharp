@@ -38,6 +38,17 @@ namespace Ciridium
         /// contains ScheduledCallback structs that will be executed when their time has been reached.
         /// </summary>
         private static List<ScheduledCallback> scheduledCallbacks;
+        public static IReadOnlyList<ScheduledCallback> ScheduledCallbacks
+        {
+            get
+            {
+                lock (scheduledCallbackListLock)
+                {
+                    return scheduledCallbacks.AsReadOnly();
+                }
+            }
+        }
+
         /// <summary>
         /// Since new ScheduledCallbacks can not be added while the callbacks are checked for time they are added from this point
         /// </summary>
@@ -46,6 +57,7 @@ namespace Ciridium
         /// The lock object used for newScheduledCallbacks
         /// </summary>
         private static readonly object newCallbacksLock = new object();
+        private static readonly object scheduledCallbackListLock = new object();
 
         /// <summary>
         /// initiates variables and starts the timer thread
@@ -77,19 +89,22 @@ namespace Ciridium
                         markedForRemoval.Add(schedule);
                     }
                 }
-                if (markedForRemoval.Count > 0)
+                lock (scheduledCallbackListLock)
                 {
-                    foreach (var complete in markedForRemoval)
+                    if (markedForRemoval.Count > 0)
                     {
-                        scheduledCallbacks.Remove(complete);
+                        foreach (var complete in markedForRemoval)
+                        {
+                            scheduledCallbacks.Remove(complete);
+                        }
                     }
-                }
-                lock (newCallbacksLock)
-                {
-                    if (newScheduledCallbacks != null)
+                    lock (newCallbacksLock)
                     {
-                        scheduledCallbacks.AddRange(newScheduledCallbacks);
-                        newScheduledCallbacks = null;
+                        if (newScheduledCallbacks != null)
+                        {
+                            scheduledCallbacks.AddRange(newScheduledCallbacks);
+                            newScheduledCallbacks = null;
+                        }
                     }
                 }
                 Thread.Sleep(10);

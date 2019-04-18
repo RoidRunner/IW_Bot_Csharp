@@ -36,6 +36,26 @@ namespace Ciridium.Shitposting
         }
 
         #endregion
+        #region quote <index>
+
+        private const string CMDKEYS_QUOTE_INDEX = "quote";
+        private const string CMDSYNTAX_QUOTE_INDEX = "quote";
+        private const string CMDSUMMARY_QUOTE_INDEX = "Shows a random quote";
+
+        internal async Task HandleQuoteIndexCommand(CommandContext context)
+        {
+            Quote selected = QuoteService.RandomQuote;
+            if (selected != null)
+            {
+                await context.Channel.SendEmbedAsync(selected.GetEmbed());
+            }
+            else
+            {
+                await context.Channel.SendEmbedAsync("I have no quotes stored!", true);
+            }
+        }
+
+        #endregion
         #region quote add
 
         private const string CMDKEYS_QUOTE_ADD = "quote add";

@@ -13,7 +13,7 @@ namespace Ciridium
         public const string NO_ARGUMENTS = "None";
         public readonly bool async;
 
-        public Command(CommandKeys key, HandleCommand handleCommand, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, SpecialChannelType channelType = SpecialChannelType.Normal, bool useTyping = false)
+        public Command(CommandKeys key, HandleCommand handleCommand, AccessLevel accessLevel, string summary, string syntax, string argumentHelp = NO_ARGUMENTS, SpecialChannelType channelType = SpecialChannelType.Normal, bool useTyping = false)
         {
             async = true;
             Key = key;
@@ -29,7 +29,7 @@ namespace Ciridium
             UseTyping = useTyping;
         }
 
-        public Command(CommandKeys key, HandleSynchronousCommand handleCommand, AccessLevel accessLevel, string summary, string syntax, string argumentHelp, SpecialChannelType channelType = SpecialChannelType.Normal, bool useTyping = false, bool isSynchronous = true)
+        public Command(CommandKeys key, HandleSynchronousCommand handleCommand, AccessLevel accessLevel, string summary, string syntax, string argumentHelp = NO_ARGUMENTS, SpecialChannelType channelType = SpecialChannelType.Normal, bool useTyping = false, bool isSynchronous = true)
         {
             async = false;
             Key = key;

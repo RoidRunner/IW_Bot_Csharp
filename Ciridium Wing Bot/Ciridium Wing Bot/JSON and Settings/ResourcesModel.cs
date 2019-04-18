@@ -8,10 +8,11 @@ namespace Ciridium
 {
     static class ResourcesModel
     {
-        public static readonly string BaseDirectory;
+        public static readonly string SettingsDirectory;
         public static readonly string SettingsFilePath;
         public static readonly string MissionSettingsFilePath;
         public static readonly string MissionsFilePath;
+        public static readonly string MacroEmbedsDirectory;
 
         public static readonly string ShitpostingDirectory;
         public static readonly string QuotesDirectory;
@@ -19,10 +20,11 @@ namespace Ciridium
 
         static ResourcesModel()
         {
-            BaseDirectory = Environment.CurrentDirectory + "/Settings/";
-            SettingsFilePath = BaseDirectory + "Settings.json";
-            MissionSettingsFilePath = BaseDirectory + "MissionSettings.json";
-            MissionsFilePath = BaseDirectory + "Missions.json";
+            SettingsDirectory = Environment.CurrentDirectory + "/Settings/";
+            SettingsFilePath = SettingsDirectory + "Settings.json";
+            MissionSettingsFilePath = SettingsDirectory + "MissionSettings.json";
+            MissionsFilePath = SettingsDirectory + "Missions.json";
+            MacroEmbedsDirectory = Environment.CurrentDirectory + "/MacroEmbeds/";
             ShitpostingDirectory = Environment.CurrentDirectory + "/Shitposting/";
             QuotesDirectory = ShitpostingDirectory + "/Quotes/";
             QuoteSettingsFilePath = QuotesDirectory + "QuoteSettings.json";
@@ -35,7 +37,7 @@ namespace Ciridium
 
         public static async Task InitiateBasicFiles()
         {
-            Directory.CreateDirectory(BaseDirectory);
+            Directory.CreateDirectory(SettingsDirectory);
             await SettingsModel.SaveSettings();
             await MissionSettingsModel.SaveMissionSettings();
             await MissionModel.SaveMissions();
