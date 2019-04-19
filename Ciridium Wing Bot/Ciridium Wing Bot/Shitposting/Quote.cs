@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using Ciridium.PagedStorageService;
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -143,6 +144,11 @@ namespace Ciridium.Shitposting
             result.AddField(JSON_MESSAGE_URL, MessageURL);
             result.AddField(JSON_TIMESTAMP, Timestamp.ToString("s", Var.Culture));
             return result;
+        }
+
+        public static implicit operator EmbedBuilder(Quote q)
+        {
+            return q.GetEmbed();
         }
 
         internal static Quote ParseMessageToQuote(IMessage msg)

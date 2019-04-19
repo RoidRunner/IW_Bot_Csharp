@@ -4,127 +4,29 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ciridium
+namespace Ciridium.PagedStorageService
 {
     internal class PagedStorageService<T> where T : PageStorable, new()
     {
-        internal readonly string StorageDirectory;
+        #region variables
 
+        internal readonly string StorageDirectory;
         private const int PAGESIZE = 64;
         private const string ID_SAFEFILE = "Id.json";
         private const string JSON_ID = "Id";
         private static List<T> pageStorables = new List<T>();
         private static int nextId;
-        internal static int ConsumeId
+        internal static int ConsumeId()
         {
-            get
-            {
                 return nextId++;
-            }
         }
+
+        #endregion
+        #region init
 
         public PagedStorageService(string storageDirectory)
         {
             StorageDirectory = storageDirectory;
-        }
-
-        internal IReadOnlyList<T> StoredEntries { get { return pageStorables.AsReadOnly(); } }
-        internal int Count { get { return pageStorables.Count; } }
-
-        internal async Task AddEntry(T entry)
-        {
-            entry.Id = ConsumeId;
-            pageStorables.Add(entry);
-            await SafePages(pageStorables.Count - 1);
-        }
-
-        internal async Task RemoveEntry(int id)
-        {
-            foreach (T entry in pageStorables)
-            {
-                if (entry.Id == id)
-                {
-                    pageStorables.Remove(entry);
-                    break;
-                }
-            }
-            await SafePages();
-        }
-
-        internal T this[int index]
-        {
-            get
-            {
-                if (index >= 0 && index < pageStorables.Count)
-                {
-                    return pageStorables[index];
-                }
-                else
-                {
-                    return default(T);
-                }
-            }
-        }
-
-        internal T GetEntry(int index)
-        {
-            return this[index];
-        }
-
-        internal bool HasEntryWithId(int id)
-        {
-            if (id >= nextId)
-            {
-                return false;
-            }
-            foreach (T entry in pageStorables)
-            {
-                if (entry.Id == id)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-
-
-        internal async Task SafePages(int listLocation = -1)
-        {
-            JSONObject idSettings = new JSONObject();
-            idSettings.AddField(JSON_ID, nextId);
-            await ResourcesModel.WriteJSONObjectToFile(StorageDirectory + ID_SAFEFILE, idSettings);
-
-            if (listLocation == -1)
-            {
-                foreach (string file in Directory.GetFiles(ResourcesModel.QuotesDirectory))
-                {
-                    if (file.Contains("page-") && file.EndsWith(".json"))
-                    {
-                        File.Delete(file);
-                    }
-                }
-                int pages = (pageStorables.Count - 1) / PAGESIZE;
-                for (int i = 0; i <= pages; i++)
-                {
-                    await SafePage(i);
-                }
-            }
-            else
-            {
-                int page = listLocation / PAGESIZE;
-                await SafePage(page);
-            }
-        }
-
-        internal async Task SafePage(int page)
-        {
-            JSONObject quoteListJSON = new JSONObject();
-            for (int i = page * PAGESIZE; i < pageStorables.Count && i < (page + 1) * PAGESIZE; i++)
-            {
-                quoteListJSON.Add(pageStorables[i].ToJSON());
-            }
-            await ResourcesModel.WriteJSONObjectToFile(string.Format("{0}page-{1}.json", StorageDirectory, page), quoteListJSON);
         }
 
         internal async Task<bool> InitialLoad()
@@ -154,6 +56,116 @@ namespace Ciridium
             return false;
         }
 
+        #endregion
+        #region data access and manipulation
+
+        internal IReadOnlyList<T> StoredEntries { get { return pageStorables.AsReadOnly(); } }
+        internal int Count { get { return pageStorables.Count; } }
+
+        internal async Task AddEntry(T entry)
+        {
+            entry.Id = ConsumeId();
+            pageStorables.Add(entry);
+            await SafePages(pageStorables.Count - 1);
+        }
+
+        internal async Task RemoveEntry(int id)
+        {
+            foreach (T entry in pageStorables)
+            {
+                if (entry.Id == id)
+                {
+                    pageStorables.Remove(entry);
+                    break;
+                }
+            }
+            await SafePages();
+        }
+
+        internal T this[int id]
+        {
+            get
+            {
+                if (id >= 0 && id < nextId)
+                {
+                    foreach (T entry in pageStorables)
+                    {
+                        if (entry.Id == id)
+                        {
+                            return entry;
+                        }
+                    }
+                    return default(T);
+                }
+                else
+                {
+                    return default(T);
+                }
+            }
+        }
+
+        internal T GetEntry(int id)
+        {
+            return this[id];
+        }
+
+        internal bool HasEntryWithId(int id)
+        {
+            if (id >= nextId)
+            {
+                return false;
+            }
+            foreach (T entry in pageStorables)
+            {
+                if (entry.Id == id)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        #endregion
+        #region storing
+
+        internal async Task SafePages(int listLocation = -1)
+        {
+            JSONObject idSettings = new JSONObject();
+            idSettings.AddField(JSON_ID, nextId);
+            await ResourcesModel.WriteJSONObjectToFile(StorageDirectory + ID_SAFEFILE, idSettings);
+
+            if (listLocation == -1)
+            {
+                foreach (string file in Directory.GetFiles(StorageDirectory))
+                {
+                    if (file.Contains("page-") && file.EndsWith(".json"))
+                    {
+                        File.Delete(file);
+                    }
+                }
+                int pages = (pageStorables.Count - 1) / PAGESIZE;
+                for (int i = 0; i <= pages; i++)
+                {
+                    await SafePage(i);
+                }
+            }
+            else
+            {
+                int page = listLocation / PAGESIZE;
+                await SafePage(page);
+            }
+        }
+
+        internal async Task SafePage(int page)
+        {
+            JSONObject entryList = new JSONObject();
+            for (int i = page * PAGESIZE; i < pageStorables.Count && i < (page + 1) * PAGESIZE; i++)
+            {
+                entryList.Add(pageStorables[i].ToJSON());
+            }
+            await ResourcesModel.WriteJSONObjectToFile(string.Format("{0}page-{1}.json", StorageDirectory, page), entryList);
+        }
+
         private void handlePageJSON(JSONObject page)
         {
             if (page.IsArray && page.Count > 0)
@@ -171,26 +183,7 @@ namespace Ciridium
                 }
             }
         }
-    }
 
-    internal abstract class PageStorable
-    {
-        internal int Id;
-
-        internal bool RetrieveId(JSONObject json)
-        {
-            return json.GetField(ref Id, "Id");
-        }
-        protected JSONObject IdJSON
-        {
-            get
-            {
-                JSONObject json = new JSONObject();
-                json.AddField("Id", Id);
-                return json;
-            }
-        }
-        internal abstract JSONObject ToJSON();
-        internal abstract bool FromJSON(JSONObject json);
+        #endregion
     }
 }

@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using Ciridium.PagedStorageService;
+using Discord;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,11 +14,12 @@ namespace Ciridium.MacroEmbeds
         internal string AttachedImage;
         internal List<string> Attachments = new List<string>();
 
+        #region Constructors
+
         public MacroEmbed()
         {
-
         }
-        
+
         internal MacroEmbed(string key, string header, string content, string attachedImage = null, string[] attachments = null)
         {
             Key = key;
@@ -36,6 +38,9 @@ namespace Ciridium.MacroEmbeds
             }
         }
 
+        #endregion
+        #region JSON
+
         private const string JSON_KEY = "Key";
         private const string JSON_CONTENT = "Content";
         private const string JSON_HEADER = "Header";
@@ -48,7 +53,7 @@ namespace Ciridium.MacroEmbeds
             {
                 Content = JSONObject.ReturnToUnsafeJSONString(Content);
                 Header = JSONObject.ReturnToUnsafeJSONString(Header);
-                
+
                 json.GetField(ref AttachedImage, JSON_IMAGE);
                 JSONObject attachments = json[JSON_ATTACHMENTS];
                 if ((attachments != null) && attachments.IsArray && attachments.Count > 0)
@@ -93,6 +98,9 @@ namespace Ciridium.MacroEmbeds
             return json;
         }
 
+        #endregion
+        #region Embed
+
         internal EmbedBuilder GetEmbed()
         {
             EmbedBuilder result = new EmbedBuilder()
@@ -121,5 +129,12 @@ namespace Ciridium.MacroEmbeds
             result.Footer = footer;
             return result;
         }
+
+        public static implicit operator EmbedBuilder(MacroEmbed m)
+        {
+            return m.GetEmbed();
+        }
+
+        #endregion
     }
 }

@@ -10,9 +10,13 @@ namespace Ciridium.MacroEmbeds
     {
         public MacroCommands()
         {
+            // macro
             CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_MACRO, 2, 2), HandleMacroCommand, AccessLevel.Pilot, CMDSUMMARY_MACRO, CMDSYNTAX_MACRO, CMDARGS_MACRO));
+            // macro add
             CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_MACRO_ADD, 4, 1000), HandleMacroAddCommand, AccessLevel.Director, CMDSUMMARY_MACRO_ADD, CMDSYNTAX_MACRO_ADD, CMDARGS_MACRO_ADD));
+            // macro list
             CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_MACRO_LIST), HandleMacroListCommand, AccessLevel.Pilot, CMDSUMMARY_MACRO_LIST, CMDSYNTAX_MACRO_LIST));
+            // macro remove
             CommandService.AddCommand(new Command(new CommandKeys(CMDKEYS_MACRO_REMOVE, 3, 3), HandleMacroRemoveCommand, AccessLevel.Director, CMDSUMMARY_MACRO_REMOVE, CMDSYNTAX_MACRO_REMOVE, CMDARGS_MACRO_REMOVE));
         }
 
@@ -33,7 +37,7 @@ namespace Ciridium.MacroEmbeds
                 MacroEmbed macroEmbed = MacroService.GetMacroEmbed(key);
                 if (macroEmbed != null)
                 {
-                    await context.Channel.SendEmbedAsync(macroEmbed.GetEmbed());
+                    await context.Channel.SendEmbedAsync(macroEmbed);
                 }
                 else
                 {
@@ -103,7 +107,7 @@ namespace Ciridium.MacroEmbeds
 
                         if (await MacroService.AddMacroEmbed(result))
                         {
-                            await context.Channel.SendEmbedAsync(result.GetEmbed());
+                            await context.Channel.SendEmbedAsync(result);
                         }
                         else
                         {
